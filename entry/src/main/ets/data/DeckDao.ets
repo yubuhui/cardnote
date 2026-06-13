@@ -11,6 +11,12 @@ function deckToValues(deck: Deck): relationalStore.ValuesBucket {
     created_at: deck.createdAt,
     updated_at: deck.updatedAt,
   };
+  if (deck.dailyNewCards !== undefined) {
+    values['daily_new_cards'] = deck.dailyNewCards;
+  }
+  if (deck.dailyReviewCards !== undefined) {
+    values['daily_review_cards'] = deck.dailyReviewCards;
+  }
   return values;
 }
 
@@ -24,6 +30,14 @@ function rowToDeck(resultSet: relationalStore.ResultSet): Deck {
     createdAt: resultSet.getLong(resultSet.getColumnIndex('created_at')),
     updatedAt: resultSet.getLong(resultSet.getColumnIndex('updated_at')),
   };
+  const newCardsIdx: number = resultSet.getColumnIndex('daily_new_cards');
+  if (newCardsIdx >= 0) {
+    deck.dailyNewCards = resultSet.getLong(newCardsIdx);
+  }
+  const reviewCardsIdx: number = resultSet.getColumnIndex('daily_review_cards');
+  if (reviewCardsIdx >= 0) {
+    deck.dailyReviewCards = resultSet.getLong(reviewCardsIdx);
+  }
   return deck;
 }
 
@@ -77,6 +91,18 @@ export class DeckDao {
     const values: relationalStore.ValuesBucket = deckToValues(deck);
     const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('deck');
     predicates.equalTo('id', deck.id);
+    await this.db.update(values, predicates);
+  }
+
+  /** 更新牌组设置（每日限额） */
+  async updateDeckSettings(deckId: number, dailyNewCards: number, dailyReviewCards: number): Promise<void> {
+    const values: relationalStore.ValuesBucket = {
+      daily_new_cards: dailyNewCards,
+      daily_review_cards: dailyReviewCards,
+      updated_at: Date.now(),
+    };
+    const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('deck');
+    predicates.equalTo('id', deckId);
     await this.db.update(values, predicates);
   }
 

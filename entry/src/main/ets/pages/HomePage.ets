@@ -134,6 +134,7 @@ struct HomePage {
               .padding({ bottom: 12 })
             }
             .width('100%')
+            .align(Alignment.Top)
             .layoutWeight(1)
             .scrollBar(BarState.Off)
             .edgeEffect(EdgeEffect.Spring)
@@ -187,13 +188,11 @@ struct HomePage {
           .backgroundColor(this.selectedDeckId === 0 ? PRIMARY : '#EDEDEF')
           .borderRadius(16)
           .onClick(() => {
-            this.deletingDeckId = -1;
             this.selectedDeckId = 0;
           })
 
         ForEach(this.decks, (deck: Deck) => {
-          Stack({ alignContent: Alignment.TopEnd }) {
-            Text(deck.name)
+          Text(deck.name)
               .fontSize(13)
               .fontWeight(FontWeight.Medium)
               .fontColor(this.selectedDeckId === deck.id ? Color.White : '#555')
@@ -201,33 +200,14 @@ struct HomePage {
               .backgroundColor(this.selectedDeckId === deck.id ? PRIMARY : '#EDEDEF')
               .borderRadius(16)
               .onClick(() => {
-                if (this.deletingDeckId === deck.id) {
-                  this.deletingDeckId = -1;
-                } else {
-                  this.selectedDeckId = deck.id;
-                }
+                this.selectedDeckId = deck.id;
               })
               .gesture(
                 LongPressGesture({ repeat: false, duration: 400 })
                   .onAction(() => {
-                    this.deletingDeckId = deck.id;
+                    this.showDeckActionMenu(deck);
                   })
               )
-
-            if (this.deletingDeckId === deck.id) {
-              Circle({ width: 14, height: 14 })
-                .fill('#EF4444')
-                .position({ x: -2, y: -2 })
-              Text('-')
-                .fontSize(10)
-                .fontWeight(FontWeight.Bold)
-                .fontColor(Color.White)
-                .position({ x: -2, y: -2 })
-                .onClick(() => {
-                  this.confirmDeleteDeck(deck);
-                })
-            }
-          }
         }, (deck: Deck) => deck.id.toString())
 
         // 添加牌组
@@ -247,6 +227,7 @@ struct HomePage {
       .padding({ left: 16, right: 16, top: 8, bottom: 10 })
     }
     .width('100%')
+    .scrollable(ScrollDirection.Horizontal)
     .scrollBar(BarState.Off)
     .constraintSize({ maxHeight: 60 })
     .backgroundColor(CARD_WHITE)
@@ -424,11 +405,11 @@ struct HomePage {
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .layoutWeight(1)
           Blank().width(8)
-          Text(card.status === CardStatus.reviewing ? '待复习' : '已掌握')
+          Text(card.status === CardStatus.unlearned ? '未背诵' : card.status === CardStatus.reviewing ? '待复习' : '已掌握')
             .fontSize(10)
-            .fontColor(card.status === CardStatus.reviewing ? PRIMARY : '#34C759')
+            .fontColor(card.status === CardStatus.unlearned ? '#9E9E9E' : card.status === CardStatus.reviewing ? PRIMARY : '#34C759')
             .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-            .backgroundColor(card.status === CardStatus.reviewing ? '#E8F0FE' : '#E8F8ED')
+            .backgroundColor(card.status === CardStatus.unlearned ? '#F0F0F0' : card.status === CardStatus.reviewing ? '#E8F0FE' : '#E8F8ED')
             .borderRadius(4)
         }
         .width('100%')
@@ -534,7 +515,10 @@ struct HomePage {
           .borderRadius(23)
           .shadow({ radius: 8, color: '#404A90D9', offsetY: 3 })
           .onClick(() => {
-            router.pushUrl({ url: 'pages/LearningPage' });
+            router.pushUrl({
+              url: 'pages/LearningPage',
+              params: { selectedDeckId: this.selectedDeckId }
+            });
           })
         Blank().width(12)
       }
@@ -756,6 +740,70 @@ struct HomePage {
           this.exitMultiSelectMode();
           await this.loadHomeData();
         }
+      }
+    });
+  }
+
+  showDeckActionMenu(deck: Deck) {
+    AlertDialog.show({
+      title: deck.name,
+      message: `当前: 每日新卡 ${(deck.dailyNewCards && deck.dailyNewCards > 0) ? deck.dailyNewCards : '默认'} 张, 每日复习 ${(deck.dailyReviewCards && deck.dailyReviewCards > 0) ? deck.dailyReviewCards : '默认'} 张`,
+      autoCancel: true,
+      alignment: DialogAlignment.Center,
+      primaryButton: {
+        value: '牌组设置',
+        action: () => {
+          this.openDeckSettings(deck);
+        }
+      },
+      secondaryButton: {
+        value: '删除牌组',
+        fontColor: '#EF4444',
+        action: () => {
+          this.confirmDeleteDeck(deck);
+        }
+      }
+    });
+  }
+
+  openDeckSettings(deck: Deck) {
+    const newCardRange: string[] = [];
+    // 0 = 使用全局默认
+    newCardRange.push('默认');
+    for (let i = 5; i <= 200; i += 5) {
+      newCardRange.push(i.toString());
+    }
+
+    const currentNewVal: number = (deck.dailyNewCards && deck.dailyNewCards > 0) ? deck.dailyNewCards : 0;
+    const newCardIdx: number = currentNewVal === 0 ? 0 : Math.round(currentNewVal / 5);
+
+    // 先选择每日新卡数量
+    TextPickerDialog.show({
+      range: newCardRange,
+      selected: newCardIdx,
+      onAccept: async (result: TextPickerResult) => {
+        const newValStr: string = result.value as string;
+        const newLimit: number = (newValStr === '默认') ? 0 : parseInt(newValStr);
+
+        // 再选择每日复习卡数量
+        const reviewRange: string[] = ['默认'];
+        for (let i = 50; i <= 1000; i += 50) {
+          reviewRange.push(i.toString());
+        }
+        const currentReviewVal: number = (deck.dailyReviewCards && deck.dailyReviewCards > 0) ? deck.dailyReviewCards : 0;
+        const reviewIdx: number = currentReviewVal === 0 ? 0 : Math.round(currentReviewVal / 50);
+
+        TextPickerDialog.show({
+          range: reviewRange,
+          selected: reviewIdx,
+          onAccept: async (reviewResult: TextPickerResult) => {
+            const reviewValStr: string = reviewResult.value as string;
+            const reviewLimit: number = (reviewValStr === '默认') ? 0 : parseInt(reviewValStr);
+
+            await this.cardVm.updateDeckSettings(deck.id, newLimit, reviewLimit);
+            await this.loadHomeData();
+          }
+        });
       }
     });
   }

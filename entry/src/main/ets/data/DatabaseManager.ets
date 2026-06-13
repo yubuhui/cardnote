@@ -161,6 +161,9 @@ export class DatabaseManager {
     await this.migrateTable('deck', 'uuid', 'TEXT');
     await this.migrateTable('card', 'uuid', 'TEXT');
     await this.migrateTable('memory_record', 'uuid', 'TEXT');
+    // deck: 添加每日限额列（v4 - 牌组独立限额，0=使用全局默认）
+    await this.migrateTable('deck', 'daily_new_cards', 'INTEGER DEFAULT 0');
+    await this.migrateTable('deck', 'daily_review_cards', 'INTEGER DEFAULT 0');
   }
 
   /**

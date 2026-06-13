@@ -2,6 +2,7 @@ import { Card } from '../model/Card';
 import { Deck } from '../model/Deck';
 import { MemoryRecord } from '../model/MemoryRecord';
 import { CardViewModel } from './CardViewModel';
+import { DeckDao } from '../data/DeckDao';
 import { MemoryRecordDao, DailyDuration } from '../data/MemoryRecordDao';
 import { Rating } from '../data/SM2Algorithm';
 import { ReviewSettingsManager, ReviewSettings } from '../data/ReviewSettingsManager';
@@ -49,34 +50,58 @@ export class StudyViewModel {
     this.recordDao = new MemoryRecordDao();
   }
 
-  // 获取待复习卡片（受背诵设置限制）
+  // 获取待复习卡片（按牌组独立限额）
   async getDueCards(deckIds?: number[]): Promise<Card[]> {
-    let cards: Card[] = await this.cardVm.getDueCards(deckIds);
-
     const settings: ReviewSettings = ReviewSettingsManager.getInstance().load();
+    const deckDao: DeckDao = new DeckDao();
 
-    // 过滤：跳过已掌握的卡片
-    if (settings.skipMasteredCards) {
-      cards = cards.filter(c => c.status !== CardStatus.mastered);
+    // 确定要查询的牌组 ID 列表
+    let targetDeckIds: number[];
+    if (deckIds && deckIds.length > 0) {
+      targetDeckIds = deckIds;
+    } else {
+      const allDecks: Deck[] = await deckDao.getAll();
+      targetDeckIds = allDecks.map(d => d.id);
     }
 
-    // 分离新卡（未学习）和复习卡
-    const newCards: Card[] = [];
-    const reviewCards: Card[] = [];
-    for (const c of cards) {
-      if (c.status === CardStatus.unlearned) {
-        newCards.push(c);
-      } else {
-        reviewCards.push(c);
+    const result: Card[] = [];
+
+    for (const deckId of targetDeckIds) {
+      // 获取该牌组的有效限额：牌组自身设置 > 0 则用它，否则用全局设置
+      const deck: Deck | null = await deckDao.getById(deckId);
+      const newLimit: number = (deck && deck.dailyNewCards && deck.dailyNewCards > 0)
+        ? deck.dailyNewCards : settings.dailyNewCards;
+      const reviewLimit: number = (deck && deck.dailyReviewCards && deck.dailyReviewCards > 0)
+        ? deck.dailyReviewCards : settings.dailyReviewCards;
+
+      // 查询该牌组的待复习卡片
+      let cards: Card[] = await this.cardVm.getDueCards([deckId]);
+
+      // 过滤已掌握的卡片
+      if (settings.skipMasteredCards) {
+        cards = cards.filter(c => c.status !== CardStatus.mastered);
       }
+
+      // 分离新卡和复习卡
+      const newCards: Card[] = [];
+      const reviewCards: Card[] = [];
+      for (const c of cards) {
+        if (c.status === CardStatus.unlearned) {
+          newCards.push(c);
+        } else {
+          reviewCards.push(c);
+        }
+      }
+
+      // 按该牌组独立限额截取
+      const limitedNew: Card[] = newCards.slice(0, newLimit);
+      const limitedReview: Card[] = reviewCards.slice(0, reviewLimit);
+
+      // 新卡优先，复习卡在后
+      result.push(...limitedNew, ...limitedReview);
     }
 
-    // 按设置限制数量
-    const limitedNew: Card[] = newCards.slice(0, settings.dailyNewCards);
-    const limitedReview: Card[] = reviewCards.slice(0, settings.dailyReviewCards);
-
-    // 新卡优先，复习卡在后
-    return [...limitedNew, ...limitedReview];
+    return result;
   }
 
   // 根据 ID 获取牌组

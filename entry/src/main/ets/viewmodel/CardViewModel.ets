@@ -39,6 +39,10 @@ export class CardViewModel {
     await this.deckDao.delete(id);
   }
 
+  async updateDeckSettings(deckId: number, dailyNewCards: number, dailyReviewCards: number): Promise<void> {
+    await this.deckDao.updateDeckSettings(deckId, dailyNewCards, dailyReviewCards);
+  }
+
   // ===== 卡片操作 =====
   async getAllCards(): Promise<Card[]> {
     return this.cardDao.getAll();
