@@ -1,0 +1,11 @@
+{
+  "src": [
+    "pages/HomePage",
+    "pages/LearningPage",
+    "pages/EditorPage",
+    "pages/ImportExportPage",
+    "pages/ReviewSettingsPage",
+    "pages/LoginPage",
+    "pages/PrivacyPolicyPage"
+  ]
+}

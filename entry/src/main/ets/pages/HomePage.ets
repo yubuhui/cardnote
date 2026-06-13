@@ -1,0 +1,843 @@
+import { router } from '@kit.ArkUI';
+import { Card, CardStatus } from '../model/Card';
+import { Deck } from '../model/Deck';
+import { CardViewModel } from '../viewmodel/CardViewModel';
+import { StudyViewModel } from '../viewmodel/StudyViewModel';
+import { FlipCard } from '../components/FlipCard';
+import { StatsPage } from './StatsPage';
+import { SettingsPage } from './SettingsPage';
+
+const PRIMARY = '#4A90D9';
+const PRIMARY_DARK = '#3A7BC8';
+const BG_GRAY = '#F2F3F7';
+const CARD_WHITE = '#FFFFFF';
+const TEXT_PRIMARY = '#1A1A1A';
+const TEXT_SECONDARY = '#8E8E93';
+const TEXT_TERTIARY = '#A0A0A0';
+
+@Entry
+@Component
+struct HomePage {
+  @State cards: Card[] = [];
+  @State decks: Deck[] = [];
+  @State loading: boolean = true;
+  @State unlearnedOpen: boolean = true;
+  @State reviewingOpen: boolean = false;
+  @State masteredOpen: boolean = false;
+  @State swipeCardId: number = -1;
+  @State swipeOffsetX: number = 0;
+  @State activeSwipeCardId: number = -1;
+  @State selectedDeckId: number = 0;
+  @State deletingDeckId: number = -1;
+  @State currentTabIndex: number = 0;
+  @State isMultiSelectMode: boolean = false;
+  @State selectedCardIds: number[] = [];
+  @Provide statsRefreshSignal: number = 0;
+  private cardVm: CardViewModel = new CardViewModel();
+  private studyVm: StudyViewModel = new StudyViewModel();
+  private addDeckDialogController: CustomDialogController = new CustomDialogController({
+    builder: AddDeckDialog({ onConfirm: (name: string) => { this.addDeck(name); } }),
+    autoCancel: true,
+    alignment: DialogAlignment.Center
+  });
+
+  aboutToAppear() {
+    this.loadHomeData();
+  }
+
+  onPageShow() {
+    this.loadHomeData();
+    this.statsRefreshSignal++;
+  }
+
+  private getFilteredCards(): Card[] {
+    if (this.selectedDeckId === 0) {
+      return this.cards;
+    }
+    return this.cards.filter(c => c.deckId === this.selectedDeckId);
+  }
+
+  async loadHomeData() {
+    try {
+      this.decks = await this.cardVm.getAllDecks();
+      this.cards = await this.cardVm.getAllCards();
+    } catch (err) {
+      console.error('Load home data failed:', err);
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  build() {
+    Flex({ direction: FlexDirection.Column, justifyContent: FlexAlign.Start }) {
+      Tabs({ index: this.currentTabIndex }) {
+        TabContent() {
+          Flex({ direction: FlexDirection.Column, justifyContent: FlexAlign.Start }) {
+            // 顶部区域 —— 统计栏
+            Column() {
+              Text('CardNote')
+                .fontSize(20)
+                .fontWeight(FontWeight.Bold)
+                .fontColor(TEXT_PRIMARY)
+                .margin({ top: 8, bottom: 14 })
+                .alignSelf(ItemAlign.Start)
+              Row({ space: 10 }) {
+                // 待复习
+                Column() {
+                  Text(`${this.cards.filter((c: Card) => c.status === CardStatus.reviewing).length}`)
+                    .fontSize(26).fontWeight(FontWeight.Bold).fontColor(PRIMARY).fontFamily('HarmonyHeiTi')
+                  Text('待复习').fontSize(11).fontColor(TEXT_SECONDARY).margin({ top: 2 })
+                }
+                .layoutWeight(1).padding({ top: 12, bottom: 12 }).backgroundColor(CARD_WHITE).borderRadius(12)
+                .shadow({ radius: 6, color: '#14000000', offsetY: 2 })
+                // 新卡片
+                Column() {
+                  Text(`${this.cards.filter((c: Card) => c.status === CardStatus.unlearned).length}`)
+                    .fontSize(26).fontWeight(FontWeight.Bold).fontColor('#FF9500').fontFamily('HarmonyHeiTi')
+                  Text('新卡片').fontSize(11).fontColor(TEXT_SECONDARY).margin({ top: 2 })
+                }
+                .layoutWeight(1).padding({ top: 12, bottom: 12 }).backgroundColor(CARD_WHITE).borderRadius(12)
+                .shadow({ radius: 6, color: '#14000000', offsetY: 2 })
+                // 总卡片
+                Column() {
+                  Text(`${this.cards.length}`)
+                    .fontSize(26).fontWeight(FontWeight.Bold).fontColor('#34C759').fontFamily('HarmonyHeiTi')
+                  Text('总卡片').fontSize(11).fontColor(TEXT_SECONDARY).margin({ top: 2 })
+                }
+                .layoutWeight(1).padding({ top: 12, bottom: 12 }).backgroundColor(CARD_WHITE).borderRadius(12)
+                .shadow({ radius: 6, color: '#14000000', offsetY: 2 })
+              }
+              .width('100%')
+            }
+            .width('100%')
+            .padding({ left: 16, right: 16, top: 12, bottom: 14 })
+            .backgroundColor(CARD_WHITE)
+
+            // 牌组筛选
+            if (this.decks.length > 0) {
+              this.buildDeckFilter()
+            }
+
+            // 多选提示栏
+            if (this.isMultiSelectMode) {
+              this.buildMultiSelectBar()
+            }
+
+            // 卡片列表区域
+            Scroll() {
+              Column() {
+                this.buildSectionUnlearned()
+                this.buildSectionReviewing()
+                this.buildSectionMastered()
+              }
+              .width('100%')
+              .padding({ bottom: 12 })
+            }
+            .width('100%')
+            .layoutWeight(1)
+            .scrollBar(BarState.Off)
+            .edgeEffect(EdgeEffect.Spring)
+
+            // 底部栏
+            if (this.isMultiSelectMode) {
+              this.buildBatchActionBar()
+            } else {
+              this.buildBottomBar()
+            }
+          }
+          .width('100%')
+          .height('100%')
+          .backgroundColor(BG_GRAY)
+        }
+        .tabBar(this.buildTab('首页', 0))
+
+        TabContent() {
+          StatsPage()
+        }
+        .tabBar(this.buildTab('统计', 1))
+
+        TabContent() {
+          SettingsPage()
+        }
+        .tabBar(this.buildTab('设置', 2))
+      }
+      .barPosition(BarPosition.End)
+      .scrollable(false)
+      .barHeight(56)
+      .barMode(BarMode.Fixed)
+      .layoutWeight(1)
+      .onChange((index: number) => { this.currentTabIndex = index })
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor(BG_GRAY)
+  }
+
+  // ==================== 牌组筛选 ====================
+  @Builder
+  buildDeckFilter() {
+    Scroll() {
+      Row({ space: 8 }) {
+        // 全部
+        Text('全部')
+          .fontSize(13)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(this.selectedDeckId === 0 ? Color.White : '#555')
+          .padding({ left: 16, right: 16, top: 7, bottom: 7 })
+          .backgroundColor(this.selectedDeckId === 0 ? PRIMARY : '#EDEDEF')
+          .borderRadius(16)
+          .onClick(() => {
+            this.deletingDeckId = -1;
+            this.selectedDeckId = 0;
+          })
+
+        ForEach(this.decks, (deck: Deck) => {
+          Stack({ alignContent: Alignment.TopEnd }) {
+            Text(deck.name)
+              .fontSize(13)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(this.selectedDeckId === deck.id ? Color.White : '#555')
+              .padding({ left: 16, right: 16, top: 7, bottom: 7 })
+              .backgroundColor(this.selectedDeckId === deck.id ? PRIMARY : '#EDEDEF')
+              .borderRadius(16)
+              .onClick(() => {
+                if (this.deletingDeckId === deck.id) {
+                  this.deletingDeckId = -1;
+                } else {
+                  this.selectedDeckId = deck.id;
+                }
+              })
+              .gesture(
+                LongPressGesture({ repeat: false, duration: 400 })
+                  .onAction(() => {
+                    this.deletingDeckId = deck.id;
+                  })
+              )
+
+            if (this.deletingDeckId === deck.id) {
+              Circle({ width: 14, height: 14 })
+                .fill('#EF4444')
+                .position({ x: -2, y: -2 })
+              Text('-')
+                .fontSize(10)
+                .fontWeight(FontWeight.Bold)
+                .fontColor(Color.White)
+                .position({ x: -2, y: -2 })
+                .onClick(() => {
+                  this.confirmDeleteDeck(deck);
+                })
+            }
+          }
+        }, (deck: Deck) => deck.id.toString())
+
+        // 添加牌组
+        Text('+')
+          .fontSize(16)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#888')
+          .width(30)
+          .height(30)
+          .textAlign(TextAlign.Center)
+          .backgroundColor('#EDEDEF')
+          .borderRadius(15)
+          .onClick(() => {
+            this.addDeckDialogController.open();
+          })
+      }
+      .padding({ left: 16, right: 16, top: 8, bottom: 10 })
+    }
+    .width('100%')
+    .scrollBar(BarState.Off)
+    .constraintSize({ maxHeight: 60 })
+    .backgroundColor(CARD_WHITE)
+  }
+
+  // ==================== 多选栏 ====================
+  @Builder
+  buildMultiSelectBar() {
+    Row() {
+      Text(`已选 ${this.selectedCardIds.length} 项`)
+        .fontSize(13)
+        .fontColor(TEXT_SECONDARY)
+      Blank()
+      Text('全选')
+        .fontSize(13)
+        .fontColor(PRIMARY)
+        .onClick(() => {
+          const filtered = this.getFilteredCards();
+          this.selectedCardIds = filtered.map(c => c.id);
+        })
+      Blank().width(16)
+      Text('取消')
+        .fontSize(13)
+        .fontColor('#EF4444')
+        .onClick(() => {
+          this.exitMultiSelectMode();
+        })
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16, top: 8, bottom: 8 })
+    .backgroundColor('#F0F4FF')
+  }
+
+  // ==================== 未背诵区块 ====================
+  @Builder
+  buildSectionUnlearned() {
+    Column() {
+      // 区块标题行
+      Row() {
+        Row({ space: 6 }) {
+          Circle({ width: 6, height: 6 })
+            .fill('#9E9E9E')
+          Text('未背诵')
+            .fontSize(15)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(TEXT_PRIMARY)
+          Text(`(${this.getFilteredCards().filter(c => c.status === CardStatus.unlearned).length})`)
+            .fontSize(12)
+            .fontColor(TEXT_SECONDARY)
+        }
+        Blank()
+        Text(this.unlearnedOpen ? '▼' : '▶')
+          .fontSize(10)
+          .fontColor('#B0B0B0')
+      }
+      .width('100%')
+      .padding({ top: 14, bottom: 10, left: 4, right: 4 })
+      .onClick(() => { this.unlearnedOpen = !this.unlearnedOpen; })
+
+      // 卡片列表
+      if (this.unlearnedOpen) {
+        ForEach(this.getFilteredCards().filter(c => c.status === CardStatus.unlearned), (card: Card) => {
+          this.buildCardItem(card)
+        }, (card: Card) => card.id.toString())
+      }
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16, top: 4, bottom: 16 })
+    .backgroundColor(CARD_WHITE)
+    .borderRadius(14)
+    .margin({ top: 10 })
+    .shadow({ radius: 4, color: '#0A000000', offsetY: 1 })
+  }
+
+  // ==================== 复习中区块 ====================
+  @Builder
+  buildSectionReviewing() {
+    Column() {
+      Row() {
+        Row({ space: 6 }) {
+          Circle({ width: 6, height: 6 })
+            .fill(PRIMARY)
+          Text('复习中')
+            .fontSize(15)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(TEXT_PRIMARY)
+          Text(`(${this.getFilteredCards().filter(c => c.status === CardStatus.reviewing).length})`)
+            .fontSize(12)
+            .fontColor(TEXT_SECONDARY)
+        }
+        Blank()
+        Text(this.reviewingOpen ? '▼' : '▶')
+          .fontSize(10)
+          .fontColor('#B0B0B0')
+      }
+      .width('100%')
+      .padding({ top: 14, bottom: 10, left: 4, right: 4 })
+      .onClick(() => { this.reviewingOpen = !this.reviewingOpen; })
+
+      if (this.reviewingOpen) {
+        ForEach(this.getFilteredCards().filter(c => c.status === CardStatus.reviewing), (card: Card) => {
+          this.buildCardItem(card)
+        }, (card: Card) => card.id.toString())
+      }
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16, top: 4, bottom: 16 })
+    .backgroundColor(CARD_WHITE)
+    .borderRadius(14)
+    .margin({ top: 10 })
+    .shadow({ radius: 4, color: '#0A000000', offsetY: 1 })
+  }
+
+  // ==================== 已掌握区块 ====================
+  @Builder
+  buildSectionMastered() {
+    Column() {
+      Row() {
+        Row({ space: 6 }) {
+          Circle({ width: 6, height: 6 })
+            .fill('#34C759')
+          Text('已掌握')
+            .fontSize(15)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(TEXT_PRIMARY)
+          Text(`(${this.getFilteredCards().filter(c => c.status === CardStatus.mastered).length})`)
+            .fontSize(12)
+            .fontColor(TEXT_SECONDARY)
+        }
+        Blank()
+        Text(this.masteredOpen ? '▼' : '▶')
+          .fontSize(10)
+          .fontColor('#B0B0B0')
+      }
+      .width('100%')
+      .padding({ top: 14, bottom: 10, left: 4, right: 4 })
+      .onClick(() => { this.masteredOpen = !this.masteredOpen; })
+
+      if (this.masteredOpen) {
+        ForEach(this.getFilteredCards().filter(c => c.status === CardStatus.mastered), (card: Card) => {
+          this.buildCardItem(card)
+        }, (card: Card) => card.id.toString())
+      }
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16, top: 4, bottom: 16 })
+    .backgroundColor(CARD_WHITE)
+    .borderRadius(14)
+    .margin({ top: 10 })
+    .shadow({ radius: 4, color: '#0A000000', offsetY: 1 })
+  }
+
+  // ==================== 卡片项（含滑动手势） ====================
+  @Builder
+  buildCardItem(card: Card) {
+    Stack() {
+      // 多选 check
+      if (this.isMultiSelectMode) {
+        Row({ space: 6 }) {
+          Checkbox({ name: 'check', group: 'cards' })
+            .select(this.isCardSelected(card.id))
+            .onChange(() => {
+              this.toggleCardSelection(card.id);
+            })
+        }
+        .alignSelf(ItemAlign.Start)
+      }
+
+      Column() {
+        Row() {
+          Text(card.front)
+            .fontSize(14)
+            .fontColor(TEXT_PRIMARY)
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .layoutWeight(1)
+          Blank().width(8)
+          Text(card.status === CardStatus.reviewing ? '待复习' : '已掌握')
+            .fontSize(10)
+            .fontColor(card.status === CardStatus.reviewing ? PRIMARY : '#34C759')
+            .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+            .backgroundColor(card.status === CardStatus.reviewing ? '#E8F0FE' : '#E8F8ED')
+            .borderRadius(4)
+        }
+        .width('100%')
+      }
+      .width('100%')
+      .padding({ left: 14, right: 14, top: 12, bottom: 12 })
+      .backgroundColor(CARD_WHITE)
+      .borderRadius(10)
+      .offset({ x: this.activeSwipeCardId === card.id ? this.swipeOffsetX : 0 })
+      .shadow({ radius: 3, color: '#08000000', offsetY: 1 })
+      .gesture(
+        PanGesture({ direction: PanDirection.Horizontal, distance: 5 })
+          .onActionStart(() => {
+            this.swipeCardId = card.id;
+            this.swipeOffsetX = 0;
+          })
+          .onActionUpdate((event: GestureEvent) => {
+            if (this.swipeCardId !== card.id) return;
+            this.swipeOffsetX = Math.min(0, Math.max(-160, event.offsetX));
+          })
+          .onActionEnd(() => {
+            if (this.swipeCardId !== card.id) return;
+            if (this.swipeOffsetX < -80) {
+              this.activeSwipeCardId = card.id;
+            } else {
+              this.swipeOffsetX = 0;
+              this.activeSwipeCardId = -1;
+            }
+            this.swipeCardId = -1;
+          })
+      )
+    }
+    .width('100%')
+    .margin({ bottom: 6 })
+    .onClick(() => {
+      this.deletingDeckId = -1;
+      if (this.isMultiSelectMode) {
+        this.toggleCardSelection(card.id);
+      } else if (this.activeSwipeCardId === card.id) {
+        this.closeSwipe();
+      } else {
+        router.pushUrl({ url: 'pages/EditorPage', params: { cardId: card.id } });
+      }
+    })
+
+    // 滑动操作按钮
+    if (this.activeSwipeCardId === card.id) {
+      Row() {
+        // 删除
+        Button() {
+          Column() {
+            Text('🗑').fontSize(18)
+            Text('删除').fontSize(10)
+          }
+        }
+        .width(52).height(52)
+        .backgroundColor('#EF4444')
+        .borderRadius(10)
+        .onClick(() => { this.deleteCard(card); })
+        Blank().width(6)
+        // 重学
+        Button() {
+          Column() {
+            Text('🔄').fontSize(18)
+            Text('重学').fontSize(10)
+          }
+        }
+        .width(52).height(52)
+        .backgroundColor('#F39C12')
+        .borderRadius(10)
+        .onClick(() => { this.relearnCard(card); })
+        Blank().width(6)
+        // 晋级
+        Button() {
+          Column() {
+            Text('⏫').fontSize(18)
+            Text('晋级').fontSize(10)
+          }
+        }
+        .width(52).height(52)
+        .backgroundColor('#2ECC71')
+        .borderRadius(10)
+        .onClick(() => { this.promoteCard(card); })
+      }
+      .height(52)
+      .position({ x: '100%', y: '50%' })
+      .translate({ x: -64, y: -26 })
+    }
+  }
+
+  // ==================== 底部操作栏（正常模式） ====================
+  @Builder
+  buildBottomBar() {
+    Row() {
+      if (this.cards.length > 0) {
+        Button('开始学习')
+          .layoutWeight(1)
+          .height(46)
+          .fontSize(15)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(Color.White)
+          .backgroundColor(PRIMARY)
+          .borderRadius(23)
+          .shadow({ radius: 8, color: '#404A90D9', offsetY: 3 })
+          .onClick(() => {
+            router.pushUrl({ url: 'pages/LearningPage' });
+          })
+        Blank().width(12)
+      }
+
+      Button('+ 新建卡片')
+        .layoutWeight(1)
+        .height(46)
+        .fontSize(14)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(PRIMARY)
+        .backgroundColor(Color.White)
+        .border({ width: 1.5, color: PRIMARY, style: BorderStyle.Solid })
+        .borderRadius(23)
+        .onClick(() => {
+          router.pushUrl({ url: 'pages/EditorPage' });
+        })
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16, top: 10, bottom: 10 })
+    .backgroundColor(CARD_WHITE)
+    .shadow({ radius: 6, color: '#10000000', offsetY: -2 })
+  }
+
+  // ==================== 批量操作栏 ====================
+  @Builder
+  buildBatchActionBar() {
+    Row({ space: 8 }) {
+      Button('重新学习')
+        .layoutWeight(1)
+        .height(42)
+        .fontSize(13)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(PRIMARY)
+        .backgroundColor(Color.White)
+        .border({ width: 1.2, color: PRIMARY, style: BorderStyle.Solid })
+        .borderRadius(21)
+        .onClick(() => { this.batchRelearn(); })
+
+      Button('晋级')
+        .layoutWeight(1)
+        .height(42)
+        .fontSize(13)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(PRIMARY)
+        .backgroundColor(Color.White)
+        .border({ width: 1.2, color: PRIMARY, style: BorderStyle.Solid })
+        .borderRadius(21)
+        .onClick(() => { this.batchPromote(); })
+
+      Button('删除')
+        .layoutWeight(1)
+        .height(42)
+        .fontSize(13)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(Color.White)
+        .backgroundColor('#EF4444')
+        .borderRadius(21)
+        .onClick(() => { this.batchDelete(); })
+
+      Button('取消')
+        .layoutWeight(1)
+        .height(42)
+        .fontSize(13)
+        .fontWeight(FontWeight.Medium)
+        .fontColor('#666')
+        .backgroundColor('#EEEEEF')
+        .borderRadius(21)
+        .onClick(() => { this.exitMultiSelectMode(); })
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16, top: 10, bottom: 10 })
+    .backgroundColor(CARD_WHITE)
+    .shadow({ radius: 6, color: '#10000000', offsetY: -2 })
+  }
+
+  // ==================== Tab 栏 ====================
+  @Builder
+  buildTab(label: string, index: number) {
+    Column() {
+      Text(label)
+        .fontSize(11)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(this.currentTabIndex === index ? PRIMARY : TEXT_SECONDARY)
+      if (this.currentTabIndex === index) {
+        Circle({ width: 4, height: 4 })
+          .fill(PRIMARY)
+          .margin({ top: 2 })
+      }
+    }
+    .width('100%')
+    .justifyContent(FlexAlign.Center)
+  }
+
+  // ==================== 辅助方法 ====================
+  isCardSelected(cardId: number): boolean {
+    return this.selectedCardIds.indexOf(cardId) >= 0;
+  }
+
+  toggleCardSelection(cardId: number) {
+    const idx = this.selectedCardIds.indexOf(cardId);
+    if (idx >= 0) {
+      this.selectedCardIds.splice(idx, 1);
+    } else {
+      this.selectedCardIds.push(cardId);
+    }
+  }
+
+  exitMultiSelectMode() {
+    this.isMultiSelectMode = false;
+    this.selectedCardIds = [];
+  }
+
+  closeSwipe() {
+    this.swipeOffsetX = 0;
+    this.activeSwipeCardId = -1;
+    this.swipeCardId = -1;
+  }
+
+  // ==================== 卡片操作 ====================
+  async deleteCard(card: Card) {
+    AlertDialog.show({
+      title: '删除卡片',
+      message: `确定要删除「${card.front}」吗？删除后不可恢复。`,
+      autoCancel: true,
+      alignment: DialogAlignment.Center,
+      primaryButton: {
+        value: '取消',
+        action: () => {}
+      },
+      secondaryButton: {
+        value: '删除',
+        fontColor: '#EF4444',
+        action: async () => {
+          await this.cardVm.deleteCard(card.id);
+          await this.loadHomeData();
+        }
+      }
+    });
+  }
+
+  async relearnCard(card: Card) {
+    card.status = CardStatus.unlearned;
+    await this.cardVm.updateCard(card);
+    await this.loadHomeData();
+  }
+
+  async promoteCard(card: Card) {
+    if (card.status === CardStatus.unlearned) {
+      card.status = CardStatus.reviewing;
+    } else if (card.status === CardStatus.reviewing) {
+      card.status = CardStatus.mastered;
+    }
+    await this.cardVm.updateCard(card);
+    await this.loadHomeData();
+  }
+
+  async addDeck(name: string) {
+    if (!name.trim()) return;
+    const colors = ['#4A90D9', '#E85D75', '#50C878', '#FFB347', '#9B59B6', '#1ABC9C'];
+    const icons = ['📌', '📍', '📋', '📃', '📀', '📖'];
+    const idx = Math.floor(Math.random() * colors.length);
+    const deck: Deck = {
+      id: 0,
+      name: name.trim(),
+      icon: icons[idx],
+      color: colors[idx],
+      createdAt: 0,
+      updatedAt: 0
+    };
+    await this.cardVm.createDeck(deck);
+    await this.loadHomeData();
+  }
+
+  async batchPromote() {
+    for (const id of this.selectedCardIds) {
+      const card = this.cards.find(c => c.id === id);
+      if (card && card.status !== CardStatus.mastered) {
+        if (card.status === CardStatus.unlearned) {
+          card.status = CardStatus.reviewing;
+        } else if (card.status === CardStatus.reviewing) {
+          card.status = CardStatus.mastered;
+        }
+        await this.cardVm.updateCard(card);
+      }
+    }
+    this.exitMultiSelectMode();
+    await this.loadHomeData();
+  }
+
+  async batchRelearn() {
+    for (const id of this.selectedCardIds) {
+      const card = this.cards.find(c => c.id === id);
+      if (card) {
+        card.status = CardStatus.unlearned;
+        await this.cardVm.updateCard(card);
+      }
+    }
+    this.exitMultiSelectMode();
+    await this.loadHomeData();
+  }
+
+  async batchDelete() {
+    AlertDialog.show({
+      title: '批量删除',
+      message: `确定要删除选中的 ${this.selectedCardIds.length} 张卡片吗？删除后不可恢复。`,
+      autoCancel: true,
+      alignment: DialogAlignment.Center,
+      primaryButton: {
+        value: '取消',
+        action: () => {}
+      },
+      secondaryButton: {
+        value: '删除',
+        fontColor: '#EF4444',
+        action: async () => {
+          for (const id of this.selectedCardIds) {
+            await this.cardVm.deleteCard(id);
+          }
+          this.exitMultiSelectMode();
+          await this.loadHomeData();
+        }
+      }
+    });
+  }
+
+  confirmDeleteDeck(deck: Deck) {
+    AlertDialog.show({
+      title: '删除牌组',
+      message: `确定要删除「${deck.name}」吗？该牌组下的所有卡片也会被删除。`,
+      autoCancel: true,
+      alignment: DialogAlignment.Center,
+      primaryButton: {
+        value: '取消',
+        action: () => { this.deletingDeckId = -1; }
+      },
+      secondaryButton: {
+        value: '删除',
+        fontColor: '#EF4444',
+        action: async () => {
+          await this.cardVm.deleteDeck(deck.id);
+          this.deletingDeckId = -1;
+          this.selectedDeckId = 0;
+          await this.loadHomeData();
+        }
+      }
+    });
+  }
+}
+
+// ==================== 添加牌组对话框 ====================
+@CustomDialog
+struct AddDeckDialog {
+  controller: CustomDialogController;
+  onConfirm?: (name: string) => void;
+  @State deckName: string = '';
+
+  build() {
+    Column() {
+      Text('新建牌组')
+        .fontSize(18)
+        .fontWeight(FontWeight.Bold)
+        .fontColor(TEXT_PRIMARY)
+        .margin({ bottom: 14 })
+
+      TextInput({ placeholder: '输入牌组名称' })
+        .fontSize(14)
+        .width('100%')
+        .height(42)
+        .backgroundColor('#F5F5F7')
+        .borderRadius(10)
+        .padding({ left: 12, right: 12 })
+        .onChange((value: string) => {
+          this.deckName = value;
+        })
+
+      Row({ space: 10 }) {
+        Button('取消')
+          .fontSize(14)
+          .backgroundColor('#EEEEEF')
+          .fontColor('#666')
+          .layoutWeight(1)
+          .height(42)
+          .borderRadius(21)
+          .onClick(() => {
+            this.controller.close();
+          })
+        Button('确定')
+          .fontSize(14)
+          .backgroundColor('#4A90D9')
+          .fontColor(Color.White)
+          .layoutWeight(1)
+          .height(42)
+          .borderRadius(21)
+          .onClick(() => {
+            if (this.deckName.trim()) {
+              this.onConfirm?.(this.deckName.trim());
+              this.controller.close();
+            }
+          })
+      }
+      .width('100%')
+      .margin({ top: 18 })
+    }
+    .padding(22)
+  }
+}

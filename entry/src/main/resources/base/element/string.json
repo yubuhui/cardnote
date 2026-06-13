@@ -1,0 +1,13 @@
+{
+  "string": [
+    { "name": "module_desc", "value": "module description" },
+    { "name": "EntryAbility_desc", "value": "CardNote 卡片背诵 App" },
+    { "name": "EntryAbility_label", "value": "CardNote" },
+    { "name": "internet_reason", "value": "用于华为账号登录与数据同步" },
+    { "name": "cloud_sync_label", "value": "云同步" },
+    { "name": "sync_now", "value": "立即同步" },
+    { "name": "sync_status", "value": "同步状态" },
+    { "name": "last_sync", "value": "上次同步" },
+    { "name": "sync_never", "value": "从未同步" }
+  ]
+}

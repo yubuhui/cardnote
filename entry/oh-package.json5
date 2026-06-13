@@ -1,0 +1,13 @@
+{
+  "name": "entry",
+  "version": "1.0.0",
+  "description": "CardNote — 基于间隔重复算法的卡片背诵应用，支持华为账号登录与端云数据同步",
+  "main": "",
+  "author": "卡忆笔记",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@archermind/exceljs": "^1.0.0"
+  },
+  "devDependencies": {},
+  "dynamicDependencies": {}
+}

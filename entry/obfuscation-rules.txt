@@ -1,0 +1,49 @@
+# CardNote 混淆规则配置
+# 开启推荐混淆选项（release模式生效）
+
+-enable-property-obfuscation
+-enable-toplevel-obfuscation
+-enable-filename-obfuscation
+-enable-export-obfuscation
+
+# 删除所有console.*调用（release模式清理日志）
+-remove-log
+
+# 保留数据库字段名（ValuesBucket通过字符串访问）
+-keep-property-name
+id
+uuid
+name
+icon
+color
+deck_id
+type
+status
+front
+options
+correct_answer
+display_order
+analysis
+ease_factor
+interval
+repetitions
+next_review_time
+created_at
+updated_at
+card_id
+result
+date
+duration
+
+# 保留页面文件名（系统路由访问）
+-keep-file-name
+EntryAbility
+HomePage
+LearningPage
+EditorPage
+ImportExportPage
+ReviewSettingsPage
+LoginPage
+PrivacyPolicyPage
+SettingsPage
+StatsPage
