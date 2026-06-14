@@ -98,6 +98,14 @@ struct HomePage {
     autoCancel: true,
     alignment: DialogAlignment.Center
   });
+  private moveToDeckDialogController: CustomDialogController = new CustomDialogController({
+    builder: MoveToDeckDialog({
+      decks: $decks,
+      onMoveToDeck: (deckId: number) => { this.batchMoveToDeck(deckId); }
+    }),
+    autoCancel: true,
+    alignment: DialogAlignment.Center
+  });
 
   aboutToAppear() {
     this.loadHomeData();
@@ -573,7 +581,7 @@ struct HomePage {
         .borderRadius(21)
         .onClick(() => { this.batchDelete(); })
 
-      Button('取消')
+      Button('移动')
         .layoutWeight(1)
         .height(42)
         .fontSize(13)
@@ -581,7 +589,7 @@ struct HomePage {
         .fontColor('#666')
         .backgroundColor('#EEEEEF')
         .borderRadius(21)
-        .onClick(() => { this.exitMultiSelectMode(); })
+        .onClick(() => { this.moveToDeckDialogController.open(); })
     }
     .width('100%')
     .padding({ left: 16, right: 16, top: 10, bottom: 10 })
@@ -698,6 +706,18 @@ struct HomePage {
         }
       }
     });
+  }
+
+  async batchMoveToDeck(targetDeckId: number) {
+    for (const id of this.selectedCardIds) {
+      const card = this.cards.find(c => c.id === id);
+      if (card && card.deckId !== targetDeckId) {
+        card.deckId = targetDeckId;
+        await this.cardVm.updateCard(card);
+      }
+    }
+    this.exitMultiSelectMode();
+    await this.loadHomeData();
   }
 
   showDeckActionMenu(deck: Deck) {
@@ -841,6 +861,71 @@ struct AddDeckDialog {
       }
       .width('100%')
       .margin({ top: 18 })
+    }
+    .padding(22)
+  }
+}
+
+// ==================== 移动到牌组对话框 ====================
+@CustomDialog
+struct MoveToDeckDialog {
+  controller: CustomDialogController;
+  @Link decks: Deck[];
+  onMoveToDeck?: (deckId: number) => void;
+
+  build() {
+    Column() {
+      Text('移动到牌组')
+        .fontSize(18)
+        .fontWeight(FontWeight.Bold)
+        .fontColor(TEXT_PRIMARY)
+        .margin({ bottom: 14 })
+
+      Scroll() {
+        Column() {
+          ForEach(this.decks, (deck: Deck) => {
+            Row() {
+              Text(deck.icon)
+                .fontSize(18)
+                .margin({ right: 10 })
+              Text(deck.name)
+                .fontSize(15)
+                .fontColor(TEXT_PRIMARY)
+                .layoutWeight(1)
+              Image($r('sys.media.ohos_ic_public_arrow_right'))
+                .width(16)
+                .height(16)
+                .fillColor('#C0C0C0')
+            }
+            .width('100%')
+            .padding({ left: 14, right: 14, top: 13, bottom: 13 })
+            .borderRadius(10)
+            .backgroundColor('#F5F5F7')
+            .margin({ bottom: 8 })
+            .onClick(() => {
+              this.onMoveToDeck?.(deck.id);
+              this.controller.close();
+            })
+          }, (deck: Deck) => deck.id.toString())
+        }
+        .width('100%')
+      }
+      .width('100%')
+      .constraintSize({ maxHeight: 320 })
+      .scrollable(ScrollDirection.Vertical)
+      .scrollBar(BarState.Off)
+
+      Button('取消')
+        .fontSize(14)
+        .backgroundColor('#EEEEEF')
+        .fontColor('#666')
+        .width('100%')
+        .height(42)
+        .borderRadius(21)
+        .margin({ top: 12 })
+        .onClick(() => {
+          this.controller.close();
+        })
     }
     .padding(22)
   }
