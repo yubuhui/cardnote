@@ -2,7 +2,6 @@ import { ConfigurationConstant } from '@kit.AbilityKit';
 import { preferences } from '@kit.ArkData';
 import { CloudSyncService, SyncStatus } from '../service/CloudSyncService';
 import { WebDAVSyncService } from '../service/WebDAVSyncService';
-import { SyncResult } from '../webdav/SyncModels';
 
 export interface SettingsItem {
   title: string;
@@ -19,7 +18,6 @@ export struct SettingsPage {
   @State isSyncing: boolean = false;
   // WebDAV 状态
   @State webdavLastSync: string = '尚未同步';
-  @State webdavSyncing: boolean = false;
   private settingsPref: preferences.Preferences | null = null;
   private cloudSyncService: CloudSyncService = CloudSyncService.getInstance();
   private webdavService: WebDAVSyncService = new WebDAVSyncService();
@@ -57,19 +55,6 @@ export struct SettingsPage {
       this.syncTimeText = this.cloudSyncService.getLastSyncTimeText();
     });
     this.isSyncing = false;
-  }
-
-  /** 手动触发 WebDAV 同步 */
-  private async triggerWebdavSync(): Promise<void> {
-    if (this.webdavSyncing) {
-      return;
-    }
-    this.webdavSyncing = true;
-    const result: SyncResult = await this.webdavService.fullSync();
-    if (!result.error) {
-      this.webdavLastSync = `上次同步: ${this.formatDate(new Date())}`;
-    }
-    this.webdavSyncing = false;
   }
 
   private formatDate(d: Date): string {
@@ -165,9 +150,9 @@ export struct SettingsPage {
           .borderRadius(12)
           .margin({ top: 10 })
 
-          // WebDAV同步
+          // 同步
           Column() {
-            Text('WebDAV同步')
+            Text('同步')
               .fontSize(13)
               .fontWeight(FontWeight.Medium)
               .fontColor('#333')
@@ -184,31 +169,22 @@ export struct SettingsPage {
             }
             .width('100%')
             .padding({ top: 10, bottom: 10 })
+            .border({ width: { bottom: 1 }, color: '#f5f5f5' })
 
-            Row({ space: 10 }) {
-              Button('同步设置')
+            Row() {
+              Text('WebDAV设置')
                 .fontSize(14)
+                .fontColor('#333')
                 .layoutWeight(1)
-                .height(40)
-                .backgroundColor('#4A90D9')
-                .fontColor(Color.White)
-                .borderRadius(8)
-                .onClick(() => {
-                  this.goToPage('pages/WebDavSyncPage');
-                })
-              Button(this.webdavSyncing ? '同步中...' : '立即同步')
-                .fontSize(14)
-                .layoutWeight(1)
-                .height(40)
-                .backgroundColor(this.webdavSyncing ? '#CCC' : '#4A90D9')
-                .fontColor(Color.White)
-                .borderRadius(8)
-                .enabled(!this.webdavSyncing)
-                .onClick(() => {
-                  this.triggerWebdavSync();
-                })
+              Text('›')
+                .fontSize(18)
+                .fontColor('#CCC')
             }
             .width('100%')
+            .padding({ top: 10, bottom: 10 })
+            .onClick(() => {
+              this.goToPage('pages/WebDavSyncPage');
+            })
           }
           .width('100%')
           .padding(14)
@@ -248,7 +224,7 @@ export struct SettingsPage {
         .fontColor('#333')
         .margin({ bottom: 10 })
 
-      ForEach(items, (item: SettingsItem) => {
+      ForEach(items, (item: SettingsItem, index: number) => {
         Row() {
           Text(item.title)
             .fontSize(14)
@@ -267,7 +243,7 @@ export struct SettingsPage {
         }
         .width('100%')
         .padding({ top: 10, bottom: 10 })
-        .border({ width: { bottom: 1 }, color: '#f5f5f5' })
+        .border(index < items.length - 1 ? { width: { bottom: 1 }, color: '#f5f5f5' } : {})
         .onClick(() => {
           if (item.routeName) {
             this.goToPage(item.routeName);

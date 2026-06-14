@@ -132,4 +132,14 @@ export class DeckDao {
     predicates.equalTo('id', id);
     await this.db.delete(predicates);
   }
+
+  /** 仅更新牌组的 updated_at 时间戳（用于同步触发） */
+  async touchUpdatedAt(deckId: number): Promise<void> {
+    const values: relationalStore.ValuesBucket = {
+      updated_at: Date.now(),
+    };
+    const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('deck');
+    predicates.equalTo('id', deckId);
+    await this.db.update(values, predicates);
+  }
 }

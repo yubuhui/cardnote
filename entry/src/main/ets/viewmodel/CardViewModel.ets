@@ -77,18 +77,28 @@ export class CardViewModel {
       }
     }
     await this.cardDao.insert(card);
+    // 更新所属牌组的 updatedAt，使同步生效
+    await this.deckDao.touchUpdatedAt(card.deckId);
   }
 
   async updateCard(card: Card): Promise<void> {
     card.updatedAt = Date.now();
     await this.cardDao.update(card);
+    // 更新所属牌组的 updatedAt，使同步生效
+    await this.deckDao.touchUpdatedAt(card.deckId);
   }
 
   async deleteCard(id: number): Promise<void> {
+    // 先获取卡片信息以知晓所属牌组
+    const card: Card | null = await this.cardDao.getById(id);
     // 先删除关联的记忆记录，再删除卡片
     const recordDao: MemoryRecordDao = new MemoryRecordDao();
     await recordDao.deleteByCardId(id);
     await this.cardDao.delete(id);
+    // 更新所属牌组的 updatedAt
+    if (card) {
+      await this.deckDao.touchUpdatedAt(card.deckId);
+    }
   }
 
   // ===== 学习流程 =====
@@ -102,6 +112,8 @@ export class CardViewModel {
     card.status = result.status;
     card.nextReviewTime = Date.now() + result.interval * 60000;
     await this.cardDao.update(card);
+    // 更新所属牌组的 updatedAt，使同步生效
+    await this.deckDao.touchUpdatedAt(card.deckId);
   }
 
   // ===== 统计 =====
