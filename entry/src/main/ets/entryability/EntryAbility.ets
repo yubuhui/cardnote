@@ -15,7 +15,7 @@ export default class EntryAbility extends UIAbility {
   private privacyDialogController: CustomDialogController | null = null;
 
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
-    // 从偏好中读取深色模式设置
+    // 从偏好中读取深色模式设置（统一由此处管理，避免与 SettingsPage 竞态）
     try {
       const pref = preferences.getPreferencesSync(this.context, { name: 'app_settings' });
       const darkMode = pref.getSync('dark_mode', false) as boolean;
@@ -53,8 +53,12 @@ export default class EntryAbility extends UIAbility {
   async onWindowStageCreate(windowStage: window.WindowStage): Promise<void> {
     hilog.info(DOMAIN, TAG, '%{public}s', 'Ability onWindowStageCreate');
 
-    // 确保数据库已初始化（防御性检查，onCreate 中已完成初始化）
-    await DatabaseManager.getInstance().init(this.context);
+    // 确保数据库初始化完成后再加载页面。
+    // 首次安装时 onCreate 中启动的 init() 可能尚未完成，
+    // 此处 await initPromise 阻塞直到 DB 就绪。
+    const dbManager = DatabaseManager.getInstance();
+    await dbManager.init(this.context);
+    hilog.info(DOMAIN, TAG, 'Database ready before loading HomePage.');
 
     // 加载 HomePage 作为默认页面
     windowStage.loadContent('pages/HomePage', (err) => {

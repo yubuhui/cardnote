@@ -310,7 +310,7 @@ struct LearningDetailPage {
 
           ForEach(this.getOrderedOptions(), (opt: string, idx: number) => {
             this.buildChoiceOption(opt, idx)
-          }, (ignored: string, idx: number): string => idx.toString())
+          }, (ignored: string, idx: number): string => `${this.card!.id}_${idx}`)
         }
         .width('100%')
       }
@@ -558,6 +558,9 @@ struct LearningDetailPage {
 
   /** 最早学习日期 */
   private getFirstStudyDate(): string {
+    if (this.reviewHistory.length === 0) {
+      return '暂无数据';
+    }
     const first: CardReviewRecord = this.reviewHistory[this.reviewHistory.length - 1];
     const d: Date = new Date(first.date);
     return `${d.getMonth() + 1}/${d.getDate()}`;
@@ -565,6 +568,9 @@ struct LearningDetailPage {
 
   /** 掌握日期（若已掌握则显示最后记录日期，否则显示 -） */
   private getMasteredDate(): string {
+    if (this.reviewHistory.length === 0) {
+      return '未掌握';
+    }
     if (this.card!.status !== CardStatus.mastered) return '未掌握';
     const latest: CardReviewRecord = this.reviewHistory[0];
     const d: Date = new Date(latest.date);
@@ -573,6 +579,9 @@ struct LearningDetailPage {
 
   /** 从首学到掌握的日历间隔 */
   private getStudyDuration(): string {
+    if (this.reviewHistory.length === 0) {
+      return '暂无数据';
+    }
     const first: number = this.reviewHistory[this.reviewHistory.length - 1].date;
     if (this.card!.status === CardStatus.mastered) {
       const mastered: number = this.reviewHistory[0].date;

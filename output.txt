@@ -1,3 +1,4 @@
 [main b0c43d8]  feat: 完善备份功能、WebDAV同步及数据层优化
  1 file changed, 0 insertions(+), 0 deletions(-)
  create mode 100644 output.txt
+fatal: unable to access 'https://github.com/yubuhui/cardnote/': Failed to connect to github.com port 443 after 21106 ms: Could not connect to server

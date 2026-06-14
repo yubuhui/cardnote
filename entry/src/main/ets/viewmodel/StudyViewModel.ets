@@ -119,7 +119,7 @@ export class StudyViewModel {
     return this.cardVm.getDeckById(id);
   }
 
-  // 记录评分
+  // 记录评分（带事务性保护：Card 更新失败时回滚已写入的 MemoryRecord）
   async recordRating(cardId: number, rating: Rating, durationSeconds: number = 0): Promise<void> {
     // 先获取卡片信息（含 UUID），再记录学习结果
     const card: Card | null = await this.cardVm.getById(cardId);
@@ -134,9 +134,15 @@ export class StudyViewModel {
     };
     await this.recordDao.insert(record);
 
-    // 再更新卡片状态
+    // 再更新卡片状态；若失败则回滚已插入的记录
     if (card) {
-      await this.cardVm.handleRating(card, rating);
+      try {
+        await this.cardVm.handleRating(card, rating);
+      } catch (err) {
+        console.error('StudyViewModel: 卡片状态更新失败，回滚记忆记录', JSON.stringify(err));
+        await this.recordDao.deleteLatestByCardId(cardId);
+        return;
+      }
     }
   }
 

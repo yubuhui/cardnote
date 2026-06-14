@@ -1,5 +1,6 @@
 {
   "string": [
+    { "name": "app_name", "value": "卡忆笔记" },
     { "name": "module_desc", "value": "module description" },
     { "name": "EntryAbility_desc", "value": "CardNote 卡片背诵 App" },
     { "name": "EntryAbility_label", "value": "CardNote" },

@@ -1,6 +1,6 @@
 import relationalStore from '@ohos.data.relationalStore';
 import { cloudData } from '@kit.ArkData';
-import { BusinessError } from '@ohos.base';
+import { BusinessError } from '@kit.BasicServicesKit';
 import { util } from '@kit.ArkTS';
 
 const DB_NAME = 'cardnote.db';

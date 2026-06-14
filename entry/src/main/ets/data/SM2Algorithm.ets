@@ -25,6 +25,8 @@ function getInitialInterval(rating: Rating): number {
       return 1440;
     case Rating.easy:
       return 5760;
+    default:
+      throw new Error(`Invalid rating for getInitialInterval: ${rating}`);
   }
 }
 
@@ -38,6 +40,8 @@ function getEfAdjust(rating: Rating): number {
       return 0.0;
     case Rating.easy:
       return 0.15;
+    default:
+      throw new Error(`Invalid rating for getEfAdjust: ${rating}`);
   }
 }
 

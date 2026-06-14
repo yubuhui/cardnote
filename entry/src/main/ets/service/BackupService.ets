@@ -108,22 +108,34 @@ export class BackupService {
     }
 
     // 清空现有数据（顺序：先删子表再删主表，避免外键约束问题）
-    store.executeSql('DELETE FROM memory_record');
-    store.executeSql('DELETE FROM card');
-    store.executeSql('DELETE FROM deck');
+    await store.executeSql('DELETE FROM memory_record');
+    await store.executeSql('DELETE FROM card');
+    await store.executeSql('DELETE FROM deck');
+
+    // ID 映射表：旧 ID → 新 ID（因为自动递增，恢复后 ID 会变化）
+    const deckIdMap: Map<number, number> = new Map();
+    const cardIdMap: Map<number, number> = new Map();
 
     // 恢复牌组
     for (const deck of backup.decks) {
-      await this.deckDao.insert(deck);
+      const oldId: number = deck.id;
+      const newId: number = await this.deckDao.insert(deck);
+      deckIdMap.set(oldId, newId);
     }
 
-    // 恢复卡片
+    // 恢复卡片（修正 deckId）
     for (const card of backup.cards) {
-      await this.cardDao.insert(card);
+      const newDeckId: number = deckIdMap.get(card.deckId) ?? card.deckId;
+      card.deckId = newDeckId;
+      const oldId: number = card.id;
+      const newId: number = await this.cardDao.insert(card);
+      cardIdMap.set(oldId, newId);
     }
 
-    // 恢复记忆记录
+    // 恢复记忆记录（修正 cardId）
     for (const record of backup.records) {
+      const newCardId: number = cardIdMap.get(record.cardId) ?? record.cardId;
+      record.cardId = newCardId;
       await this.recordDao.insert(record);
     }
 
@@ -434,7 +446,8 @@ export class BackupService {
 
   /** 获取指定 Preferences 域的所有已知 key */
   private getAllPrefKeys(pref: preferences.Preferences): string[] {
-    // 通过尝试 hasSync 检测已知白名单中的 key
+    // ⚠️ 白名单机制：新增偏好 key 时需同步更新此列表，否则备份/恢复将遗漏
+    // 建议：若后续 HarmonyOS SDK 支持枚举所有 key，可替换为 pref.getAll() 方案
     const candidateKeys: string[] = [
       'dark_mode', 'privacy_agreed', 'daily_new_cards', 'daily_review_cards',
       'sm2_factor', 'skip_mastered_cards',

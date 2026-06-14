@@ -1,11 +1,11 @@
 import { router } from '@kit.ArkUI';
+import { promptAction } from '@kit.ArkUI';
 import { Card, CardStatus } from '../model/Card';
 import { CardType, CardType as CardTypeEnum } from '../model/CardTypeEnum';
 import { Deck } from '../model/Deck';
 import { CardViewModel } from '../viewmodel/CardViewModel';
 import { extractBlankAnswers } from '../utils/FillBlankParser';
 
-@Observed
 class OptionItem {
   text: string = '';
 
@@ -558,6 +558,7 @@ struct EditorPage {
 
   async saveCard() {
     if (!this.frontText) {
+      promptAction.showToast({ message: '请输入问题（题干）' });
       return;
     }
     let correctAnswer = this.backText;
@@ -565,6 +566,7 @@ struct EditorPage {
 
     if (this.selectedType === CardTypeEnum.choice) {
       if (this.optionItems.length === 0 || this.selectedOptionIndexes.length === 0) {
+        promptAction.showToast({ message: '请添加选项并勾选正确答案' });
         return;
       }
       options = this.optionItems.map(item => item.text);
@@ -572,10 +574,12 @@ struct EditorPage {
     } else if (this.selectedType === CardTypeEnum.fillBlank) {
       correctAnswer = extractBlankAnswers(this.frontText);
       if (!correctAnswer) {
+        promptAction.showToast({ message: '请使用 [[答案]] 标记挖空位置' });
         return;
       }
     } else {
       if (!this.backText) {
+        promptAction.showToast({ message: '请输入答案' });
         return;
       }
     }

@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "storeFile": "D:/Ai_Project/cardnote_homo/keystore/cardnote.p12",
-          "storePassword": "0000001AC63C8417CAF00917ADD8CDC73A37B069DCB6357087FA12EB2AD8CDF750D0C5361FF5E344A6FB",
-          "keyAlias": "cardnotehomo",
-          "keyPassword": "0000001A117C39494C52564315661EAF51C5D4B6E08124F58B80B3BAB72548C74F1CD62A1CBA52B7E745",
+          "certpath": "C:\\Users\\huang\\.ohos\\config\\default_cardnote_homo_m-kBW2kvCtSCDTS8mRxbogR3aMXFZaTrj2HJxs5BPeM=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001B88B573001E45D8307E94160BBD5AD68CDEECA3ED88AC4F0069D09B4BDFB22D5C4ACCA29B4202B2",
+          "profile": "C:\\Users\\huang\\.ohos\\config\\default_cardnote_homo_m-kBW2kvCtSCDTS8mRxbogR3aMXFZaTrj2HJxs5BPeM=.p7b",
           "signAlg": "SHA256withECDSA",
-          "profile": "D:/Ai_Project/cardnote_homo/keystore/cardnoteprofileRelease.p7b",
-          "certpath": "D:/Ai_Project/cardnote_homo/keystore/release_cardnote.cer"
+          "storeFile": "C:\\Users\\huang\\.ohos\\config\\default_cardnote_homo_m-kBW2kvCtSCDTS8mRxbogR3aMXFZaTrj2HJxs5BPeM=.p12",
+          "storePassword": "0000001BFEA1DD735169A99C282A40CCF3D98E02EA7C84D5D477F0212804E5525238507F48F29BEA8D8E7D"
         }
       }
     ],
@@ -19,8 +19,8 @@
       {
         "name": "default",
         "signingConfig": "default",
-        "targetSdkVersion": "6.1.1(24)",
-        "compatibleSdkVersion": "6.1.1(24)",
+        "targetSdkVersion": "6.1.0(23)",
+        "compatibleSdkVersion": "6.1.0(23)",
         "runtimeOS": "HarmonyOS",
         "buildOption": {
           "strictMode": {

@@ -44,7 +44,7 @@ export struct QuizCard {
               this.toggleOption(displayIdx);
             })
             .margin({ bottom: 6 })
-        }, (option: string, displayIdx: number): string => displayIdx.toString())
+        }, (option: string, displayIdx: number): string => `${this.card.id}_${displayIdx}`)
       }
       .width('100%')
 

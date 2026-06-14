@@ -28,7 +28,7 @@ export struct SettingsPage {
   private cloudSyncService: CloudSyncService = CloudSyncService.getInstance();
   private webdavService: WebDAVSyncService = WebDAVSyncService.getInstance();
 
-  async aboutToAppear(): Promise<void> {
+  aboutToAppear(): void {
     try {
       this.settingsPref = preferences.getPreferencesSync(
         this.getUIContext().getHostContext(), { name: 'app_settings' }

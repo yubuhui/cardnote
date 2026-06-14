@@ -54,10 +54,14 @@ function rowToDeck(resultSet: relationalStore.ResultSet): Deck {
 }
 
 export class DeckDao {
-  private db: relationalStore.RdbStore;
+  private _db: relationalStore.RdbStore | null = null;
 
-  constructor() {
-    this.db = DatabaseManager.getInstance().getStore();
+  // 懒加载：构造时不访问数据库，避免在组件字段初始化阶段因 DB 未就绪而崩溃
+  private get db(): relationalStore.RdbStore {
+    if (!this._db) {
+      this._db = DatabaseManager.getInstance().getStore();
+    }
+    return this._db;
   }
 
   /** 插入牌组 */

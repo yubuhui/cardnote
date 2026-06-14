@@ -6,6 +6,7 @@ import { RatingButtons } from '../components/RatingButtons';
 import { Rating } from '../data/SM2Algorithm';
 import { CardType as CardTypeEnum } from '../model/CardTypeEnum';
 import { parseFillBlanks, TextSegment } from '../utils/FillBlankParser';
+import { shuffleFisherYates } from '../utils/ArrayUtils';
 
 @Entry
 @Component
@@ -59,27 +60,17 @@ struct LearningPage {
     }
   }
 
-  /** 选择题 → 若 displayOrder 未初始化，生成随机排列 */
+  /** 选择题 → 每次都重新乱序，保证每次学习选项顺序不同 */
   private ensureDisplayOrderShuffled(card: Card): void {
     const opts: string[] = card.options || [];
     if (opts.length < 2) {
       return;
     }
-    if (card.displayOrder && card.displayOrder.length === opts.length) {
-      return; // 已有有效顺序
-    }
     const order: number[] = [];
     for (let i = 0; i < opts.length; i++) {
       order.push(i);
     }
-    // Fisher-Yates 洗牌
-    for (let i = order.length - 1; i > 0; i--) {
-      const j: number = Math.floor(Math.random() * (i + 1));
-      const tmp: number = order[i];
-      order[i] = order[j];
-      order[j] = tmp;
-    }
-    card.displayOrder = order;
+    card.displayOrder = shuffleFisherYates(order);
   }
 
   build() {
@@ -469,7 +460,7 @@ struct LearningPage {
       Column({ space: 8 }) {
         ForEach(this.getOrderedOptions(), (opt: string, idx: number) => {
           this.buildChoiceOption(opt, idx)
-        }, (opt: string, idx: number): string => idx.toString())
+        }, (opt: string, idx: number): string => `${this.currentCard!.id}_${idx}`)
       }
       .width('100%')
 

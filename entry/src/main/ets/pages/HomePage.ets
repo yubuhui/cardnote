@@ -3,7 +3,7 @@ import { Card, CardStatus } from '../model/Card';
 import { Deck } from '../model/Deck';
 import { CardViewModel } from '../viewmodel/CardViewModel';
 import { StudyViewModel } from '../viewmodel/StudyViewModel';
-import { FlipCard } from '../components/FlipCard';
+import { MemoryRecordDao } from '../data/MemoryRecordDao';
 import { StatsPage } from './StatsPage';
 import { SettingsPage } from './SettingsPage';
 
@@ -14,6 +14,14 @@ const CARD_WHITE = '#FFFFFF';
 const TEXT_PRIMARY = '#1A1A1A';
 const TEXT_SECONDARY = '#8E8E93';
 const TEXT_TERTIARY = '#A0A0A0';
+
+interface CardSectionParams {
+  title: string;
+  circleColor: string;
+  status: CardStatus;
+  isOpen: boolean;
+  section: string;
+}
 
 // ==================== 卡片列表项组件 ====================
 @Component
@@ -133,14 +141,21 @@ struct HomePage {
   }
 
   async loadHomeData() {
-    try {
-      this.decks = await this.cardVm.getAllDecks();
-      this.cards = await this.cardVm.getAllCards();
-    } catch (err) {
-      console.error('Load home data failed:', err);
-    } finally {
-      this.loading = false;
+    const maxRetries: number = 3;
+    const retryDelay: number = 800;
+    for (let attempt: number = 0; attempt < maxRetries; attempt++) {
+      try {
+        this.decks = await this.cardVm.getAllDecks();
+        this.cards = await this.cardVm.getAllCards();
+        break;
+      } catch (err) {
+        console.error(`Load home data failed (attempt ${attempt + 1}/${maxRetries}):`, err);
+        if (attempt < maxRetries - 1) {
+          await new Promise<void>(resolve => setTimeout(resolve, retryDelay));
+        }
+      }
     }
+    this.loading = false;
   }
 
   build() {
@@ -201,9 +216,9 @@ struct HomePage {
             // 卡片列表区域
             Scroll() {
               Column() {
-                this.buildSectionUnlearned()
-                this.buildSectionReviewing()
-                this.buildSectionMastered()
+                this.buildCardSection({ title: '未背诵', circleColor: '#9E9E9E', status: CardStatus.unlearned, isOpen: this.unlearnedOpen, section: 'unlearned' })
+                this.buildCardSection({ title: '复习中', circleColor: PRIMARY, status: CardStatus.reviewing, isOpen: this.reviewingOpen, section: 'reviewing' })
+                this.buildCardSection({ title: '已掌握', circleColor: '#34C759', status: CardStatus.mastered, isOpen: this.masteredOpen, section: 'mastered' })
               }
               .width('100%')
               .padding({ bottom: 12 })
@@ -341,151 +356,43 @@ struct HomePage {
     .backgroundColor('#F0F4FF')
   }
 
-  // ==================== 未背诵区块 ====================
+  // ==================== 通用卡片分区 ====================
   @Builder
-  buildSectionUnlearned() {
+  buildCardSection($$: CardSectionParams) {
     Column() {
       // 区块标题行
       Row() {
         Row({ space: 6 }) {
           Circle({ width: 6, height: 6 })
-            .fill('#9E9E9E')
-          Text('未背诵')
+            .fill($$.circleColor)
+          Text($$.title)
             .fontSize(15)
             .fontWeight(FontWeight.Medium)
             .fontColor(TEXT_PRIMARY)
-          Text(`(${this.getFilteredCards().filter(c => c.status === CardStatus.unlearned).length})`)
+          Text(`(${this.getFilteredCards().filter(c => c.status === $$.status).length})`)
             .fontSize(12)
             .fontColor(TEXT_SECONDARY)
         }
         Blank()
-        Text(this.unlearnedOpen ? '▼' : '▶')
+        Text($$.isOpen ? '▼' : '▶')
           .fontSize(10)
           .fontColor('#B0B0B0')
       }
       .width('100%')
       .padding({ top: 14, bottom: 10, left: 4, right: 4 })
-      .onClick(() => { this.unlearnedOpen = !this.unlearnedOpen; })
+      .onClick(() => {
+        if ($$.section === 'unlearned') {
+          this.unlearnedOpen = !this.unlearnedOpen;
+        } else if ($$.section === 'reviewing') {
+          this.reviewingOpen = !this.reviewingOpen;
+        } else if ($$.section === 'mastered') {
+          this.masteredOpen = !this.masteredOpen;
+        }
+      })
 
       // 卡片列表
-      if (this.unlearnedOpen) {
-        ForEach(this.getFilteredCards().filter(c => c.status === CardStatus.unlearned), (card: Card) => {
-          CardItem({
-            cardId: card.id,
-            cardFront: card.front,
-            cardStatus: card.status,
-            isMultiSelect: this.isMultiSelectMode,
-            isSelected: this.isCardSelected(card.id),
-            onTap: () => {
-              this.deletingDeckId = -1;
-              if (this.isMultiSelectMode) {
-                this.toggleCardSelection(card.id);
-              } else {
-                router.pushUrl({ url: 'pages/LearningDetailPage', params: { cardId: card.id } });
-              }
-            },
-            onLongPress: () => {
-              if (!this.isMultiSelectMode) {
-                this.enterMultiSelectMode(card.id);
-              }
-            }
-          })
-        }, (card: Card) => card.id.toString())
-      }
-    }
-    .width('100%')
-    .padding({ left: 16, right: 16, top: 4, bottom: 16 })
-    .backgroundColor(CARD_WHITE)
-    .borderRadius(14)
-    .margin({ top: 10 })
-    .shadow({ radius: 4, color: '#0A000000', offsetY: 1 })
-  }
-
-  // ==================== 复习中区块 ====================
-  @Builder
-  buildSectionReviewing() {
-    Column() {
-      Row() {
-        Row({ space: 6 }) {
-          Circle({ width: 6, height: 6 })
-            .fill(PRIMARY)
-          Text('复习中')
-            .fontSize(15)
-            .fontWeight(FontWeight.Medium)
-            .fontColor(TEXT_PRIMARY)
-          Text(`(${this.getFilteredCards().filter(c => c.status === CardStatus.reviewing).length})`)
-            .fontSize(12)
-            .fontColor(TEXT_SECONDARY)
-        }
-        Blank()
-        Text(this.reviewingOpen ? '▼' : '▶')
-          .fontSize(10)
-          .fontColor('#B0B0B0')
-      }
-      .width('100%')
-      .padding({ top: 14, bottom: 10, left: 4, right: 4 })
-      .onClick(() => { this.reviewingOpen = !this.reviewingOpen; })
-
-      if (this.reviewingOpen) {
-        ForEach(this.getFilteredCards().filter(c => c.status === CardStatus.reviewing), (card: Card) => {
-          CardItem({
-            cardId: card.id,
-            cardFront: card.front,
-            cardStatus: card.status,
-            isMultiSelect: this.isMultiSelectMode,
-            isSelected: this.isCardSelected(card.id),
-            onTap: () => {
-              this.deletingDeckId = -1;
-              if (this.isMultiSelectMode) {
-                this.toggleCardSelection(card.id);
-              } else {
-                router.pushUrl({ url: 'pages/LearningDetailPage', params: { cardId: card.id } });
-              }
-            },
-            onLongPress: () => {
-              if (!this.isMultiSelectMode) {
-                this.enterMultiSelectMode(card.id);
-              }
-            }
-          })
-        }, (card: Card) => card.id.toString())
-      }
-    }
-    .width('100%')
-    .padding({ left: 16, right: 16, top: 4, bottom: 16 })
-    .backgroundColor(CARD_WHITE)
-    .borderRadius(14)
-    .margin({ top: 10 })
-    .shadow({ radius: 4, color: '#0A000000', offsetY: 1 })
-  }
-
-  // ==================== 已掌握区块 ====================
-  @Builder
-  buildSectionMastered() {
-    Column() {
-      Row() {
-        Row({ space: 6 }) {
-          Circle({ width: 6, height: 6 })
-            .fill('#34C759')
-          Text('已掌握')
-            .fontSize(15)
-            .fontWeight(FontWeight.Medium)
-            .fontColor(TEXT_PRIMARY)
-          Text(`(${this.getFilteredCards().filter(c => c.status === CardStatus.mastered).length})`)
-            .fontSize(12)
-            .fontColor(TEXT_SECONDARY)
-        }
-        Blank()
-        Text(this.masteredOpen ? '▼' : '▶')
-          .fontSize(10)
-          .fontColor('#B0B0B0')
-      }
-      .width('100%')
-      .padding({ top: 14, bottom: 10, left: 4, right: 4 })
-      .onClick(() => { this.masteredOpen = !this.masteredOpen; })
-
-      if (this.masteredOpen) {
-        ForEach(this.getFilteredCards().filter(c => c.status === CardStatus.mastered), (card: Card) => {
+      if ($$.isOpen) {
+        ForEach(this.getFilteredCards().filter(c => c.status === $$.status), (card: Card) => {
           CardItem({
             cardId: card.id,
             cardFront: card.front,
@@ -675,11 +582,10 @@ struct HomePage {
     for (const id of this.selectedCardIds) {
       const card = this.cards.find(c => c.id === id);
       if (card && card.status !== CardStatus.mastered) {
-        if (card.status === CardStatus.unlearned) {
-          card.status = CardStatus.reviewing;
-        } else if (card.status === CardStatus.reviewing) {
-          card.status = CardStatus.mastered;
-        }
+        const newStatus = card.status === CardStatus.unlearned
+          ? CardStatus.reviewing : CardStatus.mastered;
+        // 通过不可变更新确保 @State 变更检测生效
+        card.status = newStatus;
         await this.cardVm.updateCard(card);
       }
     }
@@ -688,15 +594,37 @@ struct HomePage {
   }
 
   async batchRelearn() {
-    for (const id of this.selectedCardIds) {
-      const card = this.cards.find(c => c.id === id);
-      if (card) {
-        card.status = CardStatus.unlearned;
-        await this.cardVm.updateCard(card);
+    AlertDialog.show({
+      title: '清除学习数据',
+      message: `将删除选中的 ${this.selectedCardIds.length} 张卡片的所有记忆记录，并重置学习进度。确定继续吗？`,
+      autoCancel: true,
+      alignment: DialogAlignment.Center,
+      primaryButton: {
+        value: '取消',
+        action: () => {}
+      },
+      secondaryButton: {
+        value: '确定',
+        fontColor: '#4A90D9',
+        action: async () => {
+          const recordDao = new MemoryRecordDao();
+          for (const id of this.selectedCardIds) {
+            const card = this.cards.find(c => c.id === id);
+            if (card) {
+              card.status = CardStatus.unlearned;
+              card.easeFactor = 2.5;
+              card.interval = 0;
+              card.repetitions = 0;
+              card.nextReviewTime = Date.now();
+              await this.cardVm.updateCard(card);
+              await recordDao.deleteByCardId(id);
+            }
+          }
+          this.exitMultiSelectMode();
+          await this.loadHomeData();
+        }
       }
-    }
-    this.exitMultiSelectMode();
-    await this.loadHomeData();
+    });
   }
 
   async batchDelete() {

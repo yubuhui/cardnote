@@ -58,20 +58,24 @@ export struct RatingButtons {
   private handleRating(rating: number) {
     switch (rating) {
       case 0:
+        this.forgetPressed = true;
         if (this.onForget) this.onForget();
-        this.forgetPressed = false;
+        setTimeout(() => { this.forgetPressed = false; }, 100);
         break;
       case 1:
+        this.hardPressed = true;
         if (this.onHard) this.onHard();
-        this.hardPressed = false;
+        setTimeout(() => { this.hardPressed = false; }, 100);
         break;
       case 2:
+        this.goodPressed = true;
         if (this.onGood) this.onGood();
-        this.goodPressed = false;
+        setTimeout(() => { this.goodPressed = false; }, 100);
         break;
       case 3:
+        this.easyPressed = true;
         if (this.onEasy) this.onEasy();
-        this.easyPressed = false;
+        setTimeout(() => { this.easyPressed = false; }, 100);
         break;
     }
   }

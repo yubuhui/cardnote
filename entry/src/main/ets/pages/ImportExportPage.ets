@@ -8,6 +8,7 @@ import { CardViewModel } from '../viewmodel/CardViewModel';
 import { Card, CardStatus } from '../model/Card';
 import { CardType } from '../model/CardTypeEnum';
 import { Deck } from '../model/Deck';
+import { shuffleFisherYates } from '../utils/ArrayUtils';
 import ExcelJS from '@archermind/exceljs';
 
 /** 解析后的预览条目 */
@@ -381,13 +382,7 @@ export struct ImportExportPage {
         let displayOrder: number[] = [];
         if (item.cardType === CardType.choice && item.options.length > 0) {
           displayOrder = item.options.map((_, i: number) => i);
-          // Fisher–Yates 洗牌
-          for (let i = displayOrder.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            const tmp = displayOrder[i];
-            displayOrder[i] = displayOrder[j];
-            displayOrder[j] = tmp;
-          }
+          displayOrder = shuffleFisherYates(displayOrder);
         }
 
         const card: Card = {

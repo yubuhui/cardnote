@@ -40,5 +40,5 @@ export function extractBlankAnswers(front: string): string {
   return segments
     .filter(s => s.isBlank)
     .map(s => s.text)
-    .join('|');
+    .join('\u0000'); // 使用 NUL 字符作为分隔符，避免与答案内容中的 '|' 冲突
 }
