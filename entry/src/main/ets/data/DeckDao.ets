@@ -10,6 +10,9 @@ function deckToValues(deck: Deck): relationalStore.ValuesBucket {
     created_at: deck.createdAt,
     updated_at: deck.updatedAt,
   };
+  if (deck.uuid) {
+    values['uuid'] = deck.uuid;
+  }
   if (deck.dailyNewCards !== undefined) {
     values['daily_new_cards'] = deck.dailyNewCards;
   }
@@ -28,6 +31,10 @@ function rowToDeck(resultSet: relationalStore.ResultSet): Deck {
     createdAt: resultSet.getLong(resultSet.getColumnIndex('created_at')),
     updatedAt: resultSet.getLong(resultSet.getColumnIndex('updated_at')),
   };
+  const uuidIdx: number = resultSet.getColumnIndex('uuid');
+  if (uuidIdx >= 0) {
+    deck.uuid = resultSet.getString(uuidIdx);
+  }
   const newCardsIdx: number = resultSet.getColumnIndex('daily_new_cards');
   if (newCardsIdx >= 0) {
     deck.dailyNewCards = resultSet.getLong(newCardsIdx);
@@ -57,6 +64,21 @@ export class DeckDao {
   async getById(id: number): Promise<Deck | null> {
     const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('deck');
     predicates.equalTo('id', id);
+    const resultSet: relationalStore.ResultSet = await this.db.query(predicates);
+    if (resultSet.rowCount === 0) {
+      resultSet.close();
+      return null;
+    }
+    resultSet.goToFirstRow();
+    const deck: Deck = rowToDeck(resultSet);
+    resultSet.close();
+    return deck;
+  }
+
+  /** 根据 UUID 查询（跨设备同步用） */
+  async getByUuid(uuid: string): Promise<Deck | null> {
+    const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('deck');
+    predicates.equalTo('uuid', uuid);
     const resultSet: relationalStore.ResultSet = await this.db.query(predicates);
     if (resultSet.rowCount === 0) {
       resultSet.close();

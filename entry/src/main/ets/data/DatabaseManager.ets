@@ -163,6 +163,10 @@ export class DatabaseManager {
     // deck: 添加每日限额列（v4 - 牌组独立限额，0=使用全局默认）
     await this.migrateTable('deck', 'daily_new_cards', 'INTEGER DEFAULT 0');
     await this.migrateTable('deck', 'daily_review_cards', 'INTEGER DEFAULT 0');
+    // card: 添加 deck_uuid 列（v5 - WebDAV 跨设备同步）
+    await this.migrateTable('card', 'deck_uuid', 'TEXT');
+    // memory_record: 添加 card_uuid 列（v5 - WebDAV 跨设备同步）
+    await this.migrateTable('memory_record', 'card_uuid', 'TEXT');
   }
 
   /**
@@ -222,11 +226,12 @@ export class DatabaseManager {
     }
   }
 
-  /** 为现有数据填充缺失的 UUID（首次云同步启用时） */
+  /** 为现有数据填充缺失的 UUID（首次云同步/WebDAV 同步启用时） */
   async fillMissingUuids(): Promise<void> {
     if (!this.rdbStore) {
       return;
     }
+    // 1. 填充各表自身的 uuid
     const tables: string[] = ['deck', 'card', 'memory_record'];
     for (const table of tables) {
       try {
@@ -249,6 +254,24 @@ export class DatabaseManager {
       } catch (err) {
         console.error(`fillMissingUuids failed for ${table}: ${JSON.stringify(err)}`);
       }
+    }
+
+    // 2. 填充 card.deck_uuid（根据 deck_id 关联 deck.uuid）
+    try {
+      await this.rdbStore.executeSql(
+        `UPDATE card SET deck_uuid = (SELECT d.uuid FROM deck d WHERE d.id = card.deck_id) WHERE deck_uuid IS NULL OR deck_uuid = ''`
+      );
+    } catch (err) {
+      console.error(`fillMissingUuids: card.deck_uuid failed: ${JSON.stringify(err)}`);
+    }
+
+    // 3. 填充 memory_record.card_uuid（根据 card_id 关联 card.uuid）
+    try {
+      await this.rdbStore.executeSql(
+        `UPDATE memory_record SET card_uuid = (SELECT c.uuid FROM card c WHERE c.id = memory_record.card_id) WHERE card_uuid IS NULL OR card_uuid = ''`
+      );
+    } catch (err) {
+      console.error(`fillMissingUuids: memory_record.card_uuid failed: ${JSON.stringify(err)}`);
     }
   }
 

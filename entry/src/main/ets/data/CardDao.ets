@@ -21,6 +21,12 @@ function cardToValues(card: Card): relationalStore.ValuesBucket {
     created_at: card.createdAt,
     updated_at: card.updatedAt,
   };
+  if (card.uuid) {
+    values['uuid'] = card.uuid;
+  }
+  if (card.deckUuid) {
+    values['deck_uuid'] = card.deckUuid;
+  }
   return values;
 }
 
@@ -43,6 +49,14 @@ function rowToCard(resultSet: relationalStore.ResultSet): Card {
     createdAt: resultSet.getLong(resultSet.getColumnIndex('created_at')),
     updatedAt: resultSet.getLong(resultSet.getColumnIndex('updated_at')),
   };
+  const uuidIdx: number = resultSet.getColumnIndex('uuid');
+  if (uuidIdx >= 0) {
+    card.uuid = resultSet.getString(uuidIdx);
+  }
+  const deckUuidIdx: number = resultSet.getColumnIndex('deck_uuid');
+  if (deckUuidIdx >= 0) {
+    card.deckUuid = resultSet.getString(deckUuidIdx);
+  }
   return card;
 }
 
@@ -73,6 +87,37 @@ export class CardDao {
     const card: Card = rowToCard(resultSet);
     resultSet.close();
     return card;
+  }
+
+  /** 根据 UUID 查询（跨设备同步用） */
+  async getByUuid(uuid: string): Promise<Card | null> {
+    const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('card');
+    predicates.equalTo('uuid', uuid);
+    const resultSet: relationalStore.ResultSet = await this.db.query(predicates);
+    if (resultSet.rowCount === 0) {
+      resultSet.close();
+      return null;
+    }
+    resultSet.goToFirstRow();
+    const card: Card = rowToCard(resultSet);
+    resultSet.close();
+    return card;
+  }
+
+  /** 按牌组 UUID 查询卡片（跨设备同步用） */
+  async getByDeckUuid(deckUuid: string): Promise<Card[]> {
+    const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('card');
+    predicates.equalTo('deck_uuid', deckUuid);
+    const resultSet: relationalStore.ResultSet = await this.db.query(predicates);
+    const cards: Card[] = [];
+    if (resultSet.rowCount > 0) {
+      resultSet.goToFirstRow();
+      do {
+        cards.push(rowToCard(resultSet));
+      } while (resultSet.goToNextRow());
+    }
+    resultSet.close();
+    return cards;
   }
 
   /** 查询所有卡片 */
@@ -155,6 +200,13 @@ export class CardDao {
   async delete(id: number): Promise<void> {
     const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('card');
     predicates.equalTo('id', id);
+    await this.db.delete(predicates);
+  }
+
+  /** 根据 UUID 删除卡片（跨设备同步用） */
+  async deleteByUuid(uuid: string): Promise<void> {
+    const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('card');
+    predicates.equalTo('uuid', uuid);
     await this.db.delete(predicates);
   }
 

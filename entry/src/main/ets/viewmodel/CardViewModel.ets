@@ -5,6 +5,7 @@ import { DeckDao } from '../data/DeckDao';
 import { MemoryRecordDao } from '../data/MemoryRecordDao';
 import { SM2Algorithm, Rating } from '../data/SM2Algorithm';
 import { ReviewSettingsManager } from '../data/ReviewSettingsManager';
+import { util } from '@kit.ArkTS';
 
 /** 卡片视图模型 */
 export class CardViewModel {
@@ -26,6 +27,7 @@ export class CardViewModel {
   }
 
   async createDeck(deck: Deck): Promise<void> {
+    deck.uuid = deck.uuid || util.generateRandomUUID(true);
     deck.createdAt = Date.now();
     deck.updatedAt = Date.now();
     await this.deckDao.insert(deck);
@@ -63,9 +65,17 @@ export class CardViewModel {
 
   async createCard(card: Card): Promise<void> {
     const now = Date.now();
+    card.uuid = card.uuid || util.generateRandomUUID(true);
     card.createdAt = now;
     card.updatedAt = now;
     card.nextReviewTime = now;
+    // 自动填充 deckUuid
+    if (!card.deckUuid) {
+      const deck: Deck | null = await this.deckDao.getById(card.deckId);
+      if (deck?.uuid) {
+        card.deckUuid = deck.uuid;
+      }
+    }
     await this.cardDao.insert(card);
   }
 

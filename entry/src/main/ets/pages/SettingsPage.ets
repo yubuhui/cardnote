@@ -1,6 +1,8 @@
 import { ConfigurationConstant } from '@kit.AbilityKit';
 import { preferences } from '@kit.ArkData';
 import { CloudSyncService, SyncStatus } from '../service/CloudSyncService';
+import { WebDAVSyncService } from '../service/WebDAVSyncService';
+import { SyncResult } from '../webdav/SyncModels';
 
 export interface SettingsItem {
   title: string;
@@ -15,8 +17,12 @@ export struct SettingsPage {
   @State syncStatus: SyncStatus = SyncStatus.IDLE;
   @State syncTimeText: string = '从未同步';
   @State isSyncing: boolean = false;
+  // WebDAV 状态
+  @State webdavLastSync: string = '尚未同步';
+  @State webdavSyncing: boolean = false;
   private settingsPref: preferences.Preferences | null = null;
   private cloudSyncService: CloudSyncService = CloudSyncService.getInstance();
+  private webdavService: WebDAVSyncService = new WebDAVSyncService();
 
   async aboutToAppear(): Promise<void> {
     try {
@@ -30,6 +36,14 @@ export struct SettingsPage {
 
     // 刷新云同步时间显示
     this.syncTimeText = this.cloudSyncService.getLastSyncTimeText();
+
+    // 初始化 WebDAV 同步服务并刷新状态
+    this.webdavService.init(this.getUIContext().getHostContext()!);
+    const webdavTime: number = this.webdavService.getLastSyncTime();
+    if (webdavTime > 0) {
+      const d: Date = new Date(webdavTime);
+      this.webdavLastSync = `上次同步: ${this.formatDate(d)}`;
+    }
   }
 
   /** 手动触发云同步 */
@@ -43,6 +57,24 @@ export struct SettingsPage {
       this.syncTimeText = this.cloudSyncService.getLastSyncTimeText();
     });
     this.isSyncing = false;
+  }
+
+  /** 手动触发 WebDAV 同步 */
+  private async triggerWebdavSync(): Promise<void> {
+    if (this.webdavSyncing) {
+      return;
+    }
+    this.webdavSyncing = true;
+    const result: SyncResult = await this.webdavService.fullSync();
+    if (!result.error) {
+      this.webdavLastSync = `上次同步: ${this.formatDate(new Date())}`;
+    }
+    this.webdavSyncing = false;
+  }
+
+  private formatDate(d: Date): string {
+    const pad: (n: number) => string = (n: number): string => (n < 10 ? '0' + n : String(n));
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
   /** 获取同步状态对应的颜色 */
@@ -142,28 +174,16 @@ export struct SettingsPage {
               .margin({ bottom: 10 })
 
             Row() {
-              Text('同步状态')
-                .fontSize(14)
-                .fontColor('#333')
-                .layoutWeight(1)
-              Text(this.syncStatus)
-                .fontSize(13)
-                .fontColor(this.getSyncStatusColor())
-            }
-            .width('100%')
-            .padding({ top: 10, bottom: 6 })
-
-            Row() {
               Text('上次同步')
                 .fontSize(14)
                 .fontColor('#333')
                 .layoutWeight(1)
-              Text(this.syncTimeText)
+              Text(this.webdavLastSync)
                 .fontSize(13)
                 .fontColor('#999')
             }
             .width('100%')
-            .padding({ top: 6, bottom: 10 })
+            .padding({ top: 10, bottom: 10 })
 
             Row({ space: 10 }) {
               Button('同步设置')
@@ -176,16 +196,16 @@ export struct SettingsPage {
                 .onClick(() => {
                   this.goToPage('pages/WebDavSyncPage');
                 })
-              Button(this.isSyncing ? '同步中...' : '立即同步')
+              Button(this.webdavSyncing ? '同步中...' : '立即同步')
                 .fontSize(14)
                 .layoutWeight(1)
                 .height(40)
-                .backgroundColor(this.isSyncing ? '#CCC' : '#4A90D9')
+                .backgroundColor(this.webdavSyncing ? '#CCC' : '#4A90D9')
                 .fontColor(Color.White)
                 .borderRadius(8)
-                .enabled(!this.isSyncing)
+                .enabled(!this.webdavSyncing)
                 .onClick(() => {
-                  this.triggerSync();
+                  this.triggerWebdavSync();
                 })
             }
             .width('100%')

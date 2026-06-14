@@ -16,6 +16,12 @@ function recordToValues(record: MemoryRecord): relationalStore.ValuesBucket {
     date: record.date,
     duration: record.duration,
   };
+  if (record.uuid) {
+    values['uuid'] = record.uuid;
+  }
+  if (record.cardUuid) {
+    values['card_uuid'] = record.cardUuid;
+  }
   return values;
 }
 
@@ -28,6 +34,14 @@ function rowToRecord(resultSet: relationalStore.ResultSet): MemoryRecord {
     date: resultSet.getLong(resultSet.getColumnIndex('date')),
     duration: resultSet.getLong(resultSet.getColumnIndex('duration')),
   };
+  const uuidIdx: number = resultSet.getColumnIndex('uuid');
+  if (uuidIdx >= 0) {
+    record.uuid = resultSet.getString(uuidIdx);
+  }
+  const cardUuidIdx: number = resultSet.getColumnIndex('card_uuid');
+  if (cardUuidIdx >= 0) {
+    record.cardUuid = resultSet.getString(cardUuidIdx);
+  }
   return record;
 }
 
@@ -49,6 +63,37 @@ export class MemoryRecordDao {
   async getByCardId(cardId: number): Promise<MemoryRecord[]> {
     const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('memory_record');
     predicates.equalTo('card_id', cardId).orderByDesc('date');
+    const resultSet: relationalStore.ResultSet = await this.db.query(predicates);
+    const records: MemoryRecord[] = [];
+    if (resultSet.rowCount > 0) {
+      resultSet.goToFirstRow();
+      do {
+        records.push(rowToRecord(resultSet));
+      } while (resultSet.goToNextRow());
+    }
+    resultSet.close();
+    return records;
+  }
+
+  /** 根据 UUID 查询（跨设备同步用） */
+  async getByUuid(uuid: string): Promise<MemoryRecord | null> {
+    const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('memory_record');
+    predicates.equalTo('uuid', uuid);
+    const resultSet: relationalStore.ResultSet = await this.db.query(predicates);
+    if (resultSet.rowCount === 0) {
+      resultSet.close();
+      return null;
+    }
+    resultSet.goToFirstRow();
+    const record: MemoryRecord = rowToRecord(resultSet);
+    resultSet.close();
+    return record;
+  }
+
+  /** 按卡片 UUID 查询所有记录（跨设备同步用） */
+  async getByCardUuid(cardUuid: string): Promise<MemoryRecord[]> {
+    const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('memory_record');
+    predicates.equalTo('card_uuid', cardUuid).orderByDesc('date');
     const resultSet: relationalStore.ResultSet = await this.db.query(predicates);
     const records: MemoryRecord[] = [];
     if (resultSet.rowCount > 0) {
@@ -172,6 +217,20 @@ export class MemoryRecordDao {
   async deleteByCardId(cardId: number): Promise<void> {
     const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('memory_record');
     predicates.equalTo('card_id', cardId);
+    await this.db.delete(predicates);
+  }
+
+  /** 根据卡片 UUID 删除所有记忆记录（跨设备同步用） */
+  async deleteByCardUuid(cardUuid: string): Promise<void> {
+    const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('memory_record');
+    predicates.equalTo('card_uuid', cardUuid);
+    await this.db.delete(predicates);
+  }
+
+  /** 根据 UUID 删除单条记忆记录（跨设备同步用） */
+  async deleteByUuid(uuid: string): Promise<void> {
+    const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('memory_record');
+    predicates.equalTo('uuid', uuid);
     await this.db.delete(predicates);
   }
 

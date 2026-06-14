@@ -7,6 +7,7 @@ import { MemoryRecordDao, DailyDuration } from '../data/MemoryRecordDao';
 import { Rating } from '../data/SM2Algorithm';
 import { ReviewSettingsManager, ReviewSettings } from '../data/ReviewSettingsManager';
 import { CardStatus } from '../model/CardTypeEnum';
+import { util } from '@kit.ArkTS';
 
 export interface TodayStats {
   forget: number;
@@ -120,18 +121,20 @@ export class StudyViewModel {
 
   // 记录评分
   async recordRating(cardId: number, rating: Rating, durationSeconds: number = 0): Promise<void> {
-    // 先记录学习结果
+    // 先获取卡片信息（含 UUID），再记录学习结果
+    const card: Card | null = await this.cardVm.getById(cardId);
     const record: MemoryRecord = {
       id: 0,
       cardId: cardId,
+      cardUuid: card?.uuid,
+      uuid: util.generateRandomUUID(true),
       result: rating,
       date: Date.now(),
       duration: durationSeconds,
     };
     await this.recordDao.insert(record);
 
-    // 再更新卡片
-    const card: Card | null = await this.cardVm.getById(cardId);
+    // 再更新卡片状态
     if (card) {
       await this.cardVm.handleRating(card, rating);
     }

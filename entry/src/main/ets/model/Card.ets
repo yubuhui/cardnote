@@ -3,8 +3,10 @@ import { CardType, CardStatus } from './CardTypeEnum';
 export { CardStatus };
 
 export interface Card {
-  id: number;               // 自增主键
-  deckId: number;           // 所属牌组 ID（外键，默认 1）
+  id: number;               // 自增主键（仅本设备有效）
+  uuid?: string;            // 全局唯一标识（跨设备同步用）
+  deckId: number;           // 所属牌组 ID（本设备外键）
+  deckUuid?: string;        // 所属牌组 UUID（跨设备同步用）
   type: CardType;           // 题型
   front: string;            // 正面（问题题干）
   options: string[];        // 选项数组（仅选择题）
