@@ -108,7 +108,6 @@ export class DatabaseManager {
       'id INTEGER PRIMARY KEY AUTOINCREMENT, ' +
       'uuid TEXT, ' +
       'name TEXT NOT NULL, ' +
-      'icon TEXT DEFAULT \'📚\', ' +
       'color TEXT DEFAULT \'#4A90D9\', ' +
       'created_at INTEGER, ' +
       'updated_at INTEGER)'
@@ -214,7 +213,6 @@ export class DatabaseManager {
       const now: number = Date.now();
       const values: relationalStore.ValuesBucket = {
         name: '默认牌组',
-        icon: '📘',
         color: '#4A90D9',
         uuid: util.generateRandomUUID(true),
         created_at: now,

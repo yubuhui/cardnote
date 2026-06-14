@@ -430,16 +430,16 @@ export struct ImportExportPage {
   /** 当前选中牌组的显示标签 */
   getSelectedDeckLabel(): string {
     const d: Deck | undefined = this.deckList.find((deck: Deck) => deck.id === this.selectedDeckId);
-    return d ? `${d.icon}  ${d.name}` : '📘  默认牌组';
+    return d ? d.name : '默认牌组';
   }
 
   /** 导出牌组标签（含"全部"） */
   getExportDeckLabel(): string {
     if (this.exportDeckId === 0) {
-      return '📚  全部卡片';
+      return '全部卡片';
     }
     const d: Deck | undefined = this.deckList.find((deck: Deck) => deck.id === this.exportDeckId);
-    return d ? `${d.icon}  ${d.name}` : '📘  默认牌组';
+    return d ? d.name : '默认牌组';
   }
 
   /** 切换导出牌组时刷新计数 */
@@ -537,9 +537,9 @@ export struct ImportExportPage {
             .fontColor('#888')
             .margin({ right: 10 })
           Select([
-            { value: '📚  全部卡片' } as SelectOption,
+            { value: '全部卡片' } as SelectOption,
             ...this.deckList.map((deck: Deck) => {
-              const opt: SelectOption = { value: `${deck.icon}  ${deck.name}` };
+              const opt: SelectOption = { value: deck.name };
               return opt;
             })
           ])
@@ -646,7 +646,7 @@ export struct ImportExportPage {
           .fontSize(13)
           .fontColor('#888')
         Select(this.deckList.map((deck: Deck) => {
-          const opt: SelectOption = { value: `${deck.icon}  ${deck.name}` };
+          const opt: SelectOption = { value: deck.name };
           return opt;
         }))
           .value(this.getSelectedDeckLabel())

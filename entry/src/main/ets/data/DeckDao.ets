@@ -6,7 +6,6 @@ import { Deck } from '../model/Deck';
 function deckToValues(deck: Deck): relationalStore.ValuesBucket {
   const values: relationalStore.ValuesBucket = {
     name: deck.name,
-    icon: deck.icon,
     color: deck.color,
     created_at: deck.createdAt,
     updated_at: deck.updatedAt,
@@ -25,7 +24,6 @@ function rowToDeck(resultSet: relationalStore.ResultSet): Deck {
   const deck: Deck = {
     id: resultSet.getLong(resultSet.getColumnIndex('id')),
     name: resultSet.getString(resultSet.getColumnIndex('name')),
-    icon: resultSet.getString(resultSet.getColumnIndex('icon')),
     color: resultSet.getString(resultSet.getColumnIndex('color')),
     createdAt: resultSet.getLong(resultSet.getColumnIndex('created_at')),
     updatedAt: resultSet.getLong(resultSet.getColumnIndex('updated_at')),

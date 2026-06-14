@@ -155,10 +155,10 @@ struct EditorPage {
       .margin({ bottom: 8 })
 
       Select(this.deckList.map((deck: Deck) => {
-        const opt: SelectOption = { value: `${deck.icon}  ${deck.name}` };
+        const opt: SelectOption = { value: deck.name };
         return opt;
       }))
-        .value(`${this.selectedDeck?.icon}  ${this.selectedDeck?.name}`)
+        .value(this.selectedDeck?.name)
         .selected(this.deckList.findIndex(d => d.id === this.selectedDeck?.id))
         .onSelect((index: number) => {
           this.selectedDeck = this.deckList[index];

@@ -32,13 +32,13 @@ struct CardItem {
         Checkbox()
           .select(this.isSelected)
           .hitTestBehavior(HitTestMode.None)
-          .margin({ right: 10 })
+  
       }
 
       Row() {
         Text(this.cardFront)
           .fontSize(14)
-          .fontColor(TEXT_PRIMARY)
+          
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .layoutWeight(1)
@@ -144,7 +144,7 @@ struct HomePage {
               Text('CardNote')
                 .fontSize(20)
                 .fontWeight(FontWeight.Bold)
-                .fontColor(TEXT_PRIMARY)
+        
                 .margin({ top: 8, bottom: 14 })
                 .alignSelf(ItemAlign.Start)
               Row({ space: 10 }) {
@@ -642,12 +642,12 @@ struct HomePage {
   async addDeck(name: string) {
     if (!name.trim()) return;
     const colors = ['#4A90D9', '#E85D75', '#50C878', '#FFB347', '#9B59B6', '#1ABC9C'];
-    const icons = ['📌', '📍', '📋', '📃', '📀', '📖'];
+    
     const idx = Math.floor(Math.random() * colors.length);
     const deck: Deck = {
       id: 0,
       name: name.trim(),
-      icon: icons[idx],
+      
       color: colors[idx],
       createdAt: 0,
       updatedAt: 0
@@ -818,7 +818,7 @@ struct AddDeckDialog {
   build() {
     Column() {
       Text('新建牌组')
-        .fontSize(18)
+  
         .fontWeight(FontWeight.Bold)
         .fontColor(TEXT_PRIMARY)
         .margin({ bottom: 14 })
@@ -876,7 +876,7 @@ struct MoveToDeckDialog {
   build() {
     Column() {
       Text('移动到牌组')
-        .fontSize(18)
+        
         .fontWeight(FontWeight.Bold)
         .fontColor(TEXT_PRIMARY)
         .margin({ bottom: 14 })
@@ -885,9 +885,9 @@ struct MoveToDeckDialog {
         Column() {
           ForEach(this.decks, (deck: Deck) => {
             Row() {
-              Text(deck.icon)
-                .fontSize(18)
-                .margin({ right: 10 })
+        
+        
+      
               Text(deck.name)
                 .fontSize(15)
                 .fontColor(TEXT_PRIMARY)
