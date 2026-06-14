@@ -4,6 +4,7 @@
     "pages/LearningPage",
     "pages/EditorPage",
     "pages/ImportExportPage",
+    "pages/BackupPage",
     "pages/ReviewSettingsPage",
     "pages/LoginPage",
     "pages/PrivacyPolicyPage",

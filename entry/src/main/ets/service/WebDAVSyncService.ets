@@ -402,7 +402,7 @@ export class WebDAVSyncService {
   // 完整同步（先 PULL 再 PUSH）
   // ==========================================
 
-  /** 执行完整同步 */
+  /** 执行完整同步（先 PULL 再 PUSH） */
   async fullSync(): Promise<SyncResult> {
     const startTime: number = Date.now();
     const result: SyncResult = {
@@ -430,6 +430,59 @@ export class WebDAVSyncService {
       this.setLastSyncTime(Date.now());
     } catch (err) {
       result.error = `同步失败: ${(err as Error).message}`;
+    }
+
+    result.endTime = Date.now();
+    return result;
+  }
+
+  /** 仅上传：本地 → 云端 */
+  async pushToCloud(): Promise<SyncResult> {
+    const startTime: number = Date.now();
+    const result: SyncResult = {
+      direction: SyncDirection.PUSH,
+      startTime: startTime,
+      endTime: 0,
+      pushedDecks: 0,
+      pulledDecks: 0,
+      deletedDecks: 0,
+      error: null,
+    };
+
+    try {
+      this.initClient();
+      const pushR: PushPhaseResult = await this.pushChanges();
+      result.pushedDecks = pushR.pushedDecks;
+      result.deletedDecks = pushR.deletedDecks;
+      this.setLastSyncTime(Date.now());
+    } catch (err) {
+      result.error = `上传失败: ${(err as Error).message}`;
+    }
+
+    result.endTime = Date.now();
+    return result;
+  }
+
+  /** 仅下载：云端 → 本地 */
+  async pullFromCloud(): Promise<SyncResult> {
+    const startTime: number = Date.now();
+    const result: SyncResult = {
+      direction: SyncDirection.PULL,
+      startTime: startTime,
+      endTime: 0,
+      pushedDecks: 0,
+      pulledDecks: 0,
+      deletedDecks: 0,
+      error: null,
+    };
+
+    try {
+      this.initClient();
+      const pullR: PullPhaseResult = await this.pullChanges();
+      result.pulledDecks = pullR.pulledDecks;
+      this.setLastSyncTime(Date.now());
+    } catch (err) {
+      result.error = `下载失败: ${(err as Error).message}`;
     }
 
     result.endTime = Date.now();

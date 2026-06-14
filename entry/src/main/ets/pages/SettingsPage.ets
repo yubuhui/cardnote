@@ -2,6 +2,7 @@ import { ConfigurationConstant } from '@kit.AbilityKit';
 import { preferences } from '@kit.ArkData';
 import { CloudSyncService, SyncStatus } from '../service/CloudSyncService';
 import { WebDAVSyncService } from '../service/WebDAVSyncService';
+import { formatDateTime } from '../utils/DateUtils';
 
 export interface SettingsItem {
   title: string;
@@ -19,7 +20,10 @@ export struct SettingsPage {
   // WebDAV 状态
   @State webdavLastSync: string = '尚未同步';
   @State syncEnabled: boolean = false;
-  @State isWebdavSyncing: boolean = false;
+  @State isUploading: boolean = false;
+  @State isDownloading: boolean = false;
+  @State uploadResultText: string = '';
+  @State downloadResultText: string = '';
   private settingsPref: preferences.Preferences | null = null;
   private cloudSyncService: CloudSyncService = CloudSyncService.getInstance();
   private webdavService: WebDAVSyncService = WebDAVSyncService.getInstance();
@@ -42,7 +46,7 @@ export struct SettingsPage {
     const webdavTime: number = this.webdavService.getLastSyncTime();
     if (webdavTime > 0) {
       const d: Date = new Date(webdavTime);
-      this.webdavLastSync = `上次同步: ${this.formatDate(d)}`;
+      this.webdavLastSync = `上次同步: ${formatDateTime(d)}`;
     }
   }
 
@@ -59,29 +63,66 @@ export struct SettingsPage {
     this.isSyncing = false;
   }
 
-  /** 手动触发 WebDAV 同步 */
-  private async triggerWebdavSync(): Promise<void> {
-    if (this.isWebdavSyncing || !this.syncEnabled) {
+  /** 手动触发 WebDAV 上传到云端 */
+  private async triggerUpload(): Promise<void> {
+    if (this.isUploading || !this.syncEnabled) {
       return;
     }
     if (!this.webdavService.isConfigured()) {
-      this.webdavLastSync = '请先配置 WebDAV 并测试连接';
+      this.uploadResultText = '请先配置 WebDAV 并测试连接';
       return;
     }
-    this.isWebdavSyncing = true;
-    const result = await this.webdavService.fullSync();
+    this.isUploading = true;
+    this.uploadResultText = '上传中...';
+    const result = await this.webdavService.pushToCloud();
     if (result.error) {
-      this.webdavLastSync = '同步失败';
+      this.uploadResultText = '上传失败';
     } else {
       const d: Date = new Date();
-      this.webdavLastSync = this.formatDate(d);
+      this.uploadResultText = `上次上传: ${formatDateTime(d)} (${result.pushedDecks}个牌组)`;
+      this.webdavLastSync = formatDateTime(d);
     }
-    this.isWebdavSyncing = false;
+    this.isUploading = false;
   }
 
-  private formatDate(d: Date): string {
-    const pad: (n: number) => string = (n: number): string => (n < 10 ? '0' + n : String(n));
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  /** 手动触发 WebDAV 从云端下载 */
+  private triggerDownload(): void {
+    if (this.isDownloading || !this.syncEnabled) {
+      return;
+    }
+    if (!this.webdavService.isConfigured()) {
+      this.downloadResultText = '请先配置 WebDAV 并测试连接';
+      return;
+    }
+
+    AlertDialog.show({
+      title: '确认下载',
+      message: '从云端下载将覆盖本地数据，确定吗？',
+      autoCancel: true,
+      alignment: DialogAlignment.Center,
+      primaryButton: {
+        value: '确定',
+        fontColor: '#FA8C16',
+        action: async () => {
+          this.isDownloading = true;
+          this.downloadResultText = '下载中...';
+          const result = await this.webdavService.pullFromCloud();
+          if (result.error) {
+            this.downloadResultText = '下载失败';
+          } else {
+            const d: Date = new Date();
+            this.downloadResultText = `上次下载: ${formatDateTime(d)} (${result.pulledDecks}个牌组)`;
+            this.webdavLastSync = formatDateTime(d);
+          }
+          this.isDownloading = false;
+        }
+      },
+      secondaryButton: {
+        value: '取消',
+        fontColor: '#999',
+        action: () => {}
+      }
+    });
   }
 
   /** 获取同步状态对应的颜色 */
@@ -140,6 +181,7 @@ export struct SettingsPage {
           this.buildSection('数据管理', [
             { title: '背诵设置', routeName: 'pages/ReviewSettingsPage' } as SettingsItem,
             { title: '导入与导出', routeName: 'pages/ImportExportPage' } as SettingsItem,
+            { title: '备份', routeName: 'pages/BackupPage' } as SettingsItem,
           ])
 
           // 外观设置
@@ -216,19 +258,43 @@ export struct SettingsPage {
               }
             })
 
-            // 立即同步
+            // 上传到云端
             Row() {
-              Text('立即同步')
+              Text('上传到云端')
                 .fontSize(14)
                 .fontColor(this.syncEnabled ? '#333' : '#CCC')
                 .layoutWeight(1)
-              if (this.isWebdavSyncing) {
+              if (this.isUploading) {
                 LoadingProgress()
                   .width(20)
                   .height(20)
                   .color('#1677FF')
               } else {
-                Text(this.webdavLastSync)
+                Text(this.uploadResultText)
+                  .fontSize(13)
+                  .fontColor('#999')
+              }
+            }
+            .width('100%')
+            .padding({ top: 10, bottom: 10 })
+            .border({ width: { bottom: 1 }, color: '#f5f5f5' })
+            .onClick(() => {
+              this.triggerUpload();
+            })
+
+            // 从云端下载
+            Row() {
+              Text('从云端下载')
+                .fontSize(14)
+                .fontColor(this.syncEnabled ? '#333' : '#CCC')
+                .layoutWeight(1)
+              if (this.isDownloading) {
+                LoadingProgress()
+                  .width(20)
+                  .height(20)
+                  .color('#1677FF')
+              } else {
+                Text(this.downloadResultText)
                   .fontSize(13)
                   .fontColor('#999')
               }
@@ -236,7 +302,7 @@ export struct SettingsPage {
             .width('100%')
             .padding({ top: 10, bottom: 10 })
             .onClick(() => {
-              this.triggerWebdavSync();
+              this.triggerDownload();
             })
           }
           .width('100%')

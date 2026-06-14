@@ -90,6 +90,22 @@ export class MemoryRecordDao {
     return record;
   }
 
+  /** 查询所有记忆记录（备份用） */
+  async getAll(): Promise<MemoryRecord[]> {
+    const resultSet: relationalStore.ResultSet = await this.db.query(
+      new relationalStore.RdbPredicates('memory_record').orderByDesc('date')
+    );
+    const records: MemoryRecord[] = [];
+    if (resultSet.rowCount > 0) {
+      resultSet.goToFirstRow();
+      do {
+        records.push(rowToRecord(resultSet));
+      } while (resultSet.goToNextRow());
+    }
+    resultSet.close();
+    return records;
+  }
+
   /** 按卡片 UUID 查询所有记录（跨设备同步用） */
   async getByCardUuid(cardUuid: string): Promise<MemoryRecord[]> {
     const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('memory_record');

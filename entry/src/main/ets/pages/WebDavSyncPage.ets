@@ -3,6 +3,7 @@ import { promptAction } from '@kit.ArkUI';
 import { WebDAVSyncService } from '../service/WebDAVSyncService';
 import { WebDAVConfig } from '../webdav/SyncModels';
 import { DirPickerDialog } from './DirPickerDialog';
+import { formatDateTime } from '../utils/DateUtils';
 
 /** 单例同步服务 */
 const syncService: WebDAVSyncService = WebDAVSyncService.getInstance();
@@ -20,6 +21,10 @@ export struct WebDavSyncPage {
   @State isTesting: boolean = false;
   @State statusText: string = '';
   @State lastSyncText: string = '';
+
+  // 上传/下载状态
+  @State isUploading: boolean = false;
+  @State isDownloading: boolean = false;
 
   // 密码可见性
   @State showPassword: boolean = false;
@@ -61,15 +66,10 @@ export struct WebDavSyncPage {
     const lastTime: number = syncService.getLastSyncTime();
     if (lastTime > 0) {
       const d: Date = new Date(lastTime);
-      this.lastSyncText = `上次同步: ${this.formatDate(d)}`;
+      this.lastSyncText = `上次同步: ${formatDateTime(d)}`;
     } else {
       this.lastSyncText = '尚未同步';
     }
-  }
-
-  private formatDate(d: Date): string {
-    const pad: (n: number) => string = (n: number): string => (n < 10 ? '0' + n : String(n));
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
   // ==========================================
@@ -131,6 +131,66 @@ export struct WebDavSyncPage {
   /** 打开目录选择器（原生 CustomDialog） */
   private showDirectoryPicker(): void {
     this.dirPickerController.open();
+  }
+
+  /** 上传到云端 */
+  private async uploadToCloud(): Promise<void> {
+    if (this.isUploading || !this.syncEnabled) {
+      return;
+    }
+    this.isUploading = true;
+    this.statusText = '正在上传到云端...';
+    const result = await syncService.pushToCloud();
+    if (result.error) {
+      this.statusText = result.error;
+    } else {
+      this.statusText = `上传完成 (${result.pushedDecks}个牌组)`;
+      this.updateLastSyncTime();
+    }
+    this.isUploading = false;
+  }
+
+  /** 从云端下载 */
+  private downloadFromCloud(): void {
+    if (this.isDownloading || !this.syncEnabled) {
+      return;
+    }
+
+    AlertDialog.show({
+      title: '确认下载',
+      message: '从云端下载将覆盖本地数据，确定吗？',
+      autoCancel: true,
+      alignment: DialogAlignment.Center,
+      primaryButton: {
+        value: '确定',
+        fontColor: '#FA8C16',
+        action: async () => {
+          this.isDownloading = true;
+          this.statusText = '正在从云端下载...';
+          const result = await syncService.pullFromCloud();
+          if (result.error) {
+            this.statusText = result.error;
+          } else {
+            this.statusText = `下载完成 (${result.pulledDecks}个牌组)`;
+            this.updateLastSyncTime();
+          }
+          this.isDownloading = false;
+        }
+      },
+      secondaryButton: {
+        value: '取消',
+        fontColor: '#999',
+        action: () => {}
+      }
+    });
+  }
+
+  private updateLastSyncTime(): void {
+    const lastTime: number = syncService.getLastSyncTime();
+    if (lastTime > 0) {
+      const d: Date = new Date(lastTime);
+      this.lastSyncText = `上次同步: ${formatDateTime(d)}`;
+    }
   }
 
   // ==========================================
@@ -322,6 +382,30 @@ export struct WebDavSyncPage {
         .fontColor(Color.White)
         .enabled(this.syncEnabled && !this.isTesting)
         .onClick(() => { this.testConnection(); })
+
+      // 上传到云端
+      Button(this.isUploading ? '上传中...' : '上传到云端')
+        .width('100%')
+        .height(44)
+        .fontSize(15)
+        .backgroundColor(this.isUploading ? '#73D13D' : '#52C41A')
+        .borderRadius(22)
+        .fontColor(Color.White)
+        .margin({ top: 10 })
+        .enabled(this.syncEnabled && !this.isUploading)
+        .onClick(() => { this.uploadToCloud(); })
+
+      // 从云端下载
+      Button(this.isDownloading ? '下载中...' : '从云端下载')
+        .width('100%')
+        .height(44)
+        .fontSize(15)
+        .backgroundColor(this.isDownloading ? '#FFA940' : '#FA8C16')
+        .borderRadius(22)
+        .fontColor(Color.White)
+        .margin({ top: 10 })
+        .enabled(this.syncEnabled && !this.isDownloading)
+        .onClick(() => { this.downloadFromCloud(); })
     }
     .width('100%')
     .margin({ bottom: 16 })
