@@ -18,9 +18,11 @@ export struct SettingsPage {
   @State isSyncing: boolean = false;
   // WebDAV 状态
   @State webdavLastSync: string = '尚未同步';
+  @State syncEnabled: boolean = false;
+  @State isWebdavSyncing: boolean = false;
   private settingsPref: preferences.Preferences | null = null;
   private cloudSyncService: CloudSyncService = CloudSyncService.getInstance();
-  private webdavService: WebDAVSyncService = new WebDAVSyncService();
+  private webdavService: WebDAVSyncService = WebDAVSyncService.getInstance();
 
   async aboutToAppear(): Promise<void> {
     try {
@@ -35,8 +37,8 @@ export struct SettingsPage {
     // 刷新云同步时间显示
     this.syncTimeText = this.cloudSyncService.getLastSyncTimeText();
 
-    // 初始化 WebDAV 同步服务并刷新状态
-    this.webdavService.init(this.getUIContext().getHostContext()!);
+    // 刷新 WebDAV 状态
+    this.syncEnabled = this.webdavService.isSyncEnabled();
     const webdavTime: number = this.webdavService.getLastSyncTime();
     if (webdavTime > 0) {
       const d: Date = new Date(webdavTime);
@@ -55,6 +57,26 @@ export struct SettingsPage {
       this.syncTimeText = this.cloudSyncService.getLastSyncTimeText();
     });
     this.isSyncing = false;
+  }
+
+  /** 手动触发 WebDAV 同步 */
+  private async triggerWebdavSync(): Promise<void> {
+    if (this.isWebdavSyncing || !this.syncEnabled) {
+      return;
+    }
+    if (!this.webdavService.isConfigured()) {
+      this.webdavLastSync = '请先配置 WebDAV 并测试连接';
+      return;
+    }
+    this.isWebdavSyncing = true;
+    const result = await this.webdavService.fullSync();
+    if (result.error) {
+      this.webdavLastSync = '同步失败';
+    } else {
+      const d: Date = new Date();
+      this.webdavLastSync = this.formatDate(d);
+    }
+    this.isWebdavSyncing = false;
   }
 
   private formatDate(d: Date): string {
@@ -158,32 +180,63 @@ export struct SettingsPage {
               .fontColor('#333')
               .margin({ bottom: 10 })
 
+            // 启用同步
             Row() {
-              Text('上次同步')
+              Text('启用同步')
                 .fontSize(14)
                 .fontColor('#333')
                 .layoutWeight(1)
-              Text(this.webdavLastSync)
-                .fontSize(13)
-                .fontColor('#999')
+              Toggle({ type: ToggleType.Switch, isOn: this.syncEnabled })
+                .selectedColor('#1677FF')
+                .onChange((isOn: boolean) => {
+                  this.syncEnabled = isOn;
+                  this.webdavService.setSyncEnabled(isOn);
+                })
             }
             .width('100%')
             .padding({ top: 10, bottom: 10 })
             .border({ width: { bottom: 1 }, color: '#f5f5f5' })
 
+            // WebDAV设置
             Row() {
               Text('WebDAV设置')
                 .fontSize(14)
-                .fontColor('#333')
+                .fontColor(this.syncEnabled ? '#333' : '#CCC')
                 .layoutWeight(1)
               Text('›')
                 .fontSize(18)
-                .fontColor('#CCC')
+                .fontColor(this.syncEnabled ? '#CCC' : '#E0E0E0')
+            }
+            .width('100%')
+            .padding({ top: 10, bottom: 10 })
+            .border({ width: { bottom: 1 }, color: '#f5f5f5' })
+            .onClick(() => {
+              if (this.syncEnabled) {
+                this.goToPage('pages/WebDavSyncPage');
+              }
+            })
+
+            // 立即同步
+            Row() {
+              Text('立即同步')
+                .fontSize(14)
+                .fontColor(this.syncEnabled ? '#333' : '#CCC')
+                .layoutWeight(1)
+              if (this.isWebdavSyncing) {
+                LoadingProgress()
+                  .width(20)
+                  .height(20)
+                  .color('#1677FF')
+              } else {
+                Text(this.webdavLastSync)
+                  .fontSize(13)
+                  .fontColor('#999')
+              }
             }
             .width('100%')
             .padding({ top: 10, bottom: 10 })
             .onClick(() => {
-              this.goToPage('pages/WebDavSyncPage');
+              this.triggerWebdavSync();
             })
           }
           .width('100%')

@@ -20,8 +20,9 @@ const KEY_USERNAME: string = 'username';
 const KEY_PASSWORD: string = 'password';
 const KEY_SYNC_PATH: string = 'sync_path';
 const KEY_LAST_SYNC_TIME: string = 'last_sync_time';
+const KEY_SYNC_ENABLED: string = 'sync_enabled';
 const KEY_TOMBSTONES: string = 'tombstones';
-const DEFAULT_SYNC_PATH: string = 'kanjisync';
+const DEFAULT_SYNC_PATH: string = 'cardnote';
 
 /**
  * WebDAV 牌组粒度增量同步服务
@@ -36,6 +37,7 @@ const DEFAULT_SYNC_PATH: string = 'kanjisync';
  *   删除：墓碑 UUID 列表跟踪已删除牌组，PUSH 时清理远端文件
  */
 export class WebDAVSyncService {
+  private static instance: WebDAVSyncService | null = null;
   private client: WebDAVClient | null = null;
   private pref: preferences.Preferences | null = null;
   private deckDao: DeckDao;
@@ -43,10 +45,26 @@ export class WebDAVSyncService {
   private recordDao: MemoryRecordDao;
   private syncPath: string = DEFAULT_SYNC_PATH;
 
-  constructor() {
+  private constructor() {
     this.deckDao = new DeckDao();
     this.cardDao = new CardDao();
     this.recordDao = new MemoryRecordDao();
+  }
+
+  /** 获取单例（需先调用 initOnce） */
+  static getInstance(): WebDAVSyncService {
+    if (!WebDAVSyncService.instance) {
+      WebDAVSyncService.instance = new WebDAVSyncService();
+    }
+    return WebDAVSyncService.instance;
+  }
+
+  /** 在 EntryAbility 中调用一次，初始化 preferences */
+  initOnce(context: Context): void {
+    if (this.pref) {
+      return;
+    }
+    this.pref = preferences.getPreferencesSync(context, { name: PREF_NAME });
   }
 
   /** 远端索引文件路径 */
@@ -57,14 +75,6 @@ export class WebDAVSyncService {
   /** 远端牌组文件路径 */
   private getDeckPath(deckUuid: string): string {
     return `${this.syncPath}/deck_${deckUuid}.json`;
-  }
-
-  /** 必须在 Ability 中调用一次 */
-  init(context: Context): void {
-    if (this.pref) {
-      return;
-    }
-    this.pref = preferences.getPreferencesSync(context, { name: PREF_NAME });
   }
 
   // ==========================================
@@ -114,6 +124,37 @@ export class WebDAVSyncService {
       return;
     }
     this.pref.putSync(KEY_LAST_SYNC_TIME, time);
+    this.pref.flush();
+  }
+
+  /** 清除 WebDAV 配置（断开连接） */
+  clearConfig(): void {
+    if (!this.pref) {
+      return;
+    }
+    this.pref.putSync(KEY_BASE_URL, '');
+    this.pref.putSync(KEY_USERNAME, '');
+    this.pref.putSync(KEY_PASSWORD, '');
+    this.pref.putSync(KEY_SYNC_PATH, DEFAULT_SYNC_PATH);
+    this.syncPath = DEFAULT_SYNC_PATH;
+    this.client = null;
+    this.pref.flush();
+  }
+
+  /** 获取同步开关状态 */
+  isSyncEnabled(): boolean {
+    if (!this.pref) {
+      return false;
+    }
+    return this.pref.getSync(KEY_SYNC_ENABLED, false) as boolean;
+  }
+
+  /** 设置同步开关状态 */
+  setSyncEnabled(enabled: boolean): void {
+    if (!this.pref) {
+      return;
+    }
+    this.pref.putSync(KEY_SYNC_ENABLED, enabled);
     this.pref.flush();
   }
 
@@ -437,33 +478,13 @@ export class WebDAVSyncService {
     return { deck, cards, records, exportedAt: Date.now() };
   }
 
-  /** 下载远端牌组并合并到本地数据库 */
-  private async downloadAndMergeDeck(deckUuid: string): Promise<void> {
-    if (!this.client) {
-      throw new Error('Client not initialized');
-    }
-
-    const text: string = await this.client.getText(this.getDeckPath(deckUuid));
-    const bundle: DeckBundle = JSON.parse(text) as DeckBundle;
-
-    // 1. 合并 Deck
-    const localDeck: Deck | null = await this.deckDao.getByUuid(deckUuid);
-    if (localDeck) {
-      bundle.deck.id = localDeck.id;
-      await this.deckDao.update(bundle.deck);
-    } else {
-      bundle.deck.id = 0;
-      await this.deckDao.insert(bundle.deck);
-    }
-
-    // 取回本地 ID
-    const refreshed: Deck | null = await this.deckDao.getByUuid(deckUuid);
-    if (!refreshed) {
-      throw new Error('无法获取牌组本地 ID');
-    }
-
-    // 2. 合并 Cards
+  /**
+   * 将 Bundle 中的卡片和记录合并到指定牌组
+   */
+  private async mergeCardsIntoDeck(bundle: DeckBundle, targetDeckId: number, targetDeckUuid: string | undefined): Promise<void> {
     const remoteCardUuids: string[] = [];
+
+    // 合并 Cards
     for (let i: number = 0; i < bundle.cards.length; i++) {
       const card: Card = bundle.cards[i];
       if (!card.uuid) {
@@ -476,8 +497,8 @@ export class WebDAVSyncService {
       } else {
         card.id = 0;
       }
-      card.deckId = refreshed.id;
-      card.deckUuid = deckUuid;
+      card.deckId = targetDeckId;
+      card.deckUuid = targetDeckUuid;
 
       if (existing) {
         await this.cardDao.update(card);
@@ -487,7 +508,7 @@ export class WebDAVSyncService {
     }
 
     // 删除远端已不存在的卡片
-    const localCards: Card[] = await this.cardDao.getByDeckId(refreshed.id);
+    const localCards: Card[] = await this.cardDao.getByDeckId(targetDeckId);
     for (let i: number = 0; i < localCards.length; i++) {
       if (localCards[i].uuid && remoteCardUuids.indexOf(localCards[i].uuid!) < 0) {
         await this.recordDao.deleteByCardId(localCards[i].id);
@@ -495,7 +516,7 @@ export class WebDAVSyncService {
       }
     }
 
-    // 3. 合并 Records（按 UUID 去重，已存在的不覆盖）
+    // 合并 Records（按 UUID 去重，已存在的不覆盖）
     for (let i: number = 0; i < bundle.records.length; i++) {
       const record: MemoryRecord = bundle.records[i];
       if (!record.uuid) {
@@ -503,9 +524,8 @@ export class WebDAVSyncService {
       }
       const existing: MemoryRecord | null = await this.recordDao.getByUuid(record.uuid);
       if (existing) {
-        continue; // 已存在，不覆盖
+        continue;
       }
-      // 更新 cardId 为本地对应值
       if (record.cardUuid) {
         const localCard: Card | null = await this.cardDao.getByUuid(record.cardUuid);
         if (localCard) {
@@ -515,5 +535,45 @@ export class WebDAVSyncService {
       record.id = 0;
       await this.recordDao.insert(record);
     }
+  }
+
+  /** 下载远端牌组并合并到本地数据库 */
+  private async downloadAndMergeDeck(deckUuid: string): Promise<void> {
+    if (!this.client) {
+      throw new Error('Client not initialized');
+    }
+
+    const text: string = await this.client.getText(this.getDeckPath(deckUuid));
+    const bundle: DeckBundle = JSON.parse(text) as DeckBundle;
+
+    // === 特殊处理：远程默认牌组合并到本地默认牌组 ===
+    if (bundle.deck.isDefault) {
+      const localDefault: Deck | null = await this.deckDao.getDefaultDeck();
+      if (localDefault) {
+        await this.mergeCardsIntoDeck(bundle, localDefault.id, localDefault.uuid);
+        return;
+      }
+      // 本地没有默认牌组（异常），走正常创建流程
+    }
+
+    // 1. 合并 Deck
+    const localDeck: Deck | null = await this.deckDao.getByUuid(deckUuid);
+    if (localDeck) {
+      bundle.deck.id = localDeck.id;
+      // 保留本地 isDefault 标记，不被远程覆盖
+      bundle.deck.isDefault = localDeck.isDefault;
+      await this.deckDao.update(bundle.deck);
+    } else {
+      bundle.deck.id = 0;
+      await this.deckDao.insert(bundle.deck);
+    }
+
+    // 取回本地 ID
+    const refreshed: Deck | null = await this.deckDao.getByUuid(deckUuid);
+    if (!refreshed) {
+      throw new Error('无法获取牌组本地 ID');
+    }
+
+    await this.mergeCardsIntoDeck(bundle, refreshed.id, refreshed.uuid);
   }
 }

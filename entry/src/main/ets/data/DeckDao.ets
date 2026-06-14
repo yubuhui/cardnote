@@ -113,6 +113,21 @@ export class DeckDao {
     return decks;
   }
 
+  /** 查询系统默认牌组 */
+  async getDefaultDeck(): Promise<Deck | null> {
+    const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('deck');
+    predicates.equalTo('is_default', 1);
+    const resultSet: relationalStore.ResultSet = await this.db.query(predicates);
+    if (resultSet.rowCount === 0) {
+      resultSet.close();
+      return null;
+    }
+    resultSet.goToFirstRow();
+    const deck: Deck = rowToDeck(resultSet);
+    resultSet.close();
+    return deck;
+  }
+
   /** 更新牌组 */
   async update(deck: Deck): Promise<void> {
     const values: relationalStore.ValuesBucket = deckToValues(deck);

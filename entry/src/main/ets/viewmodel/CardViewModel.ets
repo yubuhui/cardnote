@@ -5,6 +5,7 @@ import { DeckDao } from '../data/DeckDao';
 import { MemoryRecordDao } from '../data/MemoryRecordDao';
 import { SM2Algorithm, Rating } from '../data/SM2Algorithm';
 import { ReviewSettingsManager } from '../data/ReviewSettingsManager';
+import { WebDAVSyncService } from '../service/WebDAVSyncService';
 import { util } from '@kit.ArkTS';
 
 /** 卡片视图模型 */
@@ -41,10 +42,28 @@ export class CardViewModel {
   async deleteDeck(id: number): Promise<void> {
     // 检查是否为系统默认牌组，不允许删除
     const deck: Deck | null = await this.deckDao.getById(id);
-    if (deck && deck.isDefault) {
+    if (!deck) {
+      return;
+    }
+    if (deck.isDefault) {
       throw new Error('系统默认牌组不可删除');
     }
+
+    // 级联删除：先删关联卡片的记忆记录，再删卡片
+    const cards: Card[] = await this.cardDao.getByDeckId(id);
+    const recordDao: MemoryRecordDao = new MemoryRecordDao();
+    for (let i: number = 0; i < cards.length; i++) {
+      await recordDao.deleteByCardId(cards[i].id);
+    }
+    await this.cardDao.deleteByDeckId(id);
+
+    // 删除牌组
     await this.deckDao.delete(id);
+
+    // 标记墓碑，下次同步时删除远端牌组文件
+    if (deck.uuid && WebDAVSyncService.getInstance().isConfigured()) {
+      WebDAVSyncService.getInstance().markDeckDeleted(deck.uuid);
+    }
   }
 
   async updateDeckSettings(deckId: number, dailyNewCards: number, dailyReviewCards: number): Promise<void> {

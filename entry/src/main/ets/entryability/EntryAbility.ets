@@ -6,6 +6,7 @@ import { preferences } from '@kit.ArkData';
 import { DatabaseManager } from '../data/DatabaseManager';
 import { ReviewSettingsManager } from '../data/ReviewSettingsManager';
 import { PrivacyDialog } from '../components/PrivacyDialog';
+import { WebDAVSyncService } from '../service/WebDAVSyncService';
 
 const DOMAIN = 0x0001;
 const TAG = 'CardNote';
@@ -36,6 +37,10 @@ export default class EntryAbility extends UIAbility {
     await dbManager.fillMissingUuids();
     await dbManager.setupCloudSync();
     hilog.info(DOMAIN, TAG, 'Database initialized with cloud sync.');
+
+    // 初始化 WebDAV 同步服务单例
+    WebDAVSyncService.getInstance().initOnce(this.context);
+    hilog.info(DOMAIN, TAG, 'WebDAVSyncService initialized.');
 
     // 初始化背诵设置管理器
     ReviewSettingsManager.getInstance().init(this.context);

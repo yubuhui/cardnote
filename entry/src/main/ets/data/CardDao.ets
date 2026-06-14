@@ -210,6 +210,13 @@ export class CardDao {
     await this.db.delete(predicates);
   }
 
+  /** 按牌组 ID 批量删除卡片 */
+  async deleteByDeckId(deckId: number): Promise<void> {
+    const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('card');
+    predicates.equalTo('deck_id', deckId);
+    await this.db.delete(predicates);
+  }
+
   /** 统计卡片数 */
   async count(): Promise<number> {
     const resultSet: relationalStore.ResultSet = await this.db.query(

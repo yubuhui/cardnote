@@ -1,11 +1,11 @@
 import { router } from '@kit.ArkUI';
 import { promptAction } from '@kit.ArkUI';
 import { WebDAVSyncService } from '../service/WebDAVSyncService';
-import { SyncResult, WebDAVConfig } from '../webdav/SyncModels';
+import { WebDAVConfig } from '../webdav/SyncModels';
 import { DirPickerDialog } from './DirPickerDialog';
 
 /** 单例同步服务 */
-const syncService: WebDAVSyncService = new WebDAVSyncService();
+const syncService: WebDAVSyncService = WebDAVSyncService.getInstance();
 
 @Entry
 @Component
@@ -18,7 +18,6 @@ export struct WebDavSyncPage {
 
   // UI 状态
   @State isTesting: boolean = false;
-  @State isSyncing: boolean = false;
   @State statusText: string = '';
   @State lastSyncText: string = '';
 
@@ -41,8 +40,7 @@ export struct WebDavSyncPage {
   });
 
   aboutToAppear(): void {
-    const ctx: Context = this.getUIContext().getHostContext()!;
-    syncService.init(ctx);
+    this.syncEnabled = syncService.isSyncEnabled();
     this.loadSettings();
   }
 
@@ -57,7 +55,7 @@ export struct WebDavSyncPage {
       this.serverUrl = config.baseUrl;
       this.username = config.username;
       this.password = config.password;
-      this.syncPath = config.syncPath || 'kanjisync';
+      this.syncPath = config.syncPath || 'cardnote';
     }
 
     const lastTime: number = syncService.getLastSyncTime();
@@ -88,7 +86,7 @@ export struct WebDavSyncPage {
       baseUrl: this.serverUrl,
       username: this.username,
       password: this.password,
-      syncPath: this.syncPath || 'kanjisync',
+      syncPath: this.syncPath || 'cardnote',
     });
     this.statusText = '配置已保存';
   }
@@ -101,6 +99,23 @@ export struct WebDavSyncPage {
     try {
       const ok: boolean = await syncService.testConnection();
       if (ok) {
+        // 连接成功后，默认创建 cardnote 文件夹作为同步目录
+        const currentPath: string = this.syncPath.trim();
+        if (!currentPath) {
+          try {
+            await syncService.createDirectory('cardnote', '');
+            this.syncPath = 'cardnote';
+          } catch (_e) {
+            // 目录可能已存在，直接使用
+            this.syncPath = 'cardnote';
+          }
+          syncService.saveConfig({
+            baseUrl: this.serverUrl,
+            username: this.username,
+            password: this.password,
+            syncPath: 'cardnote',
+          });
+        }
         this.statusText = '连接成功！';
         promptAction.showToast({ message: 'WebDAV 连接成功', duration: 2000 });
       } else {
@@ -111,44 +126,6 @@ export struct WebDavSyncPage {
     } finally {
       this.isTesting = false;
     }
-  }
-
-  /** 执行完整同步 */
-  private async doSync(): Promise<void> {
-    if (!syncService.isConfigured()) {
-      this.statusText = '请先完成配置并测试连接';
-      return;
-    }
-    this.isSyncing = true;
-    this.statusText = '同步中...';
-
-    const result: SyncResult = await syncService.fullSync();
-
-    if (result.error) {
-      this.statusText = result.error;
-      promptAction.showToast({ message: '同步失败', duration: 2000 });
-    } else {
-      const dur: number = result.endTime - result.startTime;
-      const parts: string[] = [];
-      if (result.pulledDecks > 0) {
-        parts.push(`拉取 ${result.pulledDecks} 个牌组`);
-      }
-      if (result.pushedDecks > 0) {
-        parts.push(`推送 ${result.pushedDecks} 个牌组`);
-      }
-      if (result.deletedDecks > 0) {
-        parts.push(`清理 ${result.deletedDecks} 个牌组`);
-      }
-      if (parts.length === 0) {
-        this.statusText = '已是最新，无需同步';
-      } else {
-        this.statusText = parts.join('，') + `（耗时 ${(dur / 1000).toFixed(1)}s）`;
-      }
-      this.lastSyncText = `上次同步: ${this.formatDate(new Date())}`;
-      promptAction.showToast({ message: '同步完成', duration: 2000 });
-    }
-
-    this.isSyncing = false;
   }
 
   /** 打开目录选择器（原生 CustomDialog） */
@@ -168,7 +145,6 @@ export struct WebDavSyncPage {
       // 内容区
       Scroll() {
         Column() {
-          this.buildSyncToggle();
           this.buildServerSection();
           this.buildActionSection();
           this.buildStatusSection();
@@ -218,26 +194,6 @@ export struct WebDavSyncPage {
     Divider().color('#E0E0E0').strokeWidth(0.5)
   }
 
-  /** 同步开关 */
-  @Builder
-  buildSyncToggle() {
-    Row() {
-      Text('启用同步')
-        .fontSize(15)
-        .fontWeight(FontWeight.Medium)
-        .fontColor('#333')
-      Blank()
-      Toggle({ type: ToggleType.Switch, isOn: this.syncEnabled })
-        .selectedColor('#1677FF')
-        .onChange((isOn: boolean) => { this.syncEnabled = isOn; })
-    }
-    .width('100%')
-    .padding(14)
-    .backgroundColor(Color.White)
-    .borderRadius(10)
-    .margin({ bottom: 16 })
-  }
-
   /** 服务器配置区域 */
   @Builder
   buildServerSection() {
@@ -276,13 +232,11 @@ export struct WebDavSyncPage {
             .fontSize(14)
             .fontColor('#333')
             .width(72)
-          TextInput({ placeholder: 'kanjisync', text: this.syncPath })
-            .type(InputType.Normal)
+          Text(this.syncPath || 'cardnote')
             .fontSize(14)
+            .fontColor(this.syncEnabled ? '#333' : '#CCC')
+            .margin({ left: 4 })
             .layoutWeight(1)
-            .backgroundColor(Color.Transparent)
-            .enabled(this.syncEnabled)
-            .onChange((v: string) => { this.syncPath = v; })
           Text('选择')
             .fontSize(13)
             .fontColor(this.syncEnabled ? '#1677FF' : '#B0B0B0')
@@ -366,20 +320,8 @@ export struct WebDavSyncPage {
         .backgroundColor(this.isTesting ? '#A0C4FF' : '#1677FF')
         .borderRadius(22)
         .fontColor(Color.White)
-        .enabled(this.syncEnabled && !this.isTesting && !this.isSyncing)
+        .enabled(this.syncEnabled && !this.isTesting)
         .onClick(() => { this.testConnection(); })
-
-      // 立即同步
-      Button(this.isSyncing ? '同步中...' : '立即同步')
-        .width('100%')
-        .height(44)
-        .fontSize(15)
-        .backgroundColor(this.isSyncing ? '#A0C4FF' : '#1677FF')
-        .borderRadius(22)
-        .fontColor(Color.White)
-        .margin({ top: 12 })
-        .enabled(this.syncEnabled && !this.isTesting && !this.isSyncing)
-        .onClick(() => { this.doSync(); })
     }
     .width('100%')
     .margin({ bottom: 16 })
