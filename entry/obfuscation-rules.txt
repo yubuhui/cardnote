@@ -45,5 +45,8 @@ ImportExportPage
 ReviewSettingsPage
 LoginPage
 PrivacyPolicyPage
+HelpFeedbackPage
+LearningDetailPage
+WebDavSyncPage
 SettingsPage
 StatsPage

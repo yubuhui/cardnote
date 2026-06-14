@@ -1,8 +1,6 @@
 import { ConfigurationConstant } from '@kit.AbilityKit';
 import { preferences } from '@kit.ArkData';
-import { HuaweiAuthService } from '../service/HuaweiAuthService';
 import { CloudSyncService, SyncStatus } from '../service/CloudSyncService';
-import { common } from '@kit.AbilityKit';
 
 export interface SettingsItem {
   title: string;
@@ -14,7 +12,6 @@ export interface SettingsItem {
 @Component
 export struct SettingsPage {
   @State isDarkMode: boolean = false;
-  @StorageLink('hwIsLoggedIn') isHwLoggedIn: boolean = false;
   @State syncStatus: SyncStatus = SyncStatus.IDLE;
   @State syncTimeText: string = '从未同步';
   @State isSyncing: boolean = false;
@@ -29,17 +26,6 @@ export struct SettingsPage {
       this.isDarkMode = this.settingsPref.getSync('dark_mode', false) as boolean;
     } catch (err) {
       console.error('Failed to load dark mode preference:', err);
-    }
-
-    // 初始化并检查华为账号登录状态
-    try {
-      const context: common.UIAbilityContext =
-        this.getUIContext().getHostContext() as common.UIAbilityContext;
-      await HuaweiAuthService.getInstance().init(context);
-      const loggedIn: boolean = HuaweiAuthService.getInstance().isLoggedIn();
-      AppStorage.setOrCreate('hwIsLoggedIn', loggedIn);
-    } catch (err) {
-      console.error('Failed to check login state:', JSON.stringify(err));
     }
 
     // 刷新云同步时间显示
@@ -112,37 +98,6 @@ export struct SettingsPage {
 
       Scroll() {
         Column() {
-          // 账号与登录
-          Column() {
-            Text('账号与登录')
-              .fontSize(13)
-              .fontWeight(FontWeight.Medium)
-              .fontColor('#333')
-              .margin({ bottom: 10 })
-
-            Row() {
-              Text('华为账号')
-                .fontSize(14)
-                .fontColor('#333')
-                .layoutWeight(1)
-              Text(this.isHwLoggedIn ? '已登录' : '未登录')
-                .fontSize(13)
-                .fontColor(this.isHwLoggedIn ? '#4CAF50' : '#999')
-              Text('›')
-                .fontSize(18)
-                .fontColor('#CCC')
-            }
-            .width('100%')
-            .padding({ top: 10, bottom: 10 })
-            .onClick(() => {
-              this.goToPage('pages/LoginPage');
-            })
-          }
-          .width('100%')
-          .padding(14)
-          .backgroundColor(Color.White)
-          .borderRadius(12)
-
           this.buildSection('数据管理', [
             { title: '背诵设置', routeName: 'pages/ReviewSettingsPage' } as SettingsItem,
             { title: '导入与导出', routeName: 'pages/ImportExportPage' } as SettingsItem,
@@ -178,9 +133,9 @@ export struct SettingsPage {
           .borderRadius(12)
           .margin({ top: 10 })
 
-          // 云同步
+          // WebDAV同步
           Column() {
-            Text('云同步')
+            Text('WebDAV同步')
               .fontSize(13)
               .fontWeight(FontWeight.Medium)
               .fontColor('#333')
@@ -210,17 +165,30 @@ export struct SettingsPage {
             .width('100%')
             .padding({ top: 6, bottom: 10 })
 
-            Button(this.isSyncing ? '同步中...' : '立即同步')
-              .fontSize(14)
-              .width('100%')
-              .height(40)
-              .backgroundColor(this.isSyncing ? '#CCC' : '#4A90D9')
-              .fontColor(Color.White)
-              .borderRadius(8)
-              .enabled(!this.isSyncing)
-              .onClick(() => {
-                this.triggerSync();
-              })
+            Row({ space: 10 }) {
+              Button('同步设置')
+                .fontSize(14)
+                .layoutWeight(1)
+                .height(40)
+                .backgroundColor('#4A90D9')
+                .fontColor(Color.White)
+                .borderRadius(8)
+                .onClick(() => {
+                  this.goToPage('pages/WebDavSyncPage');
+                })
+              Button(this.isSyncing ? '同步中...' : '立即同步')
+                .fontSize(14)
+                .layoutWeight(1)
+                .height(40)
+                .backgroundColor(this.isSyncing ? '#CCC' : '#4A90D9')
+                .fontColor(Color.White)
+                .borderRadius(8)
+                .enabled(!this.isSyncing)
+                .onClick(() => {
+                  this.triggerSync();
+                })
+            }
+            .width('100%')
           }
           .width('100%')
           .padding(14)
@@ -229,6 +197,7 @@ export struct SettingsPage {
           .margin({ top: 10 })
 
           this.buildSection('关于', [
+            { title: '帮助与反馈', routeName: 'pages/HelpFeedbackPage' } as SettingsItem,
             { title: '隐私政策', routeName: 'pages/PrivacyPolicyPage' } as SettingsItem,
             { title: '版本号', subtitle: '1.0.0' } as SettingsItem,
           ])

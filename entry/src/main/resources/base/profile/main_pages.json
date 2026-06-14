@@ -7,6 +7,8 @@
     "pages/ReviewSettingsPage",
     "pages/LoginPage",
     "pages/PrivacyPolicyPage",
-    "pages/LearningDetailPage"
+    "pages/HelpFeedbackPage",
+    "pages/LearningDetailPage",
+    "pages/WebDavSyncPage"
   ]
 }
