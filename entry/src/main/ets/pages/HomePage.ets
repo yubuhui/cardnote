@@ -101,7 +101,7 @@ struct HomePage {
   private moveToDeckDialogController: CustomDialogController = new CustomDialogController({
     builder: MoveToDeckDialog({
       decks: $decks,
-      onMoveToDeck: (deckId: number) => { this.batchMoveToDeck(deckId); }
+      onMoveToDeck: (deckIds: number[]) => { this.batchMoveToDeck(deckIds); }
     }),
     autoCancel: true,
     alignment: DialogAlignment.Center
@@ -571,6 +571,17 @@ struct HomePage {
         .borderRadius(21)
         .onClick(() => { this.batchPromote(); })
 
+      Button('移动')
+        .layoutWeight(1)
+        .height(42)
+        .fontSize(13)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(PRIMARY)
+        .backgroundColor(Color.White)
+        .border({ width: 1.2, color: PRIMARY, style: BorderStyle.Solid })
+        .borderRadius(21)
+        .onClick(() => { this.moveToDeckDialogController.open(); })
+
       Button('删除')
         .layoutWeight(1)
         .height(42)
@@ -580,16 +591,6 @@ struct HomePage {
         .backgroundColor('#EF4444')
         .borderRadius(21)
         .onClick(() => { this.batchDelete(); })
-
-      Button('移动')
-        .layoutWeight(1)
-        .height(42)
-        .fontSize(13)
-        .fontWeight(FontWeight.Medium)
-        .fontColor('#666')
-        .backgroundColor('#EEEEEF')
-        .borderRadius(21)
-        .onClick(() => { this.moveToDeckDialogController.open(); })
     }
     .width('100%')
     .padding({ left: 16, right: 16, top: 10, bottom: 10 })
@@ -708,12 +709,33 @@ struct HomePage {
     });
   }
 
-  async batchMoveToDeck(targetDeckId: number) {
+  async batchMoveToDeck(targetDeckIds: number[]) {
     for (const id of this.selectedCardIds) {
       const card = this.cards.find(c => c.id === id);
-      if (card && card.deckId !== targetDeckId) {
-        card.deckId = targetDeckId;
-        await this.cardVm.updateCard(card);
+      if (!card) continue;
+      // 第一个目标牌组：移动卡片（修改 deckId）
+      card.deckId = targetDeckIds[0];
+      await this.cardVm.updateCard(card);
+      // 其余目标牌组：复制卡片到新牌组
+      for (let i = 1; i < targetDeckIds.length; i++) {
+        const copy: Card = {
+          id: 0,
+          deckId: targetDeckIds[i],
+          type: card.type,
+          front: card.front,
+          options: card.options,
+          correctAnswer: card.correctAnswer,
+          displayOrder: card.displayOrder,
+          analysis: card.analysis,
+          status: card.status,
+          easeFactor: card.easeFactor,
+          interval: card.interval,
+          repetitions: card.repetitions,
+          nextReviewTime: card.nextReviewTime,
+          createdAt: card.createdAt,
+          updatedAt: card.updatedAt
+        };
+        await this.cardVm.createCard(copy);
       }
     }
     this.exitMultiSelectMode();
@@ -871,7 +893,8 @@ struct AddDeckDialog {
 struct MoveToDeckDialog {
   controller: CustomDialogController;
   @Link decks: Deck[];
-  onMoveToDeck?: (deckId: number) => void;
+  @State selectedDeckIds: number[] = [];
+  onMoveToDeck?: (deckIds: number[]) => void;
 
   build() {
     Column() {
@@ -888,23 +911,33 @@ struct MoveToDeckDialog {
         
         
       
+              Checkbox()
+                .select(this.selectedDeckIds.indexOf(deck.id) >= 0)
+                .hitTestBehavior(HitTestMode.None)
+                .margin({ right: 10 })
+
               Text(deck.name)
                 .fontSize(15)
                 .fontColor(TEXT_PRIMARY)
                 .layoutWeight(1)
-              Image($r('sys.media.ohos_ic_public_arrow_right'))
-                .width(16)
-                .height(16)
-                .fillColor('#C0C0C0')
             }
             .width('100%')
             .padding({ left: 14, right: 14, top: 13, bottom: 13 })
             .borderRadius(10)
-            .backgroundColor('#F5F5F7')
+            .backgroundColor(this.selectedDeckIds.indexOf(deck.id) >= 0 ? '#E8F0FE' : '#F5F5F7')
+            .border({
+              width: this.selectedDeckIds.indexOf(deck.id) >= 0 ? 1.2 : 0,
+              color: PRIMARY,
+              style: BorderStyle.Solid
+            })
             .margin({ bottom: 8 })
             .onClick(() => {
-              this.onMoveToDeck?.(deck.id);
-              this.controller.close();
+              const idx = this.selectedDeckIds.indexOf(deck.id);
+              if (idx >= 0) {
+                this.selectedDeckIds = this.selectedDeckIds.filter(id => id !== deck.id);
+              } else {
+                this.selectedDeckIds = [...this.selectedDeckIds, deck.id];
+              }
             })
           }, (deck: Deck) => deck.id.toString())
         }
@@ -915,17 +948,33 @@ struct MoveToDeckDialog {
       .scrollable(ScrollDirection.Vertical)
       .scrollBar(BarState.Off)
 
-      Button('取消')
-        .fontSize(14)
-        .backgroundColor('#EEEEEF')
-        .fontColor('#666')
-        .width('100%')
-        .height(42)
-        .borderRadius(21)
-        .margin({ top: 12 })
-        .onClick(() => {
-          this.controller.close();
-        })
+      Row({ space: 10 }) {
+        Button('取消')
+          .fontSize(14)
+          .backgroundColor('#EEEEEF')
+          .fontColor('#666')
+          .layoutWeight(1)
+          .height(42)
+          .borderRadius(21)
+          .onClick(() => {
+            this.controller.close();
+          })
+        Button('确定')
+          .fontSize(14)
+          .backgroundColor(PRIMARY)
+          .fontColor(Color.White)
+          .layoutWeight(1)
+          .height(42)
+          .borderRadius(21)
+          .onClick(() => {
+            if (this.selectedDeckIds.length > 0) {
+              this.onMoveToDeck?.(this.selectedDeckIds);
+              this.controller.close();
+            }
+          })
+      }
+      .width('100%')
+      .margin({ top: 12 })
     }
     .padding(22)
   }
