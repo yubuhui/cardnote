@@ -2,6 +2,7 @@ import { Card, CardStatus } from '../model/Card';
 import { Deck } from '../model/Deck';
 import { CardDao } from '../data/CardDao';
 import { DeckDao } from '../data/DeckDao';
+import { MemoryRecordDao } from '../data/MemoryRecordDao';
 import { SM2Algorithm, Rating } from '../data/SM2Algorithm';
 import { ReviewSettingsManager } from '../data/ReviewSettingsManager';
 
@@ -74,6 +75,9 @@ export class CardViewModel {
   }
 
   async deleteCard(id: number): Promise<void> {
+    // 先删除关联的记忆记录，再删除卡片
+    const recordDao: MemoryRecordDao = new MemoryRecordDao();
+    await recordDao.deleteByCardId(id);
     await this.cardDao.delete(id);
   }
 

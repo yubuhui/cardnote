@@ -25,6 +25,15 @@ export interface DayDetailRecord {
   durationSeconds: number;
 }
 
+/** 单条复习历史记录（含时间戳） */
+export interface CardReviewRecord {
+  date: number;
+  result: number;
+  resultLabel: string;
+  resultColor: string;
+  durationSeconds: number;
+}
+
 /** 某一天的完整详情 */
 export interface DayDetail {
   dateLabel: string;
@@ -201,5 +210,37 @@ export class StudyViewModel {
   async undoRating(cardId: number, oldCard: Card): Promise<void> {
     await this.recordDao.deleteLatestByCardId(cardId);
     await this.cardVm.updateCard(oldCard);
+  }
+
+  /** 获取某张卡片的全部复习历史（按时间倒序） */
+  async getCardReviewHistory(cardId: number): Promise<CardReviewRecord[]> {
+    const records: MemoryRecord[] = await this.recordDao.getByCardId(cardId);
+    const result: CardReviewRecord[] = [];
+    for (const r of records) {
+      result.push({
+        date: r.date,
+        result: r.result,
+        resultLabel: RATING_LABELS[r.result] ?? '未知',
+        resultColor: RATING_COLORS[r.result] ?? '#999',
+        durationSeconds: r.duration,
+      });
+    }
+    return result;
+  }
+
+  /** 清除卡片学习数据：删除全部记忆记录 + 重置卡片到未学习状态 */
+  async resetCardData(cardId: number): Promise<Card | null> {
+    await this.recordDao.deleteByCardId(cardId);
+    const card: Card | null = await this.cardVm.getById(cardId);
+    if (card) {
+      card.status = CardStatus.unlearned;
+      card.interval = 0;
+      card.repetitions = 0;
+      card.easeFactor = 2.5;
+      card.nextReviewTime = Date.now();
+      card.updatedAt = Date.now();
+      await this.cardVm.updateCard(card);
+    }
+    return card;
   }
 }

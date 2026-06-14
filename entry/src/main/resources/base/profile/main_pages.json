@@ -6,6 +6,7 @@
     "pages/ImportExportPage",
     "pages/ReviewSettingsPage",
     "pages/LoginPage",
-    "pages/PrivacyPolicyPage"
+    "pages/PrivacyPolicyPage",
+    "pages/LearningDetailPage"
   ]
 }

@@ -233,7 +233,12 @@ struct HomePage {
       .barHeight(56)
       .barMode(BarMode.Fixed)
       .layoutWeight(1)
-      .onChange((index: number) => { this.currentTabIndex = index })
+      .onChange((index: number) => {
+        this.currentTabIndex = index;
+        if (index === 1) {
+          this.statsRefreshSignal++;
+        }
+      })
     }
     .width('100%')
     .height('100%')

@@ -61,17 +61,17 @@ export class MemoryRecordDao {
     return records;
   }
 
-  /** 查询今日记录 */
+  /** 查询今日记录（排除已删除卡片的记录） */
   async getTodayRecords(): Promise<MemoryRecord[]> {
     const now: Date = new Date();
     const startOfDay: number = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const endOfDay: number = startOfDay + 86400000;
 
-    const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('memory_record');
-    predicates.greaterThanOrEqualTo('date', startOfDay)
-      .lessThan('date', endOfDay);
-
-    const resultSet: relationalStore.ResultSet = await this.db.query(predicates);
+    // 使用 JOIN 确保只统计仍存在的卡片的记录
+    const sql: string =
+      `SELECT mr.id, mr.card_id, mr.result, mr.date, mr.duration FROM memory_record mr INNER JOIN card c ON mr.card_id = c.id WHERE mr.date >= ? AND mr.date < ?`;
+    const bindArgs: relationalStore.ValueType[] = [startOfDay, endOfDay];
+    const resultSet: relationalStore.ResultSet = await this.db.querySql(sql, bindArgs);
     const records: MemoryRecord[] = [];
     if (resultSet.rowCount > 0) {
       resultSet.goToFirstRow();
@@ -85,6 +85,7 @@ export class MemoryRecordDao {
 
   /**
    * 查询指定月份中有复习记录的所有日期（返回 day-of-month 集合）
+   * 排除已删除卡片的记录
    * @param year 四位年份，如 2026
    * @param month 月份 1-12
    */
@@ -94,11 +95,11 @@ export class MemoryRecordDao {
     const startMs: number = startDate.getTime();
     const endMs: number = endDate.getTime();
 
-    const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('memory_record');
-    predicates.greaterThanOrEqualTo('date', startMs)
-      .lessThan('date', endMs);
-
-    const resultSet: relationalStore.ResultSet = await this.db.query(predicates);
+    // 使用 JOIN 确保只统计仍存在的卡片的记录
+    const sql: string =
+      `SELECT mr.date FROM memory_record mr INNER JOIN card c ON mr.card_id = c.id WHERE mr.date >= ? AND mr.date < ?`;
+    const bindArgs: relationalStore.ValueType[] = [startMs, endMs];
+    const resultSet: relationalStore.ResultSet = await this.db.querySql(sql, bindArgs);
     const dates: Set<number> = new Set();
 
     if (resultSet.rowCount > 0) {
@@ -116,6 +117,7 @@ export class MemoryRecordDao {
   /**
    * 查询近 N 天每天的学习总时长（秒）→ 用于柱状图
    * 返回按日期升序排列的 { dateLabel, totalSeconds } 数组
+   * 通过 INNER JOIN card 表排除已删除卡片的记录
    */
   async getDailyDurations(daysBack: number): Promise<DailyDuration[]> {
     const today: Date = new Date();
@@ -123,11 +125,11 @@ export class MemoryRecordDao {
     const startMs: number = startDate.getTime();
     const endMs: number = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).getTime();
 
-    const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('memory_record');
-    predicates.greaterThanOrEqualTo('date', startMs)
-      .lessThan('date', endMs);
-
-    const resultSet: relationalStore.ResultSet = await this.db.query(predicates);
+    // 使用 JOIN 确保只统计仍存在的卡片的记录
+    const sql: string =
+      `SELECT mr.date, mr.duration FROM memory_record mr INNER JOIN card c ON mr.card_id = c.id WHERE mr.date >= ? AND mr.date < ?`;
+    const bindArgs: relationalStore.ValueType[] = [startMs, endMs];
+    const resultSet: relationalStore.ResultSet = await this.db.querySql(sql, bindArgs);
 
     // 按日期汇总
     const dayMap: Map<string, number> = new Map();
@@ -166,17 +168,23 @@ export class MemoryRecordDao {
     }
   }
 
-  /** 查询指定日期的所有记录 */
+  /** 删除指定卡片的所有记忆记录 */
+  async deleteByCardId(cardId: number): Promise<void> {
+    const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('memory_record');
+    predicates.equalTo('card_id', cardId);
+    await this.db.delete(predicates);
+  }
+
+  /** 查询指定日期的所有记录（排除已删除卡片的记录） */
   async getRecordsByDate(year: number, month: number, day: number): Promise<MemoryRecord[]> {
     const startOfDay: number = new Date(year, month - 1, day).getTime();
     const endOfDay: number = startOfDay + 86400000;
 
-    const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('memory_record');
-    predicates.greaterThanOrEqualTo('date', startOfDay)
-      .lessThan('date', endOfDay)
-      .orderByDesc('date');
-
-    const resultSet: relationalStore.ResultSet = await this.db.query(predicates);
+    // 使用 JOIN 确保只统计仍存在的卡片的记录
+    const sql: string =
+      `SELECT mr.id, mr.card_id, mr.result, mr.date, mr.duration FROM memory_record mr INNER JOIN card c ON mr.card_id = c.id WHERE mr.date >= ? AND mr.date < ? ORDER BY mr.date DESC`;
+    const bindArgs: relationalStore.ValueType[] = [startOfDay, endOfDay];
+    const resultSet: relationalStore.ResultSet = await this.db.querySql(sql, bindArgs);
     const records: MemoryRecord[] = [];
     if (resultSet.rowCount > 0) {
       resultSet.goToFirstRow();

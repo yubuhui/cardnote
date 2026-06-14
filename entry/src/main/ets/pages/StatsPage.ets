@@ -1,3 +1,4 @@
+import { router } from '@kit.ArkUI';
 import { StudyViewModel, TodayStats, DayDetail, DayDetailRecord } from '../viewmodel/StudyViewModel';
 import { DailyDuration } from '../data/MemoryRecordDao';
 
@@ -13,6 +14,7 @@ export struct StatsPage {
   @State dailyDurations: DailyDuration[] = [];
   @State selectedDay: number = 0;
   @State dayDetail: DayDetail | null = null;
+  @State todayCards: DayDetailRecord[] = [];
   @Consume('statsRefreshSignal') @Watch('onStatsRefresh') remoteRefreshSignal: number = 0;
   private studyVm: StudyViewModel = new StudyViewModel();
 
@@ -29,6 +31,13 @@ export struct StatsPage {
       this.todayGood = stats.good;
       this.todayEasy = stats.easy;
       this.dailyDurations = await this.studyVm.getDailyDurations(7);
+
+      // 加载今日学习卡片列表
+      const today: Date = new Date();
+      const dayDetail: DayDetail = await this.studyVm.getDayDetail(
+        today.getFullYear(), today.getMonth() + 1, today.getDate()
+      );
+      this.todayCards = dayDetail.records;
     } catch (err) {
       console.error('Load stats failed:', err);
     }
@@ -271,6 +280,9 @@ export struct StatsPage {
 
           // 学习时长柱状图
           this.buildDurationChart()
+
+          // 今日学习卡片列表
+          this.buildTodayCardList()
         }
       }
       .align(Alignment.Top)
@@ -336,6 +348,78 @@ export struct StatsPage {
       }
       .width('100%')
       .margin({ top: 4 })
+    }
+    .width('100%')
+    .padding(14)
+    .backgroundColor(Color.White)
+    .borderRadius(12)
+    .margin({ left: 14, right: 14, top: 12 })
+  }
+
+  @Builder
+  buildTodayCardList() {
+    Column() {
+      Text('今日学习卡片')
+        .fontSize(13)
+        .fontWeight(FontWeight.Medium)
+        .fontColor('#333')
+        .width('100%')
+        .textAlign(TextAlign.Start)
+        .margin({ bottom: 10 })
+
+      if (this.todayCards.length === 0) {
+        Text('今天还没有学习记录')
+          .fontSize(12)
+          .fontColor('#999')
+          .width('100%')
+          .textAlign(TextAlign.Center)
+          .padding({ top: 8, bottom: 8 })
+      } else {
+        ForEach(this.todayCards, (item: DayDetailRecord, index: number) => {
+          Row() {
+            Column() {
+              Text(item.cardFront)
+                .fontSize(13)
+                .fontColor('#333')
+                .maxLines(2)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
+                .textAlign(TextAlign.Start)
+                .width('100%')
+
+              if (item.durationSeconds > 0) {
+                Text(`⏱ ${Math.round(item.durationSeconds / 60)} 分钟`)
+                  .fontSize(10)
+                  .fontColor('#999')
+                  .margin({ top: 2 })
+              }
+            }
+            .layoutWeight(1)
+            .alignItems(HorizontalAlign.Start)
+
+            Text(item.resultLabel)
+              .fontSize(11)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(Color.White)
+              .backgroundColor(item.resultColor)
+              .borderRadius(4)
+              .padding({ left: 8, right: 8, top: 3, bottom: 3 })
+          }
+          .width('100%')
+          .padding({ top: 6, bottom: 6 })
+          .onClick(() => {
+            router.pushUrl({
+              url: 'pages/LearningDetailPage',
+              params: { cardId: item.cardId }
+            });
+          })
+
+          if (index < this.todayCards.length - 1) {
+            Divider()
+              .height(1)
+              .color('#F5F5F5')
+          }
+        }, (item: DayDetailRecord, index: number) => `today_${item.cardId}_${index}`)
+      }
     }
     .width('100%')
     .padding(14)
