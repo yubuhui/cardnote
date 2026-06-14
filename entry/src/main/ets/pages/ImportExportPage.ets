@@ -490,19 +490,19 @@ export struct ImportExportPage {
           .padding({ left: 8, right: 8, top: 4, bottom: 4 })
           .bindMenu([
             {
-              value: '📄  下载 TXT 模板',
+              value: '下载 TXT 模板',
               action: () => { this.downloadTxtTemplate(); }
             } as MenuElement,
             {
-              value: '📋  下载 TSV 模板',
+              value: '下载 TSV 模板',
               action: () => { this.downloadTsvTemplate(); }
             } as MenuElement,
             {
-              value: '📊  下载 XLSX 模板',
+              value: '下载 XLSX 模板',
               action: () => { this.downloadXlsxTemplate(); }
             } as MenuElement,
           ] as Array<MenuElement>, {
-            title: '📥 下载导入模板'
+            title: '下载导入模板'
           })
       }
       .width('100%')
@@ -527,12 +527,12 @@ export struct ImportExportPage {
     Scroll() {
       Column() {
         // 导出卡片
-        this.buildSection('📤 导出卡片',
+        this.buildSection('导出卡片',
           `共有 ${this.exportCount} 张卡片，将导出为 TSV 文本文件。`,
           '"问题\\t答案"')
         // 导出牌组选择
         Row() {
-          Text('📂 牌组')
+          Text('牌组')
             .fontSize(13)
             .fontColor('#888')
             .margin({ right: 10 })
@@ -573,8 +573,8 @@ export struct ImportExportPage {
           .margin({ top: 20, bottom: 20 })
 
         // 导入卡片
-        this.buildSection('📥 导入卡片',
-          `选择 TSV/TXT/XLSX/XLS 文件，解析后预览再确认导入。`,
+        this.buildSection('导入卡片',
+          `选择 TSV/TXT/XLSX 文件，解析后预览再确认导入。`,
           'A列=问题  B列=答案  C列=解析')
         Button('选择文件')
           .width('100%')
@@ -642,7 +642,7 @@ export struct ImportExportPage {
 
       // 牌组选择
       Row() {
-        Text('📂 导入到')
+        Text('导入到')
           .fontSize(13)
           .fontColor('#888')
         Select(this.deckList.map((deck: Deck) => {
