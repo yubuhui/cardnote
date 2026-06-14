@@ -98,6 +98,15 @@ struct HomePage {
     autoCancel: true,
     alignment: DialogAlignment.Center
   });
+  private deckSettingsDialogController: CustomDialogController = new CustomDialogController({
+    builder: DeckSettingsDialog({
+      onSave: (newLimit: number, reviewLimit: number, deckId: number) => {
+        this.saveDeckSettings(newLimit, reviewLimit, deckId);
+      }
+    }),
+    autoCancel: true,
+    alignment: DialogAlignment.Center
+  });
   private moveToDeckDialogController: CustomDialogController = new CustomDialogController({
     builder: MoveToDeckDialog({
       decks: $decks,
@@ -761,57 +770,31 @@ struct HomePage {
       },
       secondaryButton: {
         value: '删除牌组',
-        fontColor: '#EF4444',
+        fontColor: deck.isDefault ? '#CCCCCC' : '#EF4444',
         action: () => {
-          this.confirmDeleteDeck(deck);
+          if (!deck.isDefault) {
+            this.confirmDeleteDeck(deck);
+          }
         }
       }
     });
   }
 
   openDeckSettings(deck: Deck) {
-    const newCardRange: string[] = [];
-    // 0 = 使用全局默认
-    newCardRange.push('默认');
-    for (let i = 5; i <= 200; i += 5) {
-      newCardRange.push(i.toString());
-    }
+    AppStorage.setOrCreate('currentEditDeck', deck);
+    this.deckSettingsDialogController.open();
+  }
 
-    const currentNewVal: number = (deck.dailyNewCards && deck.dailyNewCards > 0) ? deck.dailyNewCards : 0;
-    const newCardIdx: number = currentNewVal === 0 ? 0 : Math.round(currentNewVal / 5);
-
-    // 先选择每日新卡数量
-    TextPickerDialog.show({
-      range: newCardRange,
-      selected: newCardIdx,
-      onAccept: async (result: TextPickerResult) => {
-        const newValStr: string = result.value as string;
-        const newLimit: number = (newValStr === '默认') ? 0 : parseInt(newValStr);
-
-        // 再选择每日复习卡数量
-        const reviewRange: string[] = ['默认'];
-        for (let i = 50; i <= 1000; i += 50) {
-          reviewRange.push(i.toString());
-        }
-        const currentReviewVal: number = (deck.dailyReviewCards && deck.dailyReviewCards > 0) ? deck.dailyReviewCards : 0;
-        const reviewIdx: number = currentReviewVal === 0 ? 0 : Math.round(currentReviewVal / 50);
-
-        TextPickerDialog.show({
-          range: reviewRange,
-          selected: reviewIdx,
-          onAccept: async (reviewResult: TextPickerResult) => {
-            const reviewValStr: string = reviewResult.value as string;
-            const reviewLimit: number = (reviewValStr === '默认') ? 0 : parseInt(reviewValStr);
-
-            await this.cardVm.updateDeckSettings(deck.id, newLimit, reviewLimit);
-            await this.loadHomeData();
-          }
-        });
-      }
-    });
+  async saveDeckSettings(newLimit: number, reviewLimit: number, deckId: number) {
+    await this.cardVm.updateDeckSettings(deckId, newLimit, reviewLimit);
+    await this.loadHomeData();
   }
 
   confirmDeleteDeck(deck: Deck) {
+    // 系统默认牌组不可删除
+    if (deck.isDefault) {
+      return;
+    }
     AlertDialog.show({
       title: '删除牌组',
       message: `确定要删除「${deck.name}」吗？该牌组下的所有卡片也会被删除。`,
@@ -888,6 +871,118 @@ struct AddDeckDialog {
       }
       .width('100%')
       .margin({ top: 18 })
+    }
+    .padding(22)
+  }
+}
+
+// ==================== 牌组设置对话框 ====================
+@CustomDialog
+struct DeckSettingsDialog {
+  controller: CustomDialogController;
+  deck: Deck = { id: 0, name: '', color: '', createdAt: 0, updatedAt: 0 };
+  onSave?: (newLimit: number, reviewLimit: number, deckId: number) => void;
+  @State newCardSelected: number = 0;
+  @State reviewSelected: number = 0;
+  private newCardRange: string[] = [];
+  private reviewRange: string[] = [];
+
+  aboutToAppear() {
+    // 从 AppStorage 读取当前要编辑的牌组
+    const stored: Deck | undefined = AppStorage.get<Deck>('currentEditDeck');
+    if (stored) {
+      this.deck = stored;
+    }
+    // 构建新卡范围：默认 + 5~200(步长5)
+    this.newCardRange.push('默认');
+    for (let i = 5; i <= 200; i += 5) {
+      this.newCardRange.push(i.toString());
+    }
+    // 构建复习范围：默认 + 50~1000(步长50)
+    this.reviewRange.push('默认');
+    for (let i = 50; i <= 1000; i += 50) {
+      this.reviewRange.push(i.toString());
+    }
+    // 设置当前选中
+    const currentNew: number = (this.deck.dailyNewCards && this.deck.dailyNewCards > 0) ? this.deck.dailyNewCards : 0;
+    this.newCardSelected = currentNew === 0 ? 0 : Math.round(currentNew / 5);
+    const currentReview: number = (this.deck.dailyReviewCards && this.deck.dailyReviewCards > 0) ? this.deck.dailyReviewCards : 0;
+    this.reviewSelected = currentReview === 0 ? 0 : Math.round(currentReview / 50);
+  }
+
+  build() {
+    Column() {
+      Text('牌组设置')
+        .fontSize(17)
+        .fontWeight(FontWeight.Bold)
+        .fontColor('#1A1A1A')
+        .margin({ bottom: 14 })
+
+      Row({ space: 12 }) {
+        // 左侧：每日新卡
+        Column() {
+          Text('每日新卡')
+            .fontSize(13)
+            .fontColor('#8E8E93')
+            .margin({ bottom: 6 })
+          TextPicker({ range: this.newCardRange, selected: this.newCardSelected })
+            .onChange((value: string | string[], index: number | number[]) => {
+              this.newCardSelected = index as number;
+            })
+        }
+        .layoutWeight(1)
+
+        // 分隔线
+        Divider()
+          .vertical(true)
+          .height(120)
+          .color('#E5E5E5')
+
+        // 右侧：每日复习
+        Column() {
+          Text('每日复习')
+            .fontSize(13)
+            .fontColor('#8E8E93')
+            .margin({ bottom: 6 })
+          TextPicker({ range: this.reviewRange, selected: this.reviewSelected })
+            .onChange((value: string | string[], index: number | number[]) => {
+              this.reviewSelected = index as number;
+            })
+        }
+        .layoutWeight(1)
+      }
+      .margin({ bottom: 16 })
+
+      Row({ space: 10 }) {
+        Button('取消')
+          .fontSize(14)
+          .backgroundColor('#EEEEEF')
+          .fontColor('#666')
+          .layoutWeight(1)
+          .height(42)
+          .borderRadius(21)
+          .onClick(() => {
+            this.controller.close();
+          })
+        Button('确定')
+          .fontSize(14)
+          .backgroundColor('#4A90D9')
+          .fontColor(Color.White)
+          .layoutWeight(1)
+          .height(42)
+          .borderRadius(21)
+          .onClick(() => {
+            if (this.deck && this.onSave) {
+              const newVal: string = this.newCardRange[this.newCardSelected];
+              const reviewVal: string = this.reviewRange[this.reviewSelected];
+              const newLimit: number = (newVal === '默认') ? 0 : parseInt(newVal);
+              const reviewLimit: number = (reviewVal === '默认') ? 0 : parseInt(reviewVal);
+              this.onSave(newLimit, reviewLimit, this.deck.id);
+            }
+            this.controller.close();
+          })
+      }
+      .width('100%')
     }
     .padding(22)
   }

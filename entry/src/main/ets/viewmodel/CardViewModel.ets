@@ -39,6 +39,11 @@ export class CardViewModel {
   }
 
   async deleteDeck(id: number): Promise<void> {
+    // 检查是否为系统默认牌组，不允许删除
+    const deck: Deck | null = await this.deckDao.getById(id);
+    if (deck && deck.isDefault) {
+      throw new Error('系统默认牌组不可删除');
+    }
     await this.deckDao.delete(id);
   }
 

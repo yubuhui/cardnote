@@ -7,4 +7,5 @@ export interface Deck {
   updatedAt: number;    // 更新时间戳（ms）
   dailyNewCards?: number;     // 每日新卡数量，0 表示使用全局默认值
   dailyReviewCards?: number;  // 每日复习卡数量，0 表示使用全局默认值
+  isDefault?: boolean;  // 是否为系统创建的默认牌组（不可删除）
 }

@@ -1,0 +1,60 @@
+﻿  // ==================== 模板下载 ====================
+
+  /** 模板内容——TXT/TSV 共用同一份示例数据（含问答题、选择题、填空题） */
+  private getTemplateText(): string {
+    return `问题（带解析）
+答案
+解析
+
+问题（不带解析）
+答案
+
+光合作用的场所（不带解析）
+叶绿体
+
+光合作用的场所（带解析）
+叶绿体
+光合作用的场所是叶绿体
+
+光合作用的场所（C）（选择题不带解析）
+线粒体
+细胞壁
+叶绿体
+细胞膜
+
+光合作用的场所（选择题带解析）
+线粒体
+叶绿体
+细胞壁
+答案：B
+解析：光合作用的场所是叶绿体
+
+光合作用的场所是[[叶绿体]]。
+解析：光合作用的场所是叶绿体。`;
+  }
+
+  async downloadTxtTemplate() {
+    await this.saveTemplateFile('导入模板.txt', this.getTemplateText(), 'TXT');
+  }
+
+  async downloadTsvTemplate() {
+    await this.saveTemplateFile('导入模板.tsv', this.getTemplateText(), 'TSV');
+  }
+
+  async downloadXlsxTemplate() {
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('卡片模板');
+
+      // 表头
+      const headerRow = worksheet.addRow(['问题', '答案', '解析']);
+      headerRow.eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FF4A90D9' }
+        } as ExcelJS.FillPattern;
+        cell.alignment = { horizontal: 'center', vertical: 'middle' } as ExcelJS.Alignment;
+        cell.border = {
+          top: { style: 'thin' },

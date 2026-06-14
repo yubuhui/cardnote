@@ -34,7 +34,7 @@ export struct ImportExportPage {
   @State importing: boolean = false;
   /** 模板下载菜单是否展开 */
   private cardVm: CardViewModel = new CardViewModel();
-  private deckList: Deck[] = [];
+  @State deckList: Deck[] = [];
   @State selectedDeckId: number = 1;
 
   aboutToAppear() {
@@ -77,20 +77,60 @@ export struct ImportExportPage {
         return;
       }
 
-      let tsvContent: string = '';
+      // TXT 空行分隔格式，兼容三种题型
+      let txtContent: string = '';
       for (let i = 0; i < cards.length; i++) {
-        const front: string = cards[i].front.replace(/\t/g, ' ').replace(/\n/g, ' ');
-        const answer: string = cards[i].correctAnswer.replace(/\t/g, ' ').replace(/\n/g, ' ');
-        tsvContent += `${front}\t${answer}`;
+        const card: Card = cards[i];
+        // 清理字段中的制表符和换行符
+        const cleanFront: string = card.front.replace(/\t/g, ' ').replace(/\n/g, ' ');
+        const cleanAnalysis: string = (card.analysis || '').replace(/\t/g, ' ').replace(/\n/g, ' ');
+
+        if (card.type === CardType.choice) {
+          // 选择题：题目 → 选项行（每行一条）→ 答案 → 解析
+          // 清理题目中可能已嵌入的（A）~（F），统一用「答案：X」行
+          const frontToExport: string = cleanFront.replace(/（[A-F]）/g, '（□）');
+          txtContent += frontToExport + '\n';
+          // 选项
+          for (const opt of card.options) {
+            txtContent += opt.replace(/\t/g, ' ').replace(/\n/g, ' ') + '\n';
+          }
+          // 答案行（索引 → 字母）
+          const answerIndex: number = parseInt(card.correctAnswer);
+          if (!isNaN(answerIndex) && answerIndex >= 0 && answerIndex < 26) {
+            const letter: string = String.fromCharCode('A'.charCodeAt(0) + answerIndex);
+            txtContent += `答案：${letter}\n`;
+          }
+          // 解析行
+          if (cleanAnalysis.length > 0) {
+            txtContent += `解析：${cleanAnalysis}\n`;
+          }
+        } else if (card.type === CardType.fillBlank) {
+          // 填空题：题目（含 [[...]]）→ 解析
+          txtContent += cleanFront + '\n';
+          if (cleanAnalysis.length > 0) {
+            txtContent += `解析：${cleanAnalysis}\n`;
+          }
+        } else {
+          // 问答题：题目 → 答案 → 解析
+          const cleanAnswer: string = card.correctAnswer.replace(/\t/g, ' ').replace(/\n/g, ' ');
+          txtContent += cleanFront + '\n';
+          txtContent += cleanAnswer + '\n';
+          if (cleanAnalysis.length > 0) {
+            txtContent += cleanAnalysis + '\n';
+          }
+        }
+
+        // 卡片间空行分隔
         if (i < cards.length - 1) {
-          tsvContent += '\n';
+          txtContent += '\n';
         }
       }
 
       const context: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
       const saveOptions: picker.DocumentSaveOptions = new picker.DocumentSaveOptions();
-      saveOptions.newFileNames = ['cards_export.tsv'];
-      saveOptions.fileSuffixChoices = ['TSV 文件|.tsv', '.txt'];
+      const exportFileName: string = `${this.getExportDeckLabel()}.txt`;
+      saveOptions.newFileNames = [exportFileName];
+      saveOptions.fileSuffixChoices = ['TXT 文件|.txt'];
 
       const documentPicker: picker.DocumentViewPicker = new picker.DocumentViewPicker(context);
       const uris: string[] = await documentPicker.save(saveOptions);
@@ -100,7 +140,7 @@ export struct ImportExportPage {
       }
 
       const file: fs.File = fs.openSync(uris[0], fs.OpenMode.READ_WRITE);
-      fs.writeSync(file.fd, tsvContent);
+      fs.writeSync(file.fd, txtContent);
       fs.closeSync(file);
 
       this.showToast(`已导出 ${cards.length} 张卡片`);
@@ -183,35 +223,11 @@ export struct ImportExportPage {
 
         items = [];
         if (text.indexOf('\t') !== -1) {
-          // 格式A：制表符分隔（TSV / 旧版 TXT）
+          // 格式A：制表符分隔（TSV / 旧版 TXT）—— 复用统一解析逻辑，支持选择/填空/问答
           const lines: string[] = text.split('\n').filter((line: string) => line.trim().length > 0);
           for (const line of lines) {
-            const tabIdx: number = line.indexOf('\t');
-            if (tabIdx === -1) {
-              const trimmed: string = line.trim();
-              if (trimmed.length > 0) {
-                items.push({ front: trimmed, answer: '', analysis: '', valid: false, cardType: CardType.essay, options: [] });
-              }
-            } else {
-              const front: string = line.substring(0, tabIdx).trim();
-              const afterTab: string = line.substring(tabIdx + 1).trim();
-              // 可能包含第二列解析：问题\t答案\t解析
-              const secondTabIdx: number = afterTab.indexOf('\t');
-              let answer: string;
-              let analysis: string;
-              if (secondTabIdx !== -1) {
-                answer = afterTab.substring(0, secondTabIdx).trim();
-                analysis = afterTab.substring(secondTabIdx + 1).trim();
-              } else {
-                answer = afterTab;
-                analysis = '';
-              }
-              if (front.length === 0) {
-                items.push({ front: line, answer: answer, analysis: analysis, valid: false, cardType: CardType.essay, options: [] });
-              } else {
-                items.push({ front: front, answer: answer, analysis: analysis, valid: true, cardType: CardType.essay, options: [] });
-              }
-            }
+            const parts: string[] = line.split('\t').map((p: string) => p.trim());
+            items.push(this.parseCardBlock(parts));
           }
         } else {
           // 格式B：空行分隔卡片（新版 TXT）
@@ -304,18 +320,18 @@ export struct ImportExportPage {
       (optionLines.length >= 2 && explicitAnswerLetter.length > 0) ||
       (optionLines.length >= 2 && /（[A-F]）/.test(front) && explicitAnswerLetter.length === 0)) {
 
-      let answerLetter: string = explicitAnswerLetter;
-      if (answerLetter.length === 0) {
-        const embedded: RegExpMatchArray | null = front.match(/（([A-F])）/);
-        answerLetter = embedded ? embedded[1] : '';
-      }
+      // 优先使用显式「答案：X」行，否则从题目中提取嵌入的（A）~（E）
+      const answerLetter: string = explicitAnswerLetter.length > 0 ? explicitAnswerLetter :
+        (front.match(/（([A-F])）/)?.[1] ?? '');
+      // 清理题目中嵌入的答案标记：光合作用的场所（C）→ 光合作用的场所（□）
+      const cleanedFront: string = answerLetter.length > 0 ? front.replace(/（[A-F]）/, '（□）') : front;
       const answerIndex: number = answerLetter.length > 0 ?
         answerLetter.charCodeAt(0) - 'A'.charCodeAt(0) : -1;
       const correctAnswer: string = (answerIndex >= 0 && answerIndex < optionLines.length) ?
-        optionLines[answerIndex] : '';
+        answerIndex.toString() : '';
 
       return {
-        front,
+        front: cleanedFront,
         answer: correctAnswer,
         analysis: analysisFromLine,
         valid: optionLines.length >= 2 && correctAnswer.length > 0,
@@ -528,8 +544,8 @@ export struct ImportExportPage {
       Column() {
         // 导出卡片
         this.buildSection('导出卡片',
-          `共有 ${this.exportCount} 张卡片，将导出为 TSV 文本文件。`,
-          '"问题\\t答案"')
+          `共有 ${this.exportCount} 张卡片，将导出为 TXT 文本文件（支持选择/填空/问答）。`,
+          '"问题\\n答案"')
         // 导出牌组选择
         Row() {
           Text('牌组')

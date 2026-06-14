@@ -110,7 +110,8 @@ export class DatabaseManager {
       'name TEXT NOT NULL, ' +
       'color TEXT DEFAULT \'#4A90D9\', ' +
       'created_at INTEGER, ' +
-      'updated_at INTEGER)'
+      'updated_at INTEGER, ' +
+      'is_default INTEGER DEFAULT 0)'
     );
 
     // card 表
@@ -167,6 +168,8 @@ export class DatabaseManager {
     await this.migrateTable('card', 'deck_uuid', 'TEXT');
     // memory_record: 添加 card_uuid 列（v5 - WebDAV 跨设备同步）
     await this.migrateTable('memory_record', 'card_uuid', 'TEXT');
+    // deck: 添加 is_default 列（v6 - 标记系统默认牌组，不可删除）
+    await this.migrateTable('deck', 'is_default', 'INTEGER DEFAULT 0');
   }
 
   /**
@@ -221,6 +224,7 @@ export class DatabaseManager {
         uuid: util.generateRandomUUID(true),
         created_at: now,
         updated_at: now,
+        is_default: 1,
       };
       await this.rdbStore.insert('deck', values);
     }

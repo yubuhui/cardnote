@@ -19,6 +19,9 @@ function deckToValues(deck: Deck): relationalStore.ValuesBucket {
   if (deck.dailyReviewCards !== undefined) {
     values['daily_review_cards'] = deck.dailyReviewCards;
   }
+  if (deck.isDefault !== undefined) {
+    values['is_default'] = deck.isDefault ? 1 : 0;
+  }
   return values;
 }
 
@@ -42,6 +45,10 @@ function rowToDeck(resultSet: relationalStore.ResultSet): Deck {
   const reviewCardsIdx: number = resultSet.getColumnIndex('daily_review_cards');
   if (reviewCardsIdx >= 0) {
     deck.dailyReviewCards = resultSet.getLong(reviewCardsIdx);
+  }
+  const isDefaultIdx: number = resultSet.getColumnIndex('is_default');
+  if (isDefaultIdx >= 0) {
+    deck.isDefault = resultSet.getLong(isDefaultIdx) === 1;
   }
   return deck;
 }
@@ -93,7 +100,7 @@ export class DeckDao {
   /** 查询所有牌组 */
   async getAll(): Promise<Deck[]> {
     const resultSet: relationalStore.ResultSet = await this.db.query(
-      new relationalStore.RdbPredicates('deck').orderByDesc('updated_at')
+      new relationalStore.RdbPredicates('deck').orderByAsc('updated_at')
     );
     const decks: Deck[] = [];
     if (resultSet.rowCount > 0) {
