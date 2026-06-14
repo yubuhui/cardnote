@@ -166,6 +166,10 @@ export class StudyViewModel {
 
     for (const r of records) {
       const card: Card | null = await this.cardVm.getById(r.cardId);
+      // 跳过已删除的卡片，不显示其学习数据
+      if (!card) {
+        continue;
+      }
       totalDuration += r.duration;
       if (r.result === Rating.forget) forgetCount++;
       else if (r.result === Rating.hard) hardCount++;
@@ -173,7 +177,7 @@ export class StudyViewModel {
       else if (r.result === Rating.easy) easyCount++;
       detailRecords.push({
         cardId: r.cardId,
-        cardFront: card ? card.front : '(已删除)',
+        cardFront: card.front,
         result: r.result,
         resultLabel: RATING_LABELS[r.result] ?? '未知',
         resultColor: RATING_COLORS[r.result] ?? '#999',
@@ -183,7 +187,7 @@ export class StudyViewModel {
 
     return {
       dateLabel: `${year}/${month}/${day}`,
-      totalReviews: records.length,
+      totalReviews: detailRecords.length,
       forgetCount,
       hardCount,
       goodCount,

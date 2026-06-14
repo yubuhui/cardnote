@@ -15,6 +15,67 @@ const TEXT_PRIMARY = '#1A1A1A';
 const TEXT_SECONDARY = '#8E8E93';
 const TEXT_TERTIARY = '#A0A0A0';
 
+// ==================== 卡片列表项组件 ====================
+@Component
+struct CardItem {
+  @Prop cardId: number = 0;
+  @Prop cardFront: string = '';
+  @Prop cardStatus: CardStatus = CardStatus.unlearned;
+  @Prop isMultiSelect: boolean = false;
+  @Prop isSelected: boolean = false;
+  onTap: () => void = () => {};
+  onLongPress: () => void = () => {};
+
+  build() {
+    Row() {
+      if (this.isMultiSelect) {
+        Checkbox()
+          .select(this.isSelected)
+          .hitTestBehavior(HitTestMode.None)
+          .margin({ right: 10 })
+      }
+
+      Row() {
+        Text(this.cardFront)
+          .fontSize(14)
+          .fontColor(TEXT_PRIMARY)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .layoutWeight(1)
+        Blank().width(8)
+        Text(this.cardStatus === CardStatus.unlearned ? '未背诵' :
+             this.cardStatus === CardStatus.reviewing ? '待复习' : '已掌握')
+          .fontSize(10)
+          .fontColor(this.cardStatus === CardStatus.unlearned ? '#9E9E9E' :
+                     this.cardStatus === CardStatus.reviewing ? PRIMARY : '#34C759')
+          .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+          .backgroundColor(this.cardStatus === CardStatus.unlearned ? '#F0F0F0' :
+                           this.cardStatus === CardStatus.reviewing ? '#E8F0FE' : '#E8F8ED')
+          .borderRadius(4)
+      }
+      .layoutWeight(1)
+    }
+    .width('100%')
+    .padding({ left: 14, right: 14, top: 12, bottom: 12 })
+    .backgroundColor(CARD_WHITE)
+    .borderRadius(10)
+    .shadow({ radius: 3, color: '#08000000', offsetY: 1 })
+    .margin({ bottom: 6 })
+    .gesture(
+      GestureGroup(GestureMode.Exclusive,
+        LongPressGesture({ repeat: false, duration: 400 })
+          .onAction(() => {
+            this.onLongPress();
+          }),
+        TapGesture()
+          .onAction(() => {
+            this.onTap();
+          })
+      )
+    )
+  }
+}
+
 @Entry
 @Component
 struct HomePage {
@@ -24,9 +85,6 @@ struct HomePage {
   @State unlearnedOpen: boolean = true;
   @State reviewingOpen: boolean = false;
   @State masteredOpen: boolean = false;
-  @State swipeCardId: number = -1;
-  @State swipeOffsetX: number = 0;
-  @State activeSwipeCardId: number = -1;
   @State selectedDeckId: number = 0;
   @State deletingDeckId: number = -1;
   @State currentTabIndex: number = 0;
@@ -290,7 +348,26 @@ struct HomePage {
       // 卡片列表
       if (this.unlearnedOpen) {
         ForEach(this.getFilteredCards().filter(c => c.status === CardStatus.unlearned), (card: Card) => {
-          this.buildCardItem(card)
+          CardItem({
+            cardId: card.id,
+            cardFront: card.front,
+            cardStatus: card.status,
+            isMultiSelect: this.isMultiSelectMode,
+            isSelected: this.isCardSelected(card.id),
+            onTap: () => {
+              this.deletingDeckId = -1;
+              if (this.isMultiSelectMode) {
+                this.toggleCardSelection(card.id);
+              } else {
+                router.pushUrl({ url: 'pages/EditorPage', params: { cardId: card.id } });
+              }
+            },
+            onLongPress: () => {
+              if (!this.isMultiSelectMode) {
+                this.enterMultiSelectMode(card.id);
+              }
+            }
+          })
         }, (card: Card) => card.id.toString())
       }
     }
@@ -329,7 +406,26 @@ struct HomePage {
 
       if (this.reviewingOpen) {
         ForEach(this.getFilteredCards().filter(c => c.status === CardStatus.reviewing), (card: Card) => {
-          this.buildCardItem(card)
+          CardItem({
+            cardId: card.id,
+            cardFront: card.front,
+            cardStatus: card.status,
+            isMultiSelect: this.isMultiSelectMode,
+            isSelected: this.isCardSelected(card.id),
+            onTap: () => {
+              this.deletingDeckId = -1;
+              if (this.isMultiSelectMode) {
+                this.toggleCardSelection(card.id);
+              } else {
+                router.pushUrl({ url: 'pages/EditorPage', params: { cardId: card.id } });
+              }
+            },
+            onLongPress: () => {
+              if (!this.isMultiSelectMode) {
+                this.enterMultiSelectMode(card.id);
+              }
+            }
+          })
         }, (card: Card) => card.id.toString())
       }
     }
@@ -368,7 +464,26 @@ struct HomePage {
 
       if (this.masteredOpen) {
         ForEach(this.getFilteredCards().filter(c => c.status === CardStatus.mastered), (card: Card) => {
-          this.buildCardItem(card)
+          CardItem({
+            cardId: card.id,
+            cardFront: card.front,
+            cardStatus: card.status,
+            isMultiSelect: this.isMultiSelectMode,
+            isSelected: this.isCardSelected(card.id),
+            onTap: () => {
+              this.deletingDeckId = -1;
+              if (this.isMultiSelectMode) {
+                this.toggleCardSelection(card.id);
+              } else {
+                router.pushUrl({ url: 'pages/EditorPage', params: { cardId: card.id } });
+              }
+            },
+            onLongPress: () => {
+              if (!this.isMultiSelectMode) {
+                this.enterMultiSelectMode(card.id);
+              }
+            }
+          })
         }, (card: Card) => card.id.toString())
       }
     }
@@ -378,126 +493,6 @@ struct HomePage {
     .borderRadius(14)
     .margin({ top: 10 })
     .shadow({ radius: 4, color: '#0A000000', offsetY: 1 })
-  }
-
-  // ==================== 卡片项（含滑动手势） ====================
-  @Builder
-  buildCardItem(card: Card) {
-    Stack() {
-      // 多选 check
-      if (this.isMultiSelectMode) {
-        Row({ space: 6 }) {
-          Checkbox({ name: 'check', group: 'cards' })
-            .select(this.isCardSelected(card.id))
-            .onChange(() => {
-              this.toggleCardSelection(card.id);
-            })
-        }
-        .alignSelf(ItemAlign.Start)
-      }
-
-      Column() {
-        Row() {
-          Text(card.front)
-            .fontSize(14)
-            .fontColor(TEXT_PRIMARY)
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .layoutWeight(1)
-          Blank().width(8)
-          Text(card.status === CardStatus.unlearned ? '未背诵' : card.status === CardStatus.reviewing ? '待复习' : '已掌握')
-            .fontSize(10)
-            .fontColor(card.status === CardStatus.unlearned ? '#9E9E9E' : card.status === CardStatus.reviewing ? PRIMARY : '#34C759')
-            .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-            .backgroundColor(card.status === CardStatus.unlearned ? '#F0F0F0' : card.status === CardStatus.reviewing ? '#E8F0FE' : '#E8F8ED')
-            .borderRadius(4)
-        }
-        .width('100%')
-      }
-      .width('100%')
-      .padding({ left: 14, right: 14, top: 12, bottom: 12 })
-      .backgroundColor(CARD_WHITE)
-      .borderRadius(10)
-      .offset({ x: this.activeSwipeCardId === card.id ? this.swipeOffsetX : 0 })
-      .shadow({ radius: 3, color: '#08000000', offsetY: 1 })
-      .gesture(
-        PanGesture({ direction: PanDirection.Horizontal, distance: 5 })
-          .onActionStart(() => {
-            this.swipeCardId = card.id;
-            this.swipeOffsetX = 0;
-          })
-          .onActionUpdate((event: GestureEvent) => {
-            if (this.swipeCardId !== card.id) return;
-            this.swipeOffsetX = Math.min(0, Math.max(-160, event.offsetX));
-          })
-          .onActionEnd(() => {
-            if (this.swipeCardId !== card.id) return;
-            if (this.swipeOffsetX < -80) {
-              this.activeSwipeCardId = card.id;
-            } else {
-              this.swipeOffsetX = 0;
-              this.activeSwipeCardId = -1;
-            }
-            this.swipeCardId = -1;
-          })
-      )
-    }
-    .width('100%')
-    .margin({ bottom: 6 })
-    .onClick(() => {
-      this.deletingDeckId = -1;
-      if (this.isMultiSelectMode) {
-        this.toggleCardSelection(card.id);
-      } else if (this.activeSwipeCardId === card.id) {
-        this.closeSwipe();
-      } else {
-        router.pushUrl({ url: 'pages/EditorPage', params: { cardId: card.id } });
-      }
-    })
-
-    // 滑动操作按钮
-    if (this.activeSwipeCardId === card.id) {
-      Row() {
-        // 删除
-        Button() {
-          Column() {
-            Text('🗑').fontSize(18)
-            Text('删除').fontSize(10)
-          }
-        }
-        .width(52).height(52)
-        .backgroundColor('#EF4444')
-        .borderRadius(10)
-        .onClick(() => { this.deleteCard(card); })
-        Blank().width(6)
-        // 重学
-        Button() {
-          Column() {
-            Text('🔄').fontSize(18)
-            Text('重学').fontSize(10)
-          }
-        }
-        .width(52).height(52)
-        .backgroundColor('#F39C12')
-        .borderRadius(10)
-        .onClick(() => { this.relearnCard(card); })
-        Blank().width(6)
-        // 晋级
-        Button() {
-          Column() {
-            Text('⏫').fontSize(18)
-            Text('晋级').fontSize(10)
-          }
-        }
-        .width(52).height(52)
-        .backgroundColor('#2ECC71')
-        .borderRadius(10)
-        .onClick(() => { this.promoteCard(card); })
-      }
-      .height(52)
-      .position({ x: '100%', y: '50%' })
-      .translate({ x: -64, y: -26 })
-    }
   }
 
   // ==================== 底部操作栏（正常模式） ====================
@@ -523,7 +518,7 @@ struct HomePage {
         Blank().width(12)
       }
 
-      Button('+ 新建卡片')
+      Button('新建卡片')
         .layoutWeight(1)
         .height(46)
         .fontSize(14)
@@ -546,7 +541,7 @@ struct HomePage {
   @Builder
   buildBatchActionBar() {
     Row({ space: 8 }) {
-      Button('重新学习')
+      Button('重学')
         .layoutWeight(1)
         .height(42)
         .fontSize(13)
@@ -620,59 +615,20 @@ struct HomePage {
   toggleCardSelection(cardId: number) {
     const idx = this.selectedCardIds.indexOf(cardId);
     if (idx >= 0) {
-      this.selectedCardIds.splice(idx, 1);
+      this.selectedCardIds = this.selectedCardIds.filter(id => id !== cardId);
     } else {
-      this.selectedCardIds.push(cardId);
+      this.selectedCardIds = [...this.selectedCardIds, cardId];
     }
+  }
+
+  enterMultiSelectMode(cardId: number) {
+    this.isMultiSelectMode = true;
+    this.selectedCardIds = [cardId];
   }
 
   exitMultiSelectMode() {
     this.isMultiSelectMode = false;
     this.selectedCardIds = [];
-  }
-
-  closeSwipe() {
-    this.swipeOffsetX = 0;
-    this.activeSwipeCardId = -1;
-    this.swipeCardId = -1;
-  }
-
-  // ==================== 卡片操作 ====================
-  async deleteCard(card: Card) {
-    AlertDialog.show({
-      title: '删除卡片',
-      message: `确定要删除「${card.front}」吗？删除后不可恢复。`,
-      autoCancel: true,
-      alignment: DialogAlignment.Center,
-      primaryButton: {
-        value: '取消',
-        action: () => {}
-      },
-      secondaryButton: {
-        value: '删除',
-        fontColor: '#EF4444',
-        action: async () => {
-          await this.cardVm.deleteCard(card.id);
-          await this.loadHomeData();
-        }
-      }
-    });
-  }
-
-  async relearnCard(card: Card) {
-    card.status = CardStatus.unlearned;
-    await this.cardVm.updateCard(card);
-    await this.loadHomeData();
-  }
-
-  async promoteCard(card: Card) {
-    if (card.status === CardStatus.unlearned) {
-      card.status = CardStatus.reviewing;
-    } else if (card.status === CardStatus.reviewing) {
-      card.status = CardStatus.mastered;
-    }
-    await this.cardVm.updateCard(card);
-    await this.loadHomeData();
   }
 
   async addDeck(name: string) {

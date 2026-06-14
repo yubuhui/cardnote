@@ -27,16 +27,21 @@ struct LearningPage {
   private lastInteractionTime: number = 0;
 
   aboutToAppear() {
-    this.loadDueCards();
+    const params = router.getParams() as Record<string, Object>;
+    const deckId: number = (params && params['selectedDeckId'] !== undefined)
+      ? (params['selectedDeckId'] as number) : 0;
+    // selectedDeckId === 0 表示"全部牌组"，传 undefined 给后端
+    const deckIds: number[] | undefined = (deckId > 0) ? [deckId] : undefined;
+    this.loadDueCards(deckIds);
   }
 
   aboutToDisappear() {
     this.stopCardTimer();
   }
 
-  async loadDueCards() {
+  async loadDueCards(deckIds?: number[]) {
     try {
-      this.dueCards = await this.studyViewModel.getDueCards();
+      this.dueCards = await this.studyViewModel.getDueCards(deckIds);
       // 选择题 → 生成乱序 displayOrder
       for (let i = 0; i < this.dueCards.length; i++) {
         if (this.dueCards[i].type === CardTypeEnum.choice) {

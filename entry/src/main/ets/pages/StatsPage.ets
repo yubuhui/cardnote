@@ -114,7 +114,7 @@ export struct StatsPage {
   build() {
     Column() {
       // 顶部标题
-      Text('📊 学习统计')
+      Text('学习统计')
         .fontSize(16)
         .fontWeight(FontWeight.Medium)
         .fontColor('#333')
@@ -350,7 +350,7 @@ export struct StatsPage {
       // 标题栏
       Row() {
         Column() {
-          Text(`📅 ${this.dayDetail!.dateLabel}`)
+          Text(`${this.dayDetail!.dateLabel}`)
             .fontSize(15)
             .fontWeight(FontWeight.Medium)
             .fontColor('#333')
