@@ -372,7 +372,7 @@ struct HomePage {
               if (this.isMultiSelectMode) {
                 this.toggleCardSelection(card.id);
               } else {
-                router.pushUrl({ url: 'pages/EditorPage', params: { cardId: card.id } });
+                router.pushUrl({ url: 'pages/LearningDetailPage', params: { cardId: card.id } });
               }
             },
             onLongPress: () => {
@@ -430,7 +430,7 @@ struct HomePage {
               if (this.isMultiSelectMode) {
                 this.toggleCardSelection(card.id);
               } else {
-                router.pushUrl({ url: 'pages/EditorPage', params: { cardId: card.id } });
+                router.pushUrl({ url: 'pages/LearningDetailPage', params: { cardId: card.id } });
               }
             },
             onLongPress: () => {
@@ -488,7 +488,7 @@ struct HomePage {
               if (this.isMultiSelectMode) {
                 this.toggleCardSelection(card.id);
               } else {
-                router.pushUrl({ url: 'pages/EditorPage', params: { cardId: card.id } });
+                router.pushUrl({ url: 'pages/LearningDetailPage', params: { cardId: card.id } });
               }
             },
             onLongPress: () => {
