@@ -421,8 +421,8 @@ struct HomePage {
                 this.buildCardSection({ title: '未背诵', circleColor: $r('app.color.status_unlearned'), status: CardStatus.unlearned, isOpen: this.unlearnedOpen, section: 'unlearned' })
                 this.buildCardSection({ title: '复习中', circleColor: $r('app.color.primary_color'), status: CardStatus.reviewing, isOpen: this.reviewingOpen, section: 'reviewing' })
                 this.buildCardSection({ title: '已掌握', circleColor: $r('app.color.status_mastered'), status: CardStatus.mastered, isOpen: this.masteredOpen, section: 'mastered' })
-              }.width('100%').padding({ bottom: 68 })
-            }.width('100%').layoutWeight(1).scrollBar(BarState.Off)
+              }.width('100%').justifyContent(FlexAlign.Start).padding({ bottom: 68 })
+            }.width('100%').layoutWeight(1).scrollBar(BarState.Off).align(Alignment.TopStart)
 
             if (this.isMultiSelectMode) { this.buildBatchActionBar() } else { this.buildBottomBar() }
           }.width('100%').height('100%').backgroundColor($r('app.color.background_color'))
