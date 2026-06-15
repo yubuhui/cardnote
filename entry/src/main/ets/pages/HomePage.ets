@@ -1,4 +1,4 @@
-import { router } from '@kit.ArkUI';
+import { router, promptAction } from '@kit.ArkUI';
 import { Card, CardStatus } from '../model/Card';
 import { Deck } from '../model/Deck';
 import { CardViewModel } from '../viewmodel/CardViewModel';
@@ -101,38 +101,112 @@ struct AddDeckDialog {
 struct DeckSettingsDialog {
   controller?: CustomDialogController;
   onSave: (newLimit: number, reviewLimit: number, deckId: number) => void = () => {};
-  deckId: number = 0;
-  deckName: string = '';
+  @Prop deckId: number = 0;
+  @Prop deckName: string = '';
   @State newCardsPerDay: number = 20;
   @State reviewCardsPerDay: number = 100;
 
   build() {
     Column() {
-      Text(`${this.deckName} 设置`).fontSize(18).fontWeight(FontWeight.Medium).margin({ bottom: 16 })
-      Row() {
-        Text('每日新卡').fontSize(14).layoutWeight(1)
-        Text(`${this.newCardsPerDay}`).fontSize(14).fontColor($r('app.color.primary_color'))
-      }.width('100%').padding({ top: 8, bottom: 8 })
-      Slider({ value: this.newCardsPerDay, min: 5, max: 100, step: 5 })
-        .onChange((value: number) => { this.newCardsPerDay = value; })
+      Text(`${this.deckName} 设置`)
+        .fontSize(18)
+        .fontWeight(FontWeight.Medium)
+        .fontColor($r('app.color.text_primary'))
+        .margin({ bottom: 20 })
+
+      // 每日新卡
+      Column() {
+        Row() {
+          Text('每日新卡')
+            .fontSize(15)
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('app.color.text_primary'))
+            .layoutWeight(1)
+          Text(`${this.newCardsPerDay}`)
+            .fontSize(16)
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.primary_color'))
+        }
         .width('100%')
-      Row() {
-        Text('每日复习').fontSize(14).layoutWeight(1)
-        Text(`${this.reviewCardsPerDay}`).fontSize(14).fontColor($r('app.color.primary_color'))
-      }.width('100%').padding({ top: 16, bottom: 8 })
-      Slider({ value: this.reviewCardsPerDay, min: 10, max: 500, step: 10 })
-        .onChange((value: number) => { this.reviewCardsPerDay = value; })
+        .margin({ bottom: 8 })
+
+        Row({ space: 6 }) {
+          Text('5')
+            .fontSize(11)
+            .fontColor($r('app.color.text_secondary'))
+          Slider({ value: this.newCardsPerDay, min: 5, max: 100, step: 5 })
+            .onChange((value: number) => { this.newCardsPerDay = value; })
+            .layoutWeight(1)
+          Text('100')
+            .fontSize(11)
+            .fontColor($r('app.color.text_secondary'))
+        }
         .width('100%')
+      }
+      .width('100%')
+      .padding({ bottom: 12 })
+
+      Divider()
+        .width('100%')
+        .strokeWidth(0.5)
+        .color($r('app.color.divider_color'))
+        .margin({ top: 4, bottom: 12 })
+
+      // 每日复习
+      Column() {
+        Row() {
+          Text('每日复习')
+            .fontSize(15)
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('app.color.text_primary'))
+            .layoutWeight(1)
+          Text(`${this.reviewCardsPerDay}`)
+            .fontSize(16)
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.primary_color'))
+        }
+        .width('100%')
+        .margin({ bottom: 8 })
+
+        Row({ space: 6 }) {
+          Text('50')
+            .fontSize(11)
+            .fontColor($r('app.color.text_secondary'))
+          Slider({ value: this.reviewCardsPerDay, min: 50, max: 1000, step: 50 })
+            .onChange((value: number) => { this.reviewCardsPerDay = value; })
+            .layoutWeight(1)
+          Text('1000')
+            .fontSize(11)
+            .fontColor($r('app.color.text_secondary'))
+        }
+        .width('100%')
+      }
+      .width('100%')
+
       Row({ space: 12 }) {
-        Button('取消').fontSize(14).backgroundColor($r('app.color.dialog_btn_cancel_bg')).fontColor($r('app.color.dialog_btn_cancel_text')).layoutWeight(1)
+        Button('取消')
+          .fontSize(14)
+          .height(40)
+          .backgroundColor($r('app.color.dialog_btn_cancel_bg'))
+          .fontColor($r('app.color.dialog_btn_cancel_text'))
+          .layoutWeight(1)
           .onClick(() => { this.controller?.close(); })
-        Button('确定').fontSize(14).backgroundColor($r('app.color.primary_color')).fontColor(Color.White).layoutWeight(1)
+        Button('确定')
+          .fontSize(14)
+          .height(40)
+          .backgroundColor($r('app.color.primary_color'))
+          .fontColor(Color.White)
+          .layoutWeight(1)
           .onClick(() => {
             this.onSave(this.newCardsPerDay, this.reviewCardsPerDay, this.deckId);
             this.controller?.close();
           })
-      }.width('100%').margin({ top: 20 })
-    }.padding(20)
+      }
+      .width('100%')
+      .margin({ top: 20 })
+    }
+    .padding(20)
+    .width('100%')
   }
 }
 
@@ -179,6 +253,72 @@ struct MoveToDeckDialog {
   }
 }
 
+@CustomDialog
+struct DeckActionDialog {
+  controller?: CustomDialogController;
+  @Prop deckName: string = '';
+  @Prop isDefault: boolean = false;
+  onSettings: () => void = () => {};
+  onDelete: () => void = () => {};
+
+  build() {
+    Column() {
+      Text(this.deckName)
+        .fontSize(17)
+        .fontWeight(FontWeight.Medium)
+        .fontColor($r('app.color.text_primary'))
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .width('100%')
+        .textAlign(TextAlign.Center)
+        .margin({ bottom: 20 })
+
+      Row({ space: 12 }) {
+        Button('牌组设置')
+          .fontSize(14)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.primary_color'))
+          .backgroundColor($r('app.color.card_background'))
+          .border({ width: 1.2, color: $r('app.color.primary_color'), style: BorderStyle.Solid })
+          .borderRadius(20)
+          .height(40)
+          .layoutWeight(1)
+          .onClick(() => {
+            this.controller?.close();
+            this.onSettings();
+          })
+        Button('删除牌组')
+          .fontSize(14)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(this.isDefault ? $r('app.color.sync_disabled_text') : $r('app.color.delete_text'))
+          .backgroundColor($r('app.color.card_background'))
+          .border({ width: 1.2, color: this.isDefault ? $r('app.color.sync_disabled_text') : $r('app.color.delete_text'), style: BorderStyle.Solid })
+          .borderRadius(20)
+          .height(40)
+          .layoutWeight(1)
+          .enabled(!this.isDefault)
+          .onClick(() => {
+            this.controller?.close();
+            this.onDelete();
+          })
+      }
+      .width('100%')
+      .margin({ bottom: 14 })
+
+      Button('取消')
+        .fontSize(14)
+        .height(38)
+        .backgroundColor($r('app.color.dialog_btn_cancel_bg'))
+        .fontColor($r('app.color.dialog_btn_cancel_text'))
+        .borderRadius(20)
+        .width('100%')
+        .onClick(() => { this.controller?.close(); })
+    }
+    .padding({ left: 24, right: 24, top: 20, bottom: 20 })
+    .width('100%')
+  }
+}
+
 @Entry
 @Component
 struct HomePage {
@@ -190,6 +330,11 @@ struct HomePage {
   @State masteredOpen: boolean = false;
   @State selectedDeckId: number = 0;
   @State deletingDeckId: number = -1;
+  @State editingDeckId: number = 0;
+  @State editingDeckName: string = '';
+  @State editingDeckDailyNew: number = 20;
+  @State editingDeckDailyReview: number = 100;
+  @State editingDeckIsDefault: boolean = false;
   @State currentTabIndex: number = 0;
   @State isMultiSelectMode: boolean = false;
   @State selectedCardIds: number[] = [];
@@ -202,15 +347,28 @@ struct HomePage {
   });
   private deckSettingsDialogController: CustomDialogController = new CustomDialogController({
     builder: DeckSettingsDialog({
+      deckId: this.editingDeckId,
+      deckName: this.editingDeckName,
+      newCardsPerDay: this.editingDeckDailyNew,
+      reviewCardsPerDay: this.editingDeckDailyReview,
       onSave: (newLimit: number, reviewLimit: number, deckId: number) => {
         this.saveDeckSettings(newLimit, reviewLimit, deckId);
       }
     }),
     autoCancel: true, alignment: DialogAlignment.Center
   });
+  private deckActionDialogController: CustomDialogController = new CustomDialogController({
+    builder: DeckActionDialog({
+      deckName: this.editingDeckName,
+      isDefault: this.editingDeckIsDefault,
+      onSettings: () => { this.deckSettingsDialogController.open(); },
+      onDelete: () => { this.deleteCurrentActionDeck(); }
+    }),
+    autoCancel: true, alignment: DialogAlignment.Center
+  });
   private moveToDeckDialogController: CustomDialogController = new CustomDialogController({
     builder: MoveToDeckDialog({
-      decks: $decks,
+      decks: this.decks,
       onMoveToDeck: (deckIds: number[]) => { this.batchMoveToDeck(deckIds); }
     }),
     autoCancel: true, alignment: DialogAlignment.Center
@@ -407,8 +565,10 @@ struct HomePage {
         await this.cardVm.updateCard(card);
       }
     }
+    const promotedCount: number = this.selectedCardIds.length;
     this.exitMultiSelectMode();
     await this.loadHomeData();
+    promptAction.showToast({ message: `已将 ${promotedCount} 张卡片晋级`, duration: 2000 });
   }
 
   async batchRelearn() {
@@ -448,17 +608,64 @@ struct HomePage {
 
   async batchMoveToDeck(deckIds: number[]) {
     if (deckIds.length === 0) return;
+    const count: number = this.selectedCardIds.length;
     for (const cardId of this.selectedCardIds) {
       const card = this.cards.find(c => c.id === cardId);
       if (card) { card.deckId = deckIds[0]; await this.cardVm.updateCard(card); }
     }
     this.exitMultiSelectMode(); await this.loadHomeData();
+    promptAction.showToast({ message: `已将 ${count} 张卡片移动`, duration: 2000 });
   }
 
-  showDeckActionMenu(deck: Deck) { this.deletingDeckId = deck.id; }
+  showDeckActionMenu(deck: Deck) {
+    this.editingDeckId = deck.id;
+    this.editingDeckName = deck.name;
+    this.editingDeckIsDefault = deck.isDefault ?? false;
+    this.editingDeckDailyNew = deck.dailyNewCards ?? 20;
+    this.editingDeckDailyReview = deck.dailyReviewCards ?? 100;
+    this.deckActionDialogController.open();
+  }
+
+  deleteCurrentActionDeck() {
+    const deck = this.decks.find(d => d.id === this.editingDeckId);
+    if (deck) {
+      this.deleteDeck(deck);
+    }
+  }
+
+  async deleteDeck(deck: Deck) {
+    if (deck.isDefault) {
+      promptAction.showToast({ message: '系统默认牌组不可删除', duration: 2000 });
+      return;
+    }
+    // 统计该牌组下的卡片数量
+    const cardCount: number = this.cards.filter(c => c.deckId === deck.id).length;
+    AlertDialog.show({
+      title: '删除牌组',
+      message: cardCount > 0
+        ? `牌组「${deck.name}」下有 ${cardCount} 张卡片，删除牌组将同时删除所有卡片。确定继续吗？`
+        : `确定删除牌组「${deck.name}」吗？`,
+      autoCancel: true,
+      alignment: DialogAlignment.Center,
+      primaryButton: { value: '取消', action: () => {} },
+      secondaryButton: {
+        value: '删除',
+        fontColor: $r('app.color.delete_text'),
+        action: async () => {
+          await this.cardVm.deleteDeck(deck.id);
+          if (this.selectedDeckId === deck.id) {
+            this.selectedDeckId = 0;
+          }
+          await this.loadHomeData();
+          promptAction.showToast({ message: '牌组已删除', duration: 2000 });
+        }
+      }
+    });
+  }
 
   async saveDeckSettings(newLimit: number, reviewLimit: number, deckId: number) {
-    // Deck settings are applied through the dialog
+    await this.cardVm.updateDeckSettings(deckId, newLimit, reviewLimit);
     await this.loadHomeData();
+    promptAction.showToast({ message: '牌组设置已保存', duration: 2000 });
   }
 }
