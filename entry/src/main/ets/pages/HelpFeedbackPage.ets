@@ -11,13 +11,13 @@ struct HelpFeedbackPage {
         Row() {
           Text('‹')
             .fontSize(22)
-            .fontColor('#1A1A1A')
+            .fontColor($r('app.color.text_primary'))
             .textAlign(TextAlign.Center)
         }
         .width(36)
         .height(36)
         .borderRadius(18)
-        .backgroundColor('#E0E0E0')
+        .backgroundColor($r('app.color.nav_back_bg'))
         .justifyContent(FlexAlign.Center)
         .alignItems(VerticalAlign.Center)
         .onClick(() => {
@@ -26,7 +26,7 @@ struct HelpFeedbackPage {
         Text('帮助与反馈')
           .fontSize(17)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#333')
+          .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
           .textAlign(TextAlign.Center)
         Row().width(36)
@@ -34,8 +34,8 @@ struct HelpFeedbackPage {
       .width('100%')
       .height(44)
       .padding({ left: 16, right: 16 })
-      .backgroundColor(Color.White)
-      .border({ width: { bottom: 0.5 }, color: '#E0E0E0' })
+      .backgroundColor($r('app.color.card_background'))
+      .border({ width: { bottom: 0.5 }, color: $r('app.color.sync_divider_strong') })
 
       // 内容区域
       Column() {
@@ -43,24 +43,24 @@ struct HelpFeedbackPage {
           Text('Bug反馈邮箱')
             .fontSize(13)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#666')
+            .fontColor($r('app.color.text_tertiary'))
             .margin({ bottom: 6 })
           Text('huangbh2001@qq.com')
             .fontSize(15)
-            .fontColor('#4A90D9')
+            .fontColor($r('app.color.primary_color'))
         }
         .width('100%')
         .padding(16)
-        .backgroundColor(Color.White)
+        .backgroundColor($r('app.color.card_background'))
         .borderRadius(12)
         .margin(12)
       }
       .layoutWeight(1)
       .width('100%')
-      .backgroundColor('#F5F6FA')
+      .backgroundColor($r('app.color.background_color'))
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(Color.White)
+    .backgroundColor($r('app.color.card_background'))
   }
 }

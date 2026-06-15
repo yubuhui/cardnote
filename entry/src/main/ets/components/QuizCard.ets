@@ -18,14 +18,14 @@ export struct QuizCard {
       // 题干标签
       Text(`【${this.getTypeLabel()}】`)
         .fontSize(12)
-        .fontColor('#999')
+        .fontColor($r('app.color.text_secondary'))
         .margin({ bottom: 8 })
 
       // 题干
       Text(this.card.front)
         .fontSize(16)
         .fontWeight(FontWeight.Medium)
-        .fontColor('#333')
+        .fontColor($r('app.color.text_primary'))
         .textAlign(TextAlign.Start)
         .width('100%')
         .margin({ bottom: 16 })
@@ -53,8 +53,8 @@ export struct QuizCard {
         Column() {
           Text(this.getFeedbackText())
             .fontSize(12)
-            .fontColor(this.isCorrect() ? '#27AE60' : '#E74C3C')
-            .backgroundColor(this.isCorrect() ? '#E8F5E9' : '#FDEDEC')
+            .fontColor(this.isCorrect() ? $r('app.color.correct_green') : $r('app.color.delete_text'))
+            .backgroundColor(this.isCorrect() ? $r('app.color.answer_green_bg') : $r('app.color.answer_red_bg'))
             .borderRadius(8)
             .padding(8)
             .width('100%')
@@ -63,8 +63,8 @@ export struct QuizCard {
           if (this.card.analysis) {
             Text(`解析：${this.card.analysis}`)
               .fontSize(12)
-              .fontColor('#666')
-              .backgroundColor('#F5F5F5')
+              .fontColor($r('app.color.text_secondary'))
+              .backgroundColor($r('app.color.background_color'))
               .borderRadius(8)
               .padding(8)
               .width('100%')
@@ -77,9 +77,9 @@ export struct QuizCard {
     }
     .width('100%')
     .padding(16)
-    .backgroundColor(Color.White)
+    .backgroundColor($r('app.color.card_background'))
     .borderRadius(18)
-    .shadow({ radius: 8, color: '#10000000', offsetX: 0, offsetY: 4 })
+    .shadow({ radius: 8, color: $r('app.color.card_shadow'), offsetX: 0, offsetY: 4 })
   }
 
   private getTypeLabel(): string {
@@ -131,39 +131,39 @@ export struct QuizCard {
     return this.getCorrectOriginalIndices().length >= 2;
   }
 
-  private getOptionColor(displayIdx: number): string {
+  private getOptionColor(displayIdx: number): ResourceColor {
     if (!this.showResult) {
-      return '#FFFFFF';
+      return $r('app.color.card_background');
     }
     const selectedOrigIdx: number = this.getOriginalIndex(displayIdx);
     const isSelected: boolean = this.selectedOptions.indexOf(selectedOrigIdx.toString()) >= 0;
     const isCorrect: boolean = this.isOptionCorrect(displayIdx);
     if (isSelected && isCorrect) {
-      return '#E8F5E9'; // 选对 → 绿
+      return $r('app.color.answer_green_bg'); // 选对 → 绿
     }
     if (isSelected && !isCorrect) {
-      return '#FDEDEC'; // 选错 → 红
+      return $r('app.color.answer_red_bg'); // 选错 → 红
     }
     if (!isSelected && isCorrect) {
       if (this.isMultiCorrect()) {
-        return '#FFF8E1'; // 多选题漏选 → 黄
+        return $r('app.color.analysis_bg'); // 多选题漏选 → 黄
       }
-      return '#E8F5E9'; // 单选正确（未被选中情况极少）
+      return $r('app.color.answer_green_bg'); // 单选正确（未被选中情况极少）
     }
-    return '#FFFFFF';
+    return $r('app.color.card_background');
   }
 
-  private getOptionTextColor(displayIdx: number): string {
+  private getOptionTextColor(displayIdx: number): ResourceColor {
     if (!this.showResult) {
-      return '#333';
+      return $r('app.color.text_primary');
     }
     const selectedOrigIdx: number = this.getOriginalIndex(displayIdx);
     const isSelected: boolean = this.selectedOptions.indexOf(selectedOrigIdx.toString()) >= 0;
     const isCorrect: boolean = this.isOptionCorrect(displayIdx);
     if (isSelected && !isCorrect) {
-      return '#E74C3C';
+      return $r('app.color.delete_text');
     }
-    return '#333';
+    return $r('app.color.text_primary');
   }
 
   private getFeedbackText(): string {

@@ -7,7 +7,6 @@ import { formatDateTime } from '../utils/DateUtils';
 export interface SettingsItem {
   title: string;
   subtitle?: string;
-  /** 点击跳转的路由路径 */
   routeName?: string;
 }
 
@@ -17,7 +16,6 @@ export struct SettingsPage {
   @State syncStatus: SyncStatus = SyncStatus.IDLE;
   @State syncTimeText: string = '从未同步';
   @State isSyncing: boolean = false;
-  // WebDAV 状态
   @State webdavLastSync: string = '尚未同步';
   @State syncEnabled: boolean = false;
   @State isUploading: boolean = false;
@@ -38,10 +36,8 @@ export struct SettingsPage {
       console.error('Failed to load dark mode preference:', err);
     }
 
-    // 刷新云同步时间显示
     this.syncTimeText = this.cloudSyncService.getLastSyncTimeText();
 
-    // 刷新 WebDAV 状态
     this.syncEnabled = this.webdavService.isSyncEnabled();
     const webdavTime: number = this.webdavService.getLastSyncTime();
     if (webdavTime > 0) {
@@ -50,11 +46,8 @@ export struct SettingsPage {
     }
   }
 
-  /** 手动触发云同步 */
   private async triggerSync(): Promise<void> {
-    if (this.isSyncing) {
-      return;
-    }
+    if (this.isSyncing) return;
     this.isSyncing = true;
     await this.cloudSyncService.sync((status: SyncStatus) => {
       this.syncStatus = status;
@@ -63,11 +56,8 @@ export struct SettingsPage {
     this.isSyncing = false;
   }
 
-  /** 手动触发 WebDAV 上传到云端 */
   private async triggerUpload(): Promise<void> {
-    if (this.isUploading || !this.syncEnabled) {
-      return;
-    }
+    if (this.isUploading || !this.syncEnabled) return;
     if (!this.webdavService.isConfigured()) {
       this.uploadResultText = '请先配置 WebDAV 并测试连接';
       return;
@@ -85,11 +75,8 @@ export struct SettingsPage {
     this.isUploading = false;
   }
 
-  /** 手动触发 WebDAV 从云端下载 */
   private triggerDownload(): void {
-    if (this.isDownloading || !this.syncEnabled) {
-      return;
-    }
+    if (this.isDownloading || !this.syncEnabled) return;
     if (!this.webdavService.isConfigured()) {
       this.downloadResultText = '请先配置 WebDAV 并测试连接';
       return;
@@ -125,7 +112,6 @@ export struct SettingsPage {
     });
   }
 
-  /** 获取同步状态对应的颜色 */
   private getSyncStatusColor(): string {
     switch (this.syncStatus) {
       case SyncStatus.SUCCESS:
@@ -157,7 +143,10 @@ export struct SettingsPage {
             : ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT
         );
       }
-      // 持久化设置
+      // 同步到 AppStorage，供其他页面感知颜色模式变化
+      AppStorage.setOrCreate('currentColorMode',
+        enabled ? ConfigurationConstant.ColorMode.COLOR_MODE_DARK
+          : ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT);
       this.settingsPref?.putSync('dark_mode', enabled);
       this.settingsPref?.flush();
     } catch (err) {
@@ -170,11 +159,11 @@ export struct SettingsPage {
       Text('设置')
         .fontSize(16)
         .fontWeight(FontWeight.Medium)
-        .fontColor('#333')
+        .fontColor($r('app.color.text_primary'))
         .textAlign(TextAlign.Center)
         .width('100%')
         .padding({ top: 46, bottom: 12 })
-        .backgroundColor(Color.White)
+        .backgroundColor($r('app.color.card_background'))
 
       Scroll() {
         Column() {
@@ -189,14 +178,13 @@ export struct SettingsPage {
             Text('外观设置')
               .fontSize(13)
               .fontWeight(FontWeight.Medium)
-              .fontColor('#333')
+              .fontColor($r('app.color.text_primary'))
               .margin({ bottom: 10 })
 
-            // 深色模式开关
             Row() {
               Text('深色模式')
                 .fontSize(14)
-                .fontColor('#333')
+                .fontColor($r('app.color.text_primary'))
                 .layoutWeight(1)
               Toggle({ type: ToggleType.Switch, isOn: this.isDarkMode })
                 .onChange((isOn: boolean) => {
@@ -206,11 +194,10 @@ export struct SettingsPage {
             }
             .width('100%')
             .padding({ top: 10, bottom: 10 })
-            .padding({ top: 10, bottom: 10 })
           }
           .width('100%')
           .padding(14)
-          .backgroundColor(Color.White)
+          .backgroundColor($r('app.color.card_background'))
           .borderRadius(12)
           .margin({ top: 10 })
 
@@ -219,14 +206,13 @@ export struct SettingsPage {
             Text('同步')
               .fontSize(13)
               .fontWeight(FontWeight.Medium)
-              .fontColor('#333')
+              .fontColor($r('app.color.text_primary'))
               .margin({ bottom: 10 })
 
-            // 启用同步
             Row() {
               Text('启用同步')
                 .fontSize(14)
-                .fontColor('#333')
+                .fontColor($r('app.color.text_primary'))
                 .layoutWeight(1)
               Toggle({ type: ToggleType.Switch, isOn: this.syncEnabled })
                 .selectedColor('#1677FF')
@@ -237,77 +223,62 @@ export struct SettingsPage {
             }
             .width('100%')
             .padding({ top: 10, bottom: 10 })
-            .border({ width: { bottom: 1 }, color: '#f5f5f5' })
+            .border({ width: { bottom: 1 }, color: $r('app.color.divider_color') })
 
-            // WebDAV设置
             Row() {
               Text('WebDAV设置')
                 .fontSize(14)
-                .fontColor(this.syncEnabled ? '#333' : '#CCC')
+                .fontColor(this.syncEnabled ? $r('app.color.text_primary') : $r('app.color.text_secondary'))
                 .layoutWeight(1)
               Text('›')
                 .fontSize(18)
-                .fontColor(this.syncEnabled ? '#CCC' : '#E0E0E0')
+                .fontColor(this.syncEnabled ? $r('app.color.text_secondary') : $r('app.color.text_secondary'))
             }
             .width('100%')
             .padding({ top: 10, bottom: 10 })
-            .border({ width: { bottom: 1 }, color: '#f5f5f5' })
+            .border({ width: { bottom: 1 }, color: $r('app.color.divider_color') })
             .onClick(() => {
-              if (this.syncEnabled) {
-                this.goToPage('pages/WebDavSyncPage');
-              }
+              if (this.syncEnabled) this.goToPage('pages/WebDavSyncPage');
             })
 
-            // 上传到云端
             Row() {
               Text('上传到云端')
                 .fontSize(14)
-                .fontColor(this.syncEnabled ? '#333' : '#CCC')
+                .fontColor(this.syncEnabled ? $r('app.color.text_primary') : $r('app.color.text_secondary'))
                 .layoutWeight(1)
               if (this.isUploading) {
                 LoadingProgress()
-                  .width(20)
-                  .height(20)
-                  .color('#1677FF')
+                  .width(20).height(20).color('#1677FF')
               } else {
                 Text(this.uploadResultText)
-                  .fontSize(13)
-                  .fontColor('#999')
+                  .fontSize(13).fontColor($r('app.color.text_secondary'))
               }
             }
             .width('100%')
             .padding({ top: 10, bottom: 10 })
-            .border({ width: { bottom: 1 }, color: '#f5f5f5' })
-            .onClick(() => {
-              this.triggerUpload();
-            })
+            .border({ width: { bottom: 1 }, color: $r('app.color.divider_color') })
+            .onClick(() => { this.triggerUpload(); })
 
-            // 从云端下载
             Row() {
               Text('从云端下载')
                 .fontSize(14)
-                .fontColor(this.syncEnabled ? '#333' : '#CCC')
+                .fontColor(this.syncEnabled ? $r('app.color.text_primary') : $r('app.color.text_secondary'))
                 .layoutWeight(1)
               if (this.isDownloading) {
                 LoadingProgress()
-                  .width(20)
-                  .height(20)
-                  .color('#1677FF')
+                  .width(20).height(20).color('#1677FF')
               } else {
                 Text(this.downloadResultText)
-                  .fontSize(13)
-                  .fontColor('#999')
+                  .fontSize(13).fontColor($r('app.color.text_secondary'))
               }
             }
             .width('100%')
             .padding({ top: 10, bottom: 10 })
-            .onClick(() => {
-              this.triggerDownload();
-            })
+            .onClick(() => { this.triggerDownload(); })
           }
           .width('100%')
           .padding(14)
-          .backgroundColor(Color.White)
+          .backgroundColor($r('app.color.card_background'))
           .borderRadius(12)
           .margin({ top: 10 })
 
@@ -317,16 +288,14 @@ export struct SettingsPage {
             { title: '版本号', subtitle: '1.0.0' } as SettingsItem,
           ])
 
-          // ICP备案号（符合中国法律法规要求）
           Text('ICP备案号：待备案')
             .fontSize(11)
-            .fontColor('#BBB')
+            .fontColor($r('app.color.text_secondary'))
             .textAlign(TextAlign.Center)
             .width('100%')
             .padding({ top: 12, bottom: 24 })
 
-          // 底部留白，避免被悬浮Tab遮挡
-          Blank().height(72)
+          Blank().height(68)
         }
       }
       .align(Alignment.Top)
@@ -334,7 +303,7 @@ export struct SettingsPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F5F6FA')
+    .backgroundColor($r('app.color.background_color'))
   }
 
   @Builder
@@ -343,39 +312,37 @@ export struct SettingsPage {
       Text(title)
         .fontSize(13)
         .fontWeight(FontWeight.Medium)
-        .fontColor('#333')
+        .fontColor($r('app.color.text_primary'))
         .margin({ bottom: 10 })
 
       ForEach(items, (item: SettingsItem, index: number) => {
         Row() {
           Text(item.title)
             .fontSize(14)
-            .fontColor('#333')
+            .fontColor($r('app.color.text_primary'))
             .layoutWeight(1)
           if (item.subtitle) {
             Text(item.subtitle)
               .fontSize(13)
-              .fontColor('#999')
+              .fontColor($r('app.color.text_secondary'))
           }
           if (item.routeName) {
             Text('›')
               .fontSize(18)
-              .fontColor('#CCC')
+              .fontColor($r('app.color.text_secondary'))
           }
         }
         .width('100%')
         .padding({ top: 10, bottom: 10 })
-        .border(index < items.length - 1 ? { width: { bottom: 1 }, color: '#f5f5f5' } : {})
+        .border(index < items.length - 1 ? { width: { bottom: 1 }, color: $r('app.color.divider_color') } : {})
         .onClick(() => {
-          if (item.routeName) {
-            this.goToPage(item.routeName);
-          }
+          if (item.routeName) this.goToPage(item.routeName);
         })
       }, (item: SettingsItem) => item.title)
     }
     .width('100%')
     .padding(14)
-    .backgroundColor(Color.White)
+    .backgroundColor($r('app.color.card_background'))
     .borderRadius(12)
     .margin({ top: 10 })
   }

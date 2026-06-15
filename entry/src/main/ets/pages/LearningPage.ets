@@ -96,7 +96,7 @@ struct LearningPage {
             .fontSize(48)
           Text('暂无待复习卡片')
             .fontSize(16)
-            .fontColor('#999')
+            .fontColor($r('app.color.text_secondary'))
             .margin({ top: 12 })
         }
         .width('100%')
@@ -124,7 +124,7 @@ struct LearningPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F5F6FA')
+    .backgroundColor($r('app.color.background_color'))
   }
 
   @Builder
@@ -133,13 +133,13 @@ struct LearningPage {
       Row() {
         Text('‹')
           .fontSize(22)
-          .fontColor('#1A1A1A')
+          .fontColor($r('app.color.text_primary'))
           .textAlign(TextAlign.Center)
       }
       .width(36)
       .height(36)
       .borderRadius(18)
-      .backgroundColor('#E0E0E0')
+      .backgroundColor($r('app.color.nav_back_bg'))
       .justifyContent(FlexAlign.Center)
       .alignItems(VerticalAlign.Center)
       .onClick(() => {
@@ -148,7 +148,7 @@ struct LearningPage {
       if (this.currentDeck) {
         Text(this.currentDeck.name)
           .fontSize(16)
-          .fontColor('#4A90D9')
+          .fontColor($r('app.color.primary_color'))
           .layoutWeight(1)
           .textAlign(TextAlign.Center)
       } else {
@@ -156,7 +156,7 @@ struct LearningPage {
       }
       Text('⋮')
         .fontSize(18)
-        .fontColor('#666')
+        .fontColor($r('app.color.text_secondary'))
         .padding({ left: 4, right: 4 })
         .onClick(() => {
           this.showMenu = !this.showMenu;
@@ -165,7 +165,7 @@ struct LearningPage {
           builder: this.buildDropdownMenu,
           placement: Placement.BottomRight,
           maskColor: '#00000000',
-          popupColor: Color.White,
+          popupColor: $r('app.color.card_background'),
           enableArrow: false,
           radius: 10,
           onStateChange: (e) => {
@@ -178,7 +178,7 @@ struct LearningPage {
     .width('100%')
     .justifyContent(FlexAlign.SpaceBetween)
     .padding({ left: 18, right: 18, top: 46, bottom: 10 })
-    .backgroundColor(Color.White)
+    .backgroundColor($r('app.color.card_background'))
   }
 
   @Builder
@@ -188,7 +188,7 @@ struct LearningPage {
         Row() {
           Text('撤销回答')
             .fontSize(13)
-            .fontColor('#333')
+            .fontColor($r('app.color.text_primary'))
         }
         .width('100%')
         .padding({ left: 14, right: 14, top: 10, bottom: 10 })
@@ -199,14 +199,14 @@ struct LearningPage {
 
         Divider()
           .height(1)
-          .color('#F0F0F0')
+          .color($r('app.color.divider_color'))
           .margin({ left: 14, right: 14 })
       }
 
       Row() {
         Text('编辑卡片')
           .fontSize(13)
-          .fontColor('#333')
+          .fontColor($r('app.color.text_primary'))
       }
       .width('100%')
       .padding({ left: 14, right: 14, top: 10, bottom: 10 })
@@ -234,12 +234,12 @@ struct LearningPage {
       Row()
         .width(`${((this.currentIndex + 1) / Math.max(this.dueCards.length, 1)) * 100}%`)
         .height(3)
-        .backgroundColor('#4A90D9')
+        .backgroundColor($r('app.color.primary_color'))
         .borderRadius(2)
     }
     .width('100%')
     .height(3)
-    .backgroundColor('#eee')
+    .backgroundColor($r('app.color.progress_track'))
   }
 
   @Builder
@@ -251,21 +251,21 @@ struct LearningPage {
         Column() {
           Text('问题')
             .fontSize(11)
-            .fontColor('#999')
+            .fontColor($r('app.color.text_secondary'))
             .textAlign(TextAlign.Start)
             .width('100%')
             .margin({ bottom: 6 })
           Text(this.currentCard.front)
             .fontSize(15)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#333')
+            .fontColor($r('app.color.text_primary'))
             .lineHeight(24)
             .textAlign(TextAlign.Start)
             .width('100%')
         }
         .width('100%')
         .padding(16)
-        .backgroundColor('#F5F6FA')
+        .backgroundColor($r('app.color.background_color'))
         .borderRadius(10)
         .flexShrink(0)
 
@@ -274,21 +274,21 @@ struct LearningPage {
           Column() {
             Text('答案')
               .fontSize(11)
-              .fontColor('#999')
+              .fontColor($r('app.color.text_secondary'))
               .textAlign(TextAlign.Start)
               .width('100%')
               .margin({ bottom: 6 })
             Text(this.currentCard.correctAnswer)
               .fontSize(15)
               .fontWeight(FontWeight.Medium)
-              .fontColor('#333')
+              .fontColor($r('app.color.text_primary'))
               .lineHeight(24)
               .textAlign(TextAlign.Start)
               .width('100%')
           }
           .width('100%')
           .padding(16)
-          .backgroundColor('#E8F5E9')
+          .backgroundColor($r('app.color.answer_green_bg'))
           .borderRadius(10)
           .flexShrink(0)
 
@@ -297,20 +297,20 @@ struct LearningPage {
             Column() {
               Text('解析')
                 .fontSize(11)
-                .fontColor('#999')
+                .fontColor($r('app.color.text_secondary'))
                 .textAlign(TextAlign.Start)
                 .width('100%')
                 .margin({ bottom: 6 })
               Text(this.currentCard.analysis)
                 .fontSize(13)
-                .fontColor('#666')
+                .fontColor($r('app.color.text_secondary'))
                 .lineHeight(20)
                 .textAlign(TextAlign.Start)
                 .width('100%')
             }
             .width('100%')
             .padding(16)
-            .backgroundColor('#FFF8E1')
+            .backgroundColor($r('app.color.analysis_bg'))
             .borderRadius(10)
             .flexShrink(0)
           }
@@ -318,9 +318,9 @@ struct LearningPage {
       }
       .width('100%')
       .padding(16)
-      .backgroundColor(Color.White)
+      .backgroundColor($r('app.color.card_background'))
       .borderRadius(18)
-      .shadow({ radius: 8, color: '#10000000', offsetX: 0, offsetY: 4 })
+      .shadow({ radius: 8, color: $r('app.color.card_shadow'), offsetX: 0, offsetY: 4 })
       .margin({ top: 16, bottom: 12 })
       .constraintSize({ maxHeight: 420 })
     } else if (this.currentCard && this.currentCard.type === CardTypeEnum.fillBlank) {
@@ -339,7 +339,7 @@ struct LearningPage {
       Column() {
         Text('填空题')
           .fontSize(11)
-          .fontColor('#999')
+          .fontColor($r('app.color.text_secondary'))
           .textAlign(TextAlign.Start)
           .width('100%')
           .margin({ bottom: 6 })
@@ -352,15 +352,15 @@ struct LearningPage {
                 Text(this.showAnswer ? seg.text : '□')
                   .fontSize(16)
                   .fontWeight(FontWeight.Medium)
-                  .fontColor(this.showAnswer ? '#4A90D9' : '#333')
-                  .backgroundColor(this.showAnswer ? '#E3F2FD' : '#F0F0F0')
+                  .fontColor(this.showAnswer ? $r('app.color.primary_color') : $r('app.color.text_primary'))
+                  .backgroundColor(this.showAnswer ? $r('app.color.hint_box_bg') : $r('app.color.option_badge_unselected'))
                   .borderRadius(4)
                   .padding({ left: 8, right: 8, top: 4, bottom: 4 })
                   .margin({ left: 2, right: 2 })
               } else {
                 Text(seg.text)
                   .fontSize(15)
-                  .fontColor('#333')
+                  .fontColor($r('app.color.text_primary'))
                   .lineHeight(24)
               }
             },
@@ -371,7 +371,7 @@ struct LearningPage {
       }
       .width('100%')
       .padding(16)
-      .backgroundColor('#F5F6FA')
+      .backgroundColor($r('app.color.background_color'))
       .borderRadius(10)
       .flexShrink(0)
 
@@ -380,21 +380,21 @@ struct LearningPage {
         Column() {
           Text('答案')
             .fontSize(11)
-            .fontColor('#999')
+            .fontColor($r('app.color.text_secondary'))
             .textAlign(TextAlign.Start)
             .width('100%')
             .margin({ bottom: 6 })
           Text(this.currentCard!.correctAnswer)
             .fontSize(15)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#333')
+            .fontColor($r('app.color.text_primary'))
             .lineHeight(24)
             .textAlign(TextAlign.Start)
             .width('100%')
         }
         .width('100%')
         .padding(16)
-        .backgroundColor('#E8F5E9')
+        .backgroundColor($r('app.color.answer_green_bg'))
         .borderRadius(10)
         .flexShrink(0)
 
@@ -403,20 +403,20 @@ struct LearningPage {
           Column() {
             Text('解析')
               .fontSize(11)
-              .fontColor('#999')
+              .fontColor($r('app.color.text_secondary'))
               .textAlign(TextAlign.Start)
               .width('100%')
               .margin({ bottom: 6 })
             Text(this.currentCard!.analysis)
               .fontSize(13)
-              .fontColor('#666')
+              .fontColor($r('app.color.text_secondary'))
               .lineHeight(20)
               .textAlign(TextAlign.Start)
               .width('100%')
           }
           .width('100%')
           .padding(16)
-          .backgroundColor('#FFF8E1')
+          .backgroundColor($r('app.color.analysis_bg'))
           .borderRadius(10)
           .flexShrink(0)
         }
@@ -424,9 +424,9 @@ struct LearningPage {
     }
     .width('100%')
     .padding(16)
-    .backgroundColor(Color.White)
+    .backgroundColor($r('app.color.card_background'))
     .borderRadius(18)
-    .shadow({ radius: 8, color: '#10000000', offsetX: 0, offsetY: 4 })
+    .shadow({ radius: 8, color: $r('app.color.card_shadow'), offsetX: 0, offsetY: 4 })
     .margin({ top: 16, bottom: 12 })
     .constraintSize({ maxHeight: 420 })
   }
@@ -438,21 +438,21 @@ struct LearningPage {
       Column() {
         Text('选择题')
           .fontSize(11)
-          .fontColor('#999')
+          .fontColor($r('app.color.text_secondary'))
           .textAlign(TextAlign.Start)
           .width('100%')
           .margin({ bottom: 6 })
         Text(this.currentCard!.front)
           .fontSize(15)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#333')
+          .fontColor($r('app.color.text_primary'))
           .lineHeight(24)
           .textAlign(TextAlign.Start)
           .width('100%')
       }
       .width('100%')
       .padding(16)
-      .backgroundColor('#F5F6FA')
+      .backgroundColor($r('app.color.background_color'))
       .borderRadius(10)
       .flexShrink(0)
 
@@ -470,20 +470,20 @@ struct LearningPage {
           Column() {
             Text('解析')
               .fontSize(11)
-              .fontColor('#999')
+              .fontColor($r('app.color.text_secondary'))
               .textAlign(TextAlign.Start)
               .width('100%')
               .margin({ bottom: 6 })
             Text(this.currentCard!.analysis)
               .fontSize(13)
-              .fontColor('#666')
+              .fontColor($r('app.color.text_secondary'))
               .lineHeight(20)
               .textAlign(TextAlign.Start)
               .width('100%')
           }
           .width('100%')
           .padding(16)
-          .backgroundColor('#FFF8E1')
+          .backgroundColor($r('app.color.analysis_bg'))
           .borderRadius(10)
           .flexShrink(0)
         }
@@ -491,9 +491,9 @@ struct LearningPage {
     }
     .width('100%')
     .padding(16)
-    .backgroundColor(Color.White)
+    .backgroundColor($r('app.color.card_background'))
     .borderRadius(18)
-    .shadow({ radius: 8, color: '#10000000', offsetX: 0, offsetY: 4 })
+    .shadow({ radius: 8, color: $r('app.color.card_shadow'), offsetX: 0, offsetY: 4 })
     .margin({ top: 16, bottom: 12 })
     .constraintSize({ maxHeight: 480 })
   }
@@ -590,49 +590,49 @@ struct LearningPage {
   }
 
   /** 选择题 → 选项背景色 */
-  private getChoiceOptionBgColor(idx: number): string {
+  private getChoiceOptionBgColor(idx: number): ResourceColor {
     if (!this.showAnswer) {
-      return idx === this.selectedChoiceIndex ? '#EBF3FC' : '#F8F9FC';
+      return idx === this.selectedChoiceIndex ? $r('app.color.choice_option_selected_bg') : $r('app.color.choice_option_bg');
     }
     const isCorrect: boolean = this.isChoiceOptionCorrect(idx);
     const isSelected: boolean = idx === this.selectedChoiceIndex;
 
     if (isSelected && isCorrect) {
-      return '#E8F5E9'; // 选对 → 绿
+      return $r('app.color.answer_green_bg'); // 选对 → 绿
     }
     if (isSelected && !isCorrect) {
-      return '#FFEBEE'; // 选错 → 红
+      return $r('app.color.answer_red_bg'); // 选错 → 红
     }
     if (!isSelected && isCorrect) {
       if (this.isMultiCorrectChoice()) {
-        return '#FFF8E1'; // 多选题漏选 → 黄
+        return $r('app.color.analysis_bg'); // 多选题漏选 → 黄
       }
-      return '#E8F5E9'; // 单选正确但未选中（不可能），保持绿
+      return $r('app.color.answer_green_bg'); // 单选正确但未选中（不可能），保持绿
     }
-    return '#F8F9FC'; // 无关选项
+    return $r('app.color.choice_option_bg'); // 无关选项
   }
 
   /** 选择题 → 选项边框颜色 */
-  private getChoiceOptionBorderColor(idx: number): string {
+  private getChoiceOptionBorderColor(idx: number): ResourceColor {
     if (!this.showAnswer) {
-      return idx === this.selectedChoiceIndex ? '#4A90D9' : '#E0E0E0';
+      return idx === this.selectedChoiceIndex ? $r('app.color.primary_color') : $r('app.color.input_border');
     }
     const isCorrect: boolean = this.isChoiceOptionCorrect(idx);
     const isSelected: boolean = idx === this.selectedChoiceIndex;
 
     if (isSelected && isCorrect) {
-      return '#34A853'; // 选对 → 绿边框
+      return $r('app.color.correct_border'); // 选对 → 绿边框
     }
     if (isSelected && !isCorrect) {
-      return '#E74C3C'; // 选错 → 红边框
+      return $r('app.color.wrong_border'); // 选错 → 红边框
     }
     if (!isSelected && isCorrect) {
       if (this.isMultiCorrectChoice()) {
-        return '#F9A825'; // 多选题漏选 → 黄边框
+        return $r('app.color.missed_border'); // 多选题漏选 → 黄边框
       }
-      return '#34A853'; // 单选正确 → 绿边框
+      return $r('app.color.correct_border'); // 单选正确 → 绿边框
     }
-    return '#E0E0E0';
+    return $r('app.color.input_border');
   }
 
   /** 选择题 → 选项边框宽度 */
@@ -652,14 +652,14 @@ struct LearningPage {
     Row() {
       Text(String.fromCharCode(65 + idx) + '.')
         .fontSize(13)
-        .fontColor(idx === this.selectedChoiceIndex ? '#4A90D9' : '#999')
+        .fontColor(idx === this.selectedChoiceIndex ? $r('app.color.primary_color') : $r('app.color.text_secondary'))
         .fontWeight(idx === this.selectedChoiceIndex ? FontWeight.Bold : FontWeight.Normal)
         .width(28)
         .textAlign(TextAlign.Start)
 
       Text(opt)
         .fontSize(14)
-        .fontColor('#333')
+        .fontColor($r('app.color.text_primary'))
         .layoutWeight(1)
         .textAlign(TextAlign.Start)
     }
@@ -686,7 +686,7 @@ struct LearningPage {
       Button('查看答案')
         .width('80%')
         .height(48)
-        .backgroundColor('#4A90D9')
+        .backgroundColor($r('app.color.primary_color'))
         .fontColor(Color.White)
         .fontSize(15)
         .fontWeight(FontWeight.Medium)

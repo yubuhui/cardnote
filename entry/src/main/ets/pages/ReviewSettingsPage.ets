@@ -140,13 +140,13 @@ struct ReviewSettingsPage {
         Row() {
           Text('‹')
             .fontSize(22)
-            .fontColor('#1A1A1A')
+            .fontColor($r('app.color.text_primary'))
             .textAlign(TextAlign.Center)
         }
         .width(36)
         .height(36)
         .borderRadius(18)
-        .backgroundColor('#E0E0E0')
+        .backgroundColor($r('app.color.nav_back_bg'))
         .justifyContent(FlexAlign.Center)
         .alignItems(VerticalAlign.Center)
         .onClick(() => router.back())
@@ -154,7 +154,7 @@ struct ReviewSettingsPage {
         Text('背诵设置')
           .fontSize(17)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#333')
+          .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
           .textAlign(TextAlign.Center)
 
@@ -165,7 +165,7 @@ struct ReviewSettingsPage {
       }
       .width('100%')
       .padding({ left: 18, right: 18, top: 46, bottom: 12 })
-      .backgroundColor(Color.White)
+      .backgroundColor($r('app.color.card_background'))
 
       // 第二层：内容区
       Scroll() {
@@ -175,7 +175,7 @@ struct ReviewSettingsPage {
               Column() {
                 Text(item.label)
                   .fontSize(14)
-                  .fontColor('#333')
+                  .fontColor($r('app.color.text_primary'))
               }
 
               Blank()
@@ -186,23 +186,23 @@ struct ReviewSettingsPage {
                      index === 2 ? this.sm2Factor.toString() :
                      item.value.toString())
                   .fontSize(14)
-                  .fontColor('#4A90D9')
+                  .fontColor($r('app.color.primary_color'))
                   .fontWeight(FontWeight.Medium)
                 if (item.unit) {
                   Text(item.unit)
                     .fontSize(12)
-                    .fontColor('#999')
+                    .fontColor($r('app.color.text_secondary'))
                     .margin({ left: 4 })
                 }
                 Text('›')
                   .fontSize(16)
-                  .fontColor('#CCC')
+                  .fontColor($r('app.color.text_secondary'))
                   .margin({ left: 8 })
               }
             }
             .width('100%')
             .padding({ top: 14, bottom: 14 })
-            .border({ width: { bottom: 1 }, color: '#f5f5f5' })
+            .border({ width: { bottom: 1 }, color: $r('app.color.divider_color') })
             .onClick(() => {
               if (index === 0) {
                 this.showNewCardPicker();
@@ -218,7 +218,7 @@ struct ReviewSettingsPage {
               Row() {
                 Text('不背诵已掌握的卡片')
                   .fontSize(14)
-                  .fontColor('#333')
+                  .fontColor($r('app.color.text_primary'))
                 Blank()
                 Toggle({ type: ToggleType.Switch, isOn: this.skipMasteredCards })
                   .onChange((value: boolean) => {
@@ -228,14 +228,14 @@ struct ReviewSettingsPage {
               }
               .width('100%')
               .padding({ top: 14, bottom: 14 })
-              .border({ width: { bottom: 1 }, color: '#f5f5f5' })
+              .border({ width: { bottom: 1 }, color: $r('app.color.divider_color') })
             }
 
             // SM-2 倍率说明（跟随该行）
             if (index === 2) {
               Text('倍率越高，答对后的复习间隔增长越快，卡片出现频率越低；倍率越低，间隔增长越慢，卡片复习更频繁。默认为 250%，建议范围 150%~300%。')
                 .fontSize(12)
-                .fontColor('#999')
+                .fontColor($r('app.color.text_secondary'))
                 .lineHeight(18)
                 .padding({ top: 0, bottom: 12, left: 4, right: 4 })
             }
@@ -243,7 +243,7 @@ struct ReviewSettingsPage {
         }
         .width('100%')
         .padding({ left: 16, right: 16 })
-        .backgroundColor(Color.White)
+        .backgroundColor($r('app.color.card_background'))
         .borderRadius(12)
         .margin({ top: 12 })
       }
@@ -256,8 +256,8 @@ struct ReviewSettingsPage {
       Column() {
         Button('恢复默认')
           .fontSize(14)
-          .fontColor('#4A90D9')
-          .backgroundColor(Color.White)
+          .fontColor($r('app.color.primary_color'))
+          .backgroundColor($r('app.color.card_background'))
           .width('100%')
           .height(44)
           .borderRadius(12)
@@ -267,6 +267,6 @@ struct ReviewSettingsPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F5F6FA')
+    .backgroundColor($r('app.color.background_color'))
   }
 }

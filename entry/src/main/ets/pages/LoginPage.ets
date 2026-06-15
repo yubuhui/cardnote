@@ -75,7 +75,7 @@ export struct LoginPage {
         Row() {
           Text('‹')
             .fontSize(22)
-            .fontColor('#1A1A1A')
+            .fontColor($r('app.color.text_primary'))
             .textAlign(TextAlign.Center)
         }
         .width(36)
@@ -91,7 +91,7 @@ export struct LoginPage {
         Text('华为账号')
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#333')
+          .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
           .textAlign(TextAlign.Center)
 
@@ -103,7 +103,7 @@ export struct LoginPage {
       .width('100%')
       .height(56)
       .padding({ left: 8, right: 8 })
-      .backgroundColor(Color.White)
+      .backgroundColor($r('app.color.card_background'))
 
       Scroll() {
         Column() {
@@ -115,7 +115,7 @@ export struct LoginPage {
                 Text('华为账号')
                   .fontSize(18)
                   .fontWeight(FontWeight.Bold)
-                  .fontColor('#333')
+                  .fontColor($r('app.color.text_primary'))
                   .margin({ bottom: 8 })
 
                 Text('UnionID')
@@ -140,7 +140,7 @@ export struct LoginPage {
               }
               .width('100%')
               .padding(20)
-              .backgroundColor(Color.White)
+              .backgroundColor($r('app.color.card_background'))
               .borderRadius(12)
             } else {
               // 未登录状态：显示登录入口
@@ -148,7 +148,7 @@ export struct LoginPage {
                 Text('华为账号登录')
                   .fontSize(18)
                   .fontWeight(FontWeight.Bold)
-                  .fontColor('#333')
+                  .fontColor($r('app.color.text_primary'))
                   .margin({ bottom: 8 })
 
                 Text('使用华为账号登录，同步您的背诵数据')
@@ -170,7 +170,7 @@ export struct LoginPage {
               }
               .width('100%')
               .padding(20)
-              .backgroundColor(Color.White)
+              .backgroundColor($r('app.color.card_background'))
               .borderRadius(12)
             }
           }
@@ -181,7 +181,7 @@ export struct LoginPage {
             Text('说明')
               .fontSize(13)
               .fontWeight(FontWeight.Medium)
-              .fontColor('#333')
+              .fontColor($r('app.color.text_primary'))
               .margin({ bottom: 8 })
 
             Text('• 登录华为账号后，可获得用户唯一标识（UnionID），用于数据同步与备份。\n• 本功能仅获取账号标识，不会获取您的手机号、头像等隐私信息。\n• 登录后可在设置中随时退出。')
@@ -191,7 +191,7 @@ export struct LoginPage {
           }
           .width('100%')
           .padding(14)
-          .backgroundColor(Color.White)
+          .backgroundColor($r('app.color.card_background'))
           .borderRadius(12)
           .margin({ top: 10 })
         }

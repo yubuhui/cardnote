@@ -472,13 +472,13 @@ export struct ImportExportPage {
         Row() {
           Text('‹')
             .fontSize(22)
-            .fontColor('#1A1A1A')
+            .fontColor($r('app.color.text_primary'))
             .textAlign(TextAlign.Center)
         }
         .width(36)
         .height(36)
         .borderRadius(18)
-        .backgroundColor('#E0E0E0')
+        .backgroundColor($r('app.color.nav_back_bg'))
         .justifyContent(FlexAlign.Center)
         .alignItems(VerticalAlign.Center)
         .onClick(() => {
@@ -491,13 +491,13 @@ export struct ImportExportPage {
         Text(this.showPreview ? '预览导入' : '导入与导出')
           .fontSize(17)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#333')
+          .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
           .textAlign(TextAlign.Center)
         // 右上角隐藏菜单按钮（原生下拉菜单）
         Text('⋯')
           .fontSize(22)
-          .fontColor('#666')
+          .fontColor($r('app.color.text_secondary'))
           .padding({ left: 8, right: 8, top: 4, bottom: 4 })
           .bindMenu([
             {
@@ -518,7 +518,7 @@ export struct ImportExportPage {
       }
       .width('100%')
       .padding({ left: 18, right: 18, top: 46, bottom: 12 })
-      .backgroundColor(Color.White)
+      .backgroundColor($r('app.color.card_background'))
 
 
       if (this.showPreview) {
@@ -529,7 +529,7 @@ export struct ImportExportPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F5F6FA')
+    .backgroundColor($r('app.color.background_color'))
   }
 
   /** 主面板 */
@@ -545,7 +545,7 @@ export struct ImportExportPage {
         Row() {
           Text('牌组')
             .fontSize(13)
-            .fontColor('#888')
+            .fontColor($r('app.color.text_secondary'))
             .margin({ right: 10 })
           Select([
             { value: '全部卡片' } as SelectOption,
@@ -559,20 +559,20 @@ export struct ImportExportPage {
             .onSelect((index: number) => {
               this.onExportDeckChange(index);
             })
-            .selectedOptionBgColor('#F0F6FF')
+            .selectedOptionBgColor($r('app.color.select_option_bg'))
             .layoutWeight(1)
         }
         .width('100%')
         .margin({ top: 12 })
         .padding({ left: 14, right: 14, top: 10, bottom: 10 })
-        .backgroundColor('#F8F9FC')
+        .backgroundColor($r('app.color.choice_option_bg'))
         .borderRadius(10)
 
         Button(`导出 (${this.exportCount} 条)`)
           .width('100%')
           .height(48)
-          .backgroundColor(this.exportCount > 0 ? '#4A90D9' : '#CCC')
-          .fontColor(Color.White)
+          .backgroundColor(this.exportCount > 0 ? $r('app.color.primary_color') : $r('app.color.text_secondary'))
+          .fontColor($r('app.color.button_text'))
           .enabled(this.exportCount > 0)
           .borderRadius(10)
           .margin({ top: 12 })
@@ -580,7 +580,7 @@ export struct ImportExportPage {
 
         Divider()
           .height(1)
-          .color('#E8E8E8')
+          .color($r('app.color.divider_color'))
           .margin({ top: 20, bottom: 20 })
 
         // 导入卡片
@@ -590,8 +590,8 @@ export struct ImportExportPage {
         Button('选择文件')
           .width('100%')
           .height(48)
-          .backgroundColor('#4A90D9')
-          .fontColor(Color.White)
+          .backgroundColor($r('app.color.primary_color'))
+          .fontColor($r('app.color.button_text'))
           .borderRadius(10)
           .margin({ top: 12 })
           .onClick(() => { this.pickFile() })
@@ -610,7 +610,7 @@ export struct ImportExportPage {
         .fontSize(10)
         .fontColor(Color.White)
         .padding({ left: 5, right: 5, top: 2, bottom: 2 })
-        .backgroundColor('#E6A23C')
+        .backgroundColor($r('app.color.badge_choice'))
         .borderRadius(4)
         .margin({ left: 4 })
     } else if (item.cardType === CardType.fillBlank) {
@@ -618,7 +618,7 @@ export struct ImportExportPage {
         .fontSize(10)
         .fontColor(Color.White)
         .padding({ left: 5, right: 5, top: 2, bottom: 2 })
-        .backgroundColor('#67C23A')
+        .backgroundColor($r('app.color.badge_fill'))
         .borderRadius(4)
         .margin({ left: 4 })
     }
@@ -632,21 +632,21 @@ export struct ImportExportPage {
       Row() {
         Text(`共 ${this.previewItems.length} 行`)
           .fontSize(14)
-          .fontColor('#555')
+          .fontColor($r('app.color.text_secondary'))
         Text(`✅ ${this.getValidCount()} 有效`)
           .fontSize(14)
-          .fontColor('#34A853')
+          .fontColor($r('app.color.correct_border'))
           .margin({ left: 16 })
         if (this.getInvalidCount() > 0) {
           Text(`❌ ${this.getInvalidCount()} 无效`)
             .fontSize(14)
-            .fontColor('#EA4335')
+            .fontColor($r('app.color.delete_text'))
             .margin({ left: 16 })
         }
         Blank()
         Text('点击无效行可查看详情')
           .fontSize(11)
-          .fontColor('#AAA')
+          .fontColor($r('app.color.text_secondary'))
       }
       .width('100%')
       .padding({ left: 16, right: 16, top: 12, bottom: 8 })
@@ -655,7 +655,7 @@ export struct ImportExportPage {
       Row() {
         Text('导入到')
           .fontSize(13)
-          .fontColor('#888')
+          .fontColor($r('app.color.text_secondary'))
         Select(this.deckList.map((deck: Deck) => {
           const opt: SelectOption = { value: deck.name };
           return opt;
@@ -667,14 +667,14 @@ export struct ImportExportPage {
               this.selectedDeckId = this.deckList[index].id;
             }
           })
-          .selectedOptionBgColor('#F0F6FF')
+          .selectedOptionBgColor($r('app.color.select_option_bg'))
           .layoutWeight(1)
           .margin({ left: 10 })
       }
       .width('100%')
       .padding({ left: 16, right: 16, top: 4, bottom: 12 })
-      .backgroundColor(Color.White)
-      .border({ width: { bottom: 0.5 }, color: '#EEE' })
+      .backgroundColor($r('app.color.card_background'))
+      .border({ width: { bottom: 0.5 }, color: $r('app.color.divider_color') })
 
       // 预览列表
       List() {
@@ -684,7 +684,7 @@ export struct ImportExportPage {
               // 序号 + 状态
               Text(`${index + 1}`)
                 .fontSize(12)
-                .fontColor(item.valid ? '#34A853' : '#EA4335')
+                .fontColor(item.valid ? $r('app.color.correct_border') : $r('app.color.delete_text'))
                 .fontWeight(FontWeight.Bold)
                 .width(28)
                 .textAlign(TextAlign.Center)
@@ -697,7 +697,7 @@ export struct ImportExportPage {
               Column() {
                 Text(item.front || '(空)')
                   .fontSize(14)
-                  .fontColor('#333')
+                  .fontColor($r('app.color.text_primary'))
                   .maxLines(1)
                   .textOverflow({ overflow: TextOverflow.Ellipsis })
                   .width('100%')
@@ -705,7 +705,7 @@ export struct ImportExportPage {
                 if (item.valid) {
                   Text(`→ ${item.answer || '(空答案)'}`)
                     .fontSize(12)
-                    .fontColor('#888')
+                    .fontColor($r('app.color.text_secondary'))
                     .maxLines(1)
                     .textOverflow({ overflow: TextOverflow.Ellipsis })
                     .width('100%')
@@ -713,7 +713,7 @@ export struct ImportExportPage {
                   if (item.analysis.length > 0) {
                     Text(`📝 ${item.analysis}`)
                       .fontSize(11)
-                      .fontColor('#AAA')
+                      .fontColor($r('app.color.text_secondary'))
                       .maxLines(1)
                       .textOverflow({ overflow: TextOverflow.Ellipsis })
                       .width('100%')
@@ -721,7 +721,7 @@ export struct ImportExportPage {
                 } else {
                   Text('格式无效：缺少必要数据')
                     .fontSize(11)
-                    .fontColor('#EA4335')
+                    .fontColor($r('app.color.delete_text'))
                     .width('100%')
                 }
               }
@@ -732,11 +732,11 @@ export struct ImportExportPage {
             .padding({ top: 12, bottom: 12, left: 12, right: 12 })
             .alignItems(VerticalAlign.Center)
           }
-          .border({ width: { bottom: 0.5 }, color: '#EEE' })
+          .border({ width: { bottom: 0.5 }, color: $r('app.color.divider_color') })
         }, (item: PreviewItem, index: number) => `${index}_${item.front}`)
       }
       .layoutWeight(1)
-      .backgroundColor(Color.White)
+      .backgroundColor($r('app.color.card_background'))
       .width('100%')
 
       // 底部操作栏
@@ -744,16 +744,16 @@ export struct ImportExportPage {
         Button('取消')
           .flexGrow(1)
           .height(48)
-          .backgroundColor(Color.White)
-          .fontColor('#666')
+          .backgroundColor($r('app.color.card_background'))
+          .fontColor($r('app.color.text_secondary'))
           .borderRadius(10)
-          .border({ width: 1, color: '#DDD' })
+          .border({ width: 1, color: $r('app.color.input_border') })
           .onClick(() => { this.cancelPreview() })
 
         Button(`确认导入 ${this.getValidCount()} 条`)
           .flexGrow(2)
           .height(48)
-          .backgroundColor(this.getValidCount() > 0 ? '#4A90D9' : '#CCC')
+          .backgroundColor(this.getValidCount() > 0 ? $r('app.color.primary_color') : $r('app.color.text_secondary'))
           .fontColor(Color.White)
           .borderRadius(10)
           .enabled(this.getValidCount() > 0 && !this.importing)
@@ -762,7 +762,7 @@ export struct ImportExportPage {
       }
       .width('100%')
       .padding({ left: 16, right: 16, top: 12, bottom: 30 })
-      .backgroundColor('#FAFAFA')
+      .backgroundColor($r('app.color.card_background'))
     }
     .width('100%')
     .layoutWeight(1)
@@ -907,27 +907,27 @@ export struct ImportExportPage {
       Text(title)
         .fontSize(16)
         .fontWeight(FontWeight.Medium)
-        .fontColor('#333')
+        .fontColor($r('app.color.text_primary'))
         .margin({ bottom: 4 })
 
       Text(desc)
         .fontSize(13)
-        .fontColor('#888')
-        .margin({ bottom: 12 })
-
-      Text(example)
-        .fontSize(12)
-        .fontColor('#555')
-        .fontFamily('Courier New')
-        .lineHeight(20)
-        .backgroundColor('#F8F9FA')
-        .borderRadius(10)
-        .padding(12)
+        .fontColor($r('app.color.text_secondary'))
+        .margin({ bottom: 6 })
         .width('100%')
+
+      if (example && example.length > 0) {
+        Text(example)
+          .fontSize(11)
+          .fontColor($r('app.color.placeholder_color'))
+          .fontStyle(FontStyle.Italic)
+          .margin({ top: 2 })
+      }
     }
     .width('100%')
-    .padding(20)
-    .backgroundColor(Color.White)
-    .borderRadius(12)
+    .padding({ left: 14, right: 14, top: 12, bottom: 12 })
+    .backgroundColor($r('app.color.choice_option_bg'))
+    .borderRadius(10)
+    .margin({ bottom: 10 })
   }
 }

@@ -15,20 +15,20 @@ export struct RatingButtons {
 
   build() {
     Row() {
-      this.buildButton('忘记', '1 分钟', 0, '#E74C3C', this.forgetPressed);
-      this.buildButton('困难', '10 分钟', 1, '#F39C12', this.hardPressed);
-      this.buildButton('良好', '1 天', 2, '#2ECC71', this.goodPressed);
-      this.buildButton('容易', '4 天', 3, '#27AE60', this.easyPressed);
+      this.buildButton('忘记', '1 分钟', 0, $r('app.color.rating_forget'), this.forgetPressed);
+      this.buildButton('困难', '10 分钟', 1, $r('app.color.rating_hard'), this.hardPressed);
+      this.buildButton('良好', '1 天', 2, $r('app.color.rating_good'), this.goodPressed);
+      this.buildButton('容易', '4 天', 3, $r('app.color.rating_easy'), this.easyPressed);
     }
     .width('100%')
     .justifyContent(FlexAlign.SpaceAround)
-    .backgroundColor(Color.White)
+    .backgroundColor($r('app.color.card_background'))
     .padding({ top: 12, bottom: 12 })
-    .border({ width: { top: 1 }, color: '#eee' })
+    .border({ width: { top: 1 }, color: $r('app.color.divider_color') })
   }
 
   @Builder
-  buildButton(label: string, interval: string, rating: number, color: string, isPressed: boolean) {
+  buildButton(label: string, interval: string, rating: number, color: ResourceColor, isPressed: boolean) {
     Column() {
       Text(label)
         .fontSize(11)

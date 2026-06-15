@@ -22,7 +22,7 @@ export interface DayDetailRecord {
   cardFront: string;
   result: number;
   resultLabel: string;
-  resultColor: string;
+  resultColor: ResourceColor;
   durationSeconds: number;
 }
 
@@ -31,7 +31,7 @@ export interface CardReviewRecord {
   date: number;
   result: number;
   resultLabel: string;
-  resultColor: string;
+  resultColor: ResourceColor;
   durationSeconds: number;
 }
 
@@ -48,7 +48,17 @@ export interface DayDetail {
 }
 
 const RATING_LABELS: string[] = ['忘记', '困难', '良好', '容易'];
-const RATING_COLORS: string[] = ['#E74C3C', '#F39C12', '#2ECC71', '#27AE60'];
+
+/** 根据评分获取对应的颜色资源引用（适配深色模式） */
+function getRatingColor(rating: number): ResourceColor {
+  switch (rating) {
+    case 0: return $r('app.color.rating_forget');
+    case 1: return $r('app.color.rating_hard');
+    case 2: return $r('app.color.rating_good');
+    case 3: return $r('app.color.rating_easy');
+    default: return $r('app.color.text_secondary');
+  }
+}
 
 /** 学习视图模型 */
 export class StudyViewModel {
@@ -198,7 +208,7 @@ export class StudyViewModel {
         cardFront: card.front,
         result: r.result,
         resultLabel: RATING_LABELS[r.result] ?? '未知',
-        resultColor: RATING_COLORS[r.result] ?? '#999',
+        resultColor: getRatingColor(r.result),
         durationSeconds: r.duration,
       });
     }
@@ -230,7 +240,7 @@ export class StudyViewModel {
         date: r.date,
         result: r.result,
         resultLabel: RATING_LABELS[r.result] ?? '未知',
-        resultColor: RATING_COLORS[r.result] ?? '#999',
+        resultColor: getRatingColor(r.result),
         durationSeconds: r.duration,
       });
     }

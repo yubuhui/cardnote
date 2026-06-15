@@ -101,7 +101,7 @@ struct EditorPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F1F3F5')
+    .backgroundColor($r('app.color.background_color'))
   }
 
   // ==================== 导航栏 ====================
@@ -112,13 +112,13 @@ struct EditorPage {
       Row() {
         Text('‹')
           .fontSize(22)
-          .fontColor('#1A1A1A')
+          .fontColor($r('app.color.text_primary'))
           .textAlign(TextAlign.Center)
       }
       .width(36)
       .height(36)
       .borderRadius(18)
-      .backgroundColor('#E0E0E0')
+      .backgroundColor($r('app.color.nav_back_bg'))
       .justifyContent(FlexAlign.Center)
       .alignItems(VerticalAlign.Center)
       .onClick(() => {
@@ -128,7 +128,7 @@ struct EditorPage {
       Text(this.mode === '编辑' ? '编辑卡片' : '新增卡片')
         .fontSize(17)
         .fontWeight(FontWeight.Medium)
-        .fontColor('#1A1A1A')
+        .fontColor($r('app.color.text_primary'))
         .layoutWeight(1)
         .textAlign(TextAlign.Center)
 
@@ -139,7 +139,7 @@ struct EditorPage {
     }
     .width('100%')
     .padding({ left: 16, right: 16, top: 46, bottom: 14 })
-    .backgroundColor('#F1F3F5')
+    .backgroundColor($r('app.color.background_color'))
   }
 
   // ==================== 牌组选择卡片 ====================
@@ -149,7 +149,7 @@ struct EditorPage {
       Row({ space: 8 }) {
         Text('所属牌组')
           .fontSize(13)
-          .fontColor('#6B7280')
+          .fontColor($r('app.color.chip_unselected_text'))
           .fontWeight(FontWeight.Medium)
       }
       .margin({ bottom: 8 })
@@ -165,14 +165,14 @@ struct EditorPage {
         })
         .width('100%')
         .optionWidth(OptionWidthMode.FIT_TRIGGER)
-        .backgroundColor('#FFFFFF')
+        .backgroundColor($r('app.color.card_background'))
         .borderRadius(12)
-        .border({ width: 1, color: '#E5E7EB' })
+        .border({ width: 1, color: $r('app.color.input_border') })
         .padding({ left: 14, right: 14 })
     }
     .width('100%')
     .padding({ left: 16, right: 16, top: 14, bottom: 14 })
-    .backgroundColor(Color.White)
+    .backgroundColor($r('app.color.card_background'))
     .borderRadius(16)
     .shadow({ radius: 3, color: '#0C000000', offsetY: 1 })
   }
@@ -194,13 +194,13 @@ struct EditorPage {
       Text(label)
         .fontSize(14)
         .fontWeight(this.selectedType === type ? FontWeight.Medium : FontWeight.Normal)
-        .fontColor(this.selectedType === type ? '#FFFFFF' : '#6B7280')
+        .fontColor(this.selectedType === type ? '#FFFFFF' : $r('app.color.chip_unselected_text'))
     }
     .layoutWeight(1)
     .padding({ top: 12, bottom: 12 })
-    .backgroundColor(this.selectedType === type ? '#4A90D9' : '#FFFFFF')
+    .backgroundColor(this.selectedType === type ? $r('app.color.primary_color') : $r('app.color.chip_unselected_bg'))
     .borderRadius(14)
-    .border({ width: 1, color: this.selectedType === type ? '#4A90D9' : '#E5E7EB' })
+    .border({ width: 1, color: this.selectedType === type ? $r('app.color.primary_color') : $r('app.color.input_border') })
     .onClick(() => {
       this.selectedType = type;
     })
@@ -213,20 +213,20 @@ struct EditorPage {
       Row({ space: 6 }) {
         Text('问题（题干）')
           .fontSize(13)
-          .fontColor('#374151')
+          .fontColor($r('app.color.text_primary'))
           .fontWeight(FontWeight.Medium)
       }
       .margin({ bottom: 10 })
 
       TextArea({ placeholder: '输入问题内容...', text: this.frontText, controller: this.frontTextController })
-        .backgroundColor('#F9FAFB')
+        .backgroundColor($r('app.color.input_background'))
         .borderRadius(10)
-        .border({ width: 1.5, color: '#E5E7EB' })
+        .border({ width: 1.5, color: $r('app.color.input_border') })
         .height('auto')
         .constraintSize({ minHeight: 90 })
         .fontSize(15)
-        .fontColor('#1A1A1A')
-        .placeholderColor('#9CA3AF')
+        .fontColor($r('app.color.text_primary'))
+        .placeholderColor($r('app.color.placeholder_color'))
         .padding({ left: 14, right: 14, top: 12, bottom: 12 })
         .onChange((value: string) => {
           this.frontText = value;
@@ -234,7 +234,7 @@ struct EditorPage {
     }
     .width('100%')
     .padding({ left: 16, right: 16, top: 14, bottom: 14 })
-    .backgroundColor(Color.White)
+    .backgroundColor($r('app.color.card_background'))
     .borderRadius(16)
     .shadow({ radius: 3, color: '#0C000000', offsetY: 1 })
   }
@@ -258,20 +258,20 @@ struct EditorPage {
       Row({ space: 6 }) {
         Text('答案')
           .fontSize(13)
-          .fontColor('#374151')
+          .fontColor($r('app.color.text_primary'))
           .fontWeight(FontWeight.Medium)
       }
       .margin({ bottom: 10 })
 
       TextArea({ placeholder: '输入答案...', text: this.backText })
-        .backgroundColor('#F9FAFB')
+        .backgroundColor($r('app.color.input_background'))
         .borderRadius(10)
-        .border({ width: 1.5, color: '#E5E7EB' })
+        .border({ width: 1.5, color: $r('app.color.input_border') })
         .height('auto')
         .constraintSize({ minHeight: 80 })
         .fontSize(15)
-        .fontColor('#1A1A1A')
-        .placeholderColor('#9CA3AF')
+        .fontColor($r('app.color.text_primary'))
+        .placeholderColor($r('app.color.placeholder_color'))
         .padding({ left: 14, right: 14, top: 12, bottom: 12 })
         .onChange((value: string) => {
           this.backText = value;
@@ -279,7 +279,7 @@ struct EditorPage {
     }
     .width('100%')
     .padding({ left: 16, right: 16, top: 14, bottom: 14 })
-    .backgroundColor(Color.White)
+    .backgroundColor($r('app.color.card_background'))
     .borderRadius(16)
     .shadow({ radius: 3, color: '#0C000000', offsetY: 1 })
   }
@@ -291,7 +291,7 @@ struct EditorPage {
       Row({ space: 6 }) {
         Text('选项（勾选为正确答案）')
           .fontSize(13)
-          .fontColor('#374151')
+          .fontColor($r('app.color.text_primary'))
           .fontWeight(FontWeight.Medium)
 
         Blank()
@@ -299,12 +299,12 @@ struct EditorPage {
         if (this.selectedOptionIndexes.length > 0) {
           Text('已选 ' + this.selectedOptionIndexes.length.toString() + ' 项')
             .fontSize(11)
-            .fontColor('#4A90D9')
+            .fontColor($r('app.color.primary_color'))
             .fontWeight(FontWeight.Medium)
         } else {
           Text('未选择答案')
             .fontSize(11)
-            .fontColor('#F59E0B')
+            .fontColor($r('app.color.warn_text'))
         }
       }
       .width('100%')
@@ -316,11 +316,11 @@ struct EditorPage {
           Text(this.optionLabel(index))
             .fontSize(14)
             .fontWeight(FontWeight.Bold)
-            .fontColor(this.selectedOptionIndexes.includes(index) ? '#FFFFFF' : '#6B7280')
+            .fontColor(this.selectedOptionIndexes.includes(index) ? '#FFFFFF' : $r('app.color.chip_unselected_text'))
             .width(32)
             .height(32)
             .textAlign(TextAlign.Center)
-            .backgroundColor(this.selectedOptionIndexes.includes(index) ? '#4A90D9' : '#F3F4F6')
+            .backgroundColor(this.selectedOptionIndexes.includes(index) ? $r('app.color.primary_color') : $r('app.color.option_badge_unselected'))
             .borderRadius(16)
             .onClick(() => {
               const pos = this.selectedOptionIndexes.indexOf(index);
@@ -335,17 +335,17 @@ struct EditorPage {
           Stack({ alignContent: Alignment.TopEnd }) {
             TextArea({ placeholder: `选项 ${this.optionLabel(index)}`, text: item.text })
               .width('100%')
-              .backgroundColor('#F9FAFB')
+              .backgroundColor($r('app.color.input_background'))
               .borderRadius(10)
               .border({
                 width: 1.5,
-                color: this.selectedOptionIndexes.includes(index) ? '#4A90D9' : '#E5E7EB'
+                color: this.selectedOptionIndexes.includes(index) ? $r('app.color.primary_color') : $r('app.color.input_border')
               })
               .height('auto')
               .constraintSize({ minHeight: 44 })
               .fontSize(14)
-              .fontColor('#1A1A1A')
-              .placeholderColor('#9CA3AF')
+              .fontColor($r('app.color.text_primary'))
+              .placeholderColor($r('app.color.placeholder_color'))
               .padding({ left: 12, right: 30, top: 12, bottom: 12 })
               .onChange((value: string) => {
                 this.optionItems[index].text = value;
@@ -354,7 +354,7 @@ struct EditorPage {
             Image($r('sys.symbol.xmark_circle_fill'))
               .width(20)
               .height(20)
-              .fillColor('#D1D5DB')
+              .fillColor($r('app.color.icon_delete'))
               .margin({ top: 6, right: 6 })
               .onClick(() => {
                 this.optionItems.splice(index, 1);
@@ -376,18 +376,18 @@ struct EditorPage {
           Image($r('sys.symbol.plus_circle'))
             .width(16)
             .height(16)
-            .fillColor('#4A90D9')
+            .fillColor($r('app.color.primary_color'))
           Text('添加选项')
             .fontSize(13)
-            .fontColor('#4A90D9')
+            .fontColor($r('app.color.primary_color'))
             .fontWeight(FontWeight.Medium)
         }
       }
       .width('100%')
       .height(44)
-      .backgroundColor(Color.White)
+      .backgroundColor($r('app.color.card_background'))
       .borderRadius(10)
-      .border({ width: 1.5, color: '#4A90D9', style: BorderStyle.Dashed })
+      .border({ width: 1.5, color: $r('app.color.primary_color'), style: BorderStyle.Dashed })
       .margin({ top: 4 })
       .onClick(() => {
         this.optionItems.push(new OptionItem(''));
@@ -395,7 +395,7 @@ struct EditorPage {
     }
     .width('100%')
     .padding({ left: 16, right: 16, top: 14, bottom: 14 })
-    .backgroundColor(Color.White)
+    .backgroundColor($r('app.color.card_background'))
     .borderRadius(16)
     .shadow({ radius: 3, color: '#0C000000', offsetY: 1 })
   }
@@ -407,7 +407,7 @@ struct EditorPage {
       Row({ space: 6 }) {
         Text('挖空标记')
           .fontSize(13)
-          .fontColor('#374151')
+          .fontColor($r('app.color.text_primary'))
           .fontWeight(FontWeight.Medium)
       }
       .width('100%')
@@ -418,14 +418,14 @@ struct EditorPage {
         Row({ space: 6 }) {
           Text('使用 [[答案]] 标记挖空位置')
             .fontSize(12)
-            .fontColor('#4A90D9')
+            .fontColor($r('app.color.primary_color'))
             .fontWeight(FontWeight.Medium)
             .layoutWeight(1)
 
           Button('插入 [[ ]]')
             .fontSize(11)
             .fontColor('#FFFFFF')
-            .backgroundColor('#4A90D9')
+            .backgroundColor($r('app.color.primary_color'))
             .borderRadius(8)
             .height(28)
             .padding({ left: 12, right: 12 })
@@ -440,18 +440,18 @@ struct EditorPage {
 
         Text('示例：我[[爱]]你 → 背诵时显示为「我▽你」')
           .fontSize(11)
-          .fontColor('#9CA3AF')
+          .fontColor($r('app.color.placeholder_color'))
           .margin({ top: 6 })
       }
       .width('100%')
       .padding(14)
-      .backgroundColor('#EFF6FF')
+      .backgroundColor($r('app.color.hint_box_bg'))
       .borderRadius(12)
-      .border({ width: 1, color: '#BFDBFE' })
+      .border({ width: 1, color: $r('app.color.hint_box_border') })
     }
     .width('100%')
     .padding({ left: 16, right: 16, top: 14, bottom: 14 })
-    .backgroundColor(Color.White)
+    .backgroundColor($r('app.color.card_background'))
     .borderRadius(16)
     .shadow({ radius: 3, color: '#0C000000', offsetY: 1 })
   }
@@ -463,20 +463,20 @@ struct EditorPage {
       Row({ space: 6 }) {
         Text('解析（可选）')
           .fontSize(13)
-          .fontColor('#374151')
+          .fontColor($r('app.color.text_primary'))
           .fontWeight(FontWeight.Medium)
       }
       .margin({ bottom: 10 })
 
       TextArea({ placeholder: '输入解析内容...', text: this.analysisText })
-        .backgroundColor('#F9FAFB')
+        .backgroundColor($r('app.color.input_background'))
         .borderRadius(10)
-        .border({ width: 1.5, color: '#E5E7EB' })
+        .border({ width: 1.5, color: $r('app.color.input_border') })
         .height('auto')
         .constraintSize({ minHeight: 60 })
         .fontSize(14)
-        .fontColor('#1A1A1A')
-        .placeholderColor('#9CA3AF')
+        .fontColor($r('app.color.text_primary'))
+        .placeholderColor($r('app.color.placeholder_color'))
         .padding({ left: 14, right: 14, top: 12, bottom: 12 })
         .onChange((value: string) => {
           this.analysisText = value;
@@ -484,7 +484,7 @@ struct EditorPage {
     }
     .width('100%')
     .padding({ left: 16, right: 16, top: 14, bottom: 14 })
-    .backgroundColor(Color.White)
+    .backgroundColor($r('app.color.card_background'))
     .borderRadius(16)
     .shadow({ radius: 3, color: '#0C000000', offsetY: 1 })
   }
@@ -498,15 +498,15 @@ struct EditorPage {
           Row({ space: 6 }) {
             Text('删除')
               .fontSize(15)
-              .fontColor('#EF4444')
+              .fontColor($r('app.color.delete_text'))
               .fontWeight(FontWeight.Medium)
           }
         }
         .layoutWeight(1)
         .height(50)
-        .backgroundColor(Color.White)
+        .backgroundColor($r('app.color.card_background'))
         .borderRadius(25)
-        .border({ width: 1.5, color: '#FECACA' })
+        .border({ width: 1.5, color: $r('app.color.delete_border') })
         .shadow({ radius: 4, color: '#0C000000', offsetY: 2 })
         .onClick(() => {
           AlertDialog.show({
@@ -540,16 +540,16 @@ struct EditorPage {
       }
       .layoutWeight(1)
       .height(50)
-      .backgroundColor('#4A90D9')
+      .backgroundColor($r('app.color.primary_color'))
       .borderRadius(25)
-      .shadow({ radius: 8, color: '#304A90D9', offsetY: 4 })
+      .shadow({ radius: 8, color: $r('app.color.button_shadow'), offsetY: 4 })
       .onClick(() => {
         this.saveCard();
       })
     }
     .width('100%')
     .padding({ left: 16, right: 16, top: 12, bottom: 14 })
-    .backgroundColor('#F1F3F5')
+    .backgroundColor($r('app.color.background_color'))
   }
 
   private optionLabel(index: number): string {
