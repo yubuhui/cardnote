@@ -1,0 +1,16 @@
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	modified:   entry/src/main/ets/pages/HomePage.ets
+	modified:   entry/src/main/ets/pages/SettingsPage.ets
+	modified:   entry/src/main/ets/pages/StatsPage.ets
+	deleted:    git_output.txt
+	deleted:    git_result.txt
+	deleted:    output.txt
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	final_status.txt
+

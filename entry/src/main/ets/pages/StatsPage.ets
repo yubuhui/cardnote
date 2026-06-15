@@ -283,6 +283,9 @@ export struct StatsPage {
 
           // 今日学习卡片列表
           this.buildTodayCardList()
+
+          // 底部留白，避免被悬浮Tab遮挡
+          Blank().height(72)
         }
       }
       .align(Alignment.Top)

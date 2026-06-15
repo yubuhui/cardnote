@@ -324,6 +324,9 @@ export struct SettingsPage {
             .textAlign(TextAlign.Center)
             .width('100%')
             .padding({ top: 12, bottom: 24 })
+
+          // 底部留白，避免被悬浮Tab遮挡
+          Blank().height(72)
         }
       }
       .align(Alignment.Top)

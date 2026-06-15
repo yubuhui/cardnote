@@ -6,6 +6,7 @@ import { StudyViewModel } from '../viewmodel/StudyViewModel';
 import { MemoryRecordDao } from '../data/MemoryRecordDao';
 import { StatsPage } from './StatsPage';
 import { SettingsPage } from './SettingsPage';
+import { HdsTabs, HdsTabsController, hdsMaterial } from '@kit.UIDesignKit';
 
 const PRIMARY = '#4A90D9';
 const PRIMARY_DARK = '#3A7BC8';
@@ -160,7 +161,7 @@ struct HomePage {
 
   build() {
     Flex({ direction: FlexDirection.Column, justifyContent: FlexAlign.Start }) {
-      Tabs({ index: this.currentTabIndex }) {
+      HdsTabs({ index: this.currentTabIndex }) {
         TabContent() {
           Flex({ direction: FlexDirection.Column, justifyContent: FlexAlign.Start }) {
             // 顶部区域 —— 统计栏
@@ -221,7 +222,7 @@ struct HomePage {
                 this.buildCardSection({ title: '已掌握', circleColor: '#34C759', status: CardStatus.mastered, isOpen: this.masteredOpen, section: 'mastered' })
               }
               .width('100%')
-              .padding({ bottom: 12 })
+              .padding({ bottom: 72 })
             }
             .width('100%')
             .align(Alignment.Top)
@@ -254,8 +255,14 @@ struct HomePage {
       }
       .barPosition(BarPosition.End)
       .scrollable(false)
-      .barHeight(56)
-      .barMode(BarMode.Fixed)
+      .barOverlap(true)
+      .barFloatingStyle({
+        barBottomMargin: 28,
+        systemMaterialEffect: {
+          materialType: hdsMaterial.MaterialType.ADAPTIVE,
+          materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
+        }
+      })
       .layoutWeight(1)
       .onChange((index: number) => {
         this.currentTabIndex = index;
@@ -461,7 +468,7 @@ struct HomePage {
         })
     }
     .width('100%')
-    .padding({ left: 16, right: 16, top: 10, bottom: 10 })
+    .padding({ left: 16, right: 16, top: 10, bottom: 66 })
     .backgroundColor(CARD_WHITE)
     .shadow({ radius: 6, color: '#10000000', offsetY: -2 })
   }
@@ -514,7 +521,7 @@ struct HomePage {
         .onClick(() => { this.batchDelete(); })
     }
     .width('100%')
-    .padding({ left: 16, right: 16, top: 10, bottom: 10 })
+    .padding({ left: 16, right: 16, top: 10, bottom: 66 })
     .backgroundColor(CARD_WHITE)
     .shadow({ radius: 6, color: '#10000000', offsetY: -2 })
   }
