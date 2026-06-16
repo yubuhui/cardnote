@@ -58,6 +58,15 @@ export class SM2Algorithm {
 
     // 首次学习
     if (card.repetitions === 0) {
+      if (rating === Rating.forget) {
+        const result: UpdateResult = {
+          interval: getInitialInterval(rating),
+          repetitions: 0,
+          easeFactor: card.easeFactor,
+          status: CardStatus.unlearned,
+        };
+        return result;
+      }
       const result: UpdateResult = {
         interval: getInitialInterval(rating),
         repetitions: 1,

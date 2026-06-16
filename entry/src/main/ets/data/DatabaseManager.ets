@@ -179,6 +179,19 @@ export class DatabaseManager {
     if (!this.rdbStore) {
       return;
     }
+    const ALLOWED_TABLES: string[] = ['deck', 'card', 'memory_record'];
+    const ALLOWED_COLUMNS: Record<string, string[]> = {
+      'deck': ['uuid', 'daily_new_cards', 'daily_review_cards', 'is_default'],
+      'card': ['uuid', 'deck_uuid'],
+      'memory_record': ['uuid', 'duration', 'card_uuid'],
+    };
+    if (ALLOWED_TABLES.indexOf(tableName) < 0) {
+      return;
+    }
+    const allowedCols: string[] = ALLOWED_COLUMNS[tableName] ?? [];
+    if (allowedCols.indexOf(columnName) < 0) {
+      return;
+    }
     try {
       const infoSql: string = `PRAGMA table_info('${tableName}')`;
       const rs: relationalStore.ResultSet = await this.rdbStore.querySql(infoSql);

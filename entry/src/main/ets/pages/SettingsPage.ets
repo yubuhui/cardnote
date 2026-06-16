@@ -82,14 +82,14 @@ export struct SettingsPage {
       return;
     }
 
-    AlertDialog.show({
+    this.getUIContext().showAlertDialog({
       title: '确认下载',
       message: '从云端下载将覆盖本地数据，确定吗？',
       autoCancel: true,
       alignment: DialogAlignment.Center,
       primaryButton: {
         value: '确定',
-        fontColor: '#FA8C16',
+        fontColor: $r('app.color.warning'),
         action: async () => {
           this.isDownloading = true;
           this.downloadResultText = '下载中...';
@@ -106,27 +106,27 @@ export struct SettingsPage {
       },
       secondaryButton: {
         value: '取消',
-        fontColor: '#999',
+        fontColor: $r('app.color.text_secondary'),
         action: () => {}
       }
     });
   }
 
-  private getSyncStatusColor(): string {
+  private getSyncStatusColor(): ResourceColor {
     switch (this.syncStatus) {
       case SyncStatus.SUCCESS:
-        return '#4CAF50';
+        return $r('app.color.success');
       case SyncStatus.SYNCING:
       case SyncStatus.RETRYING:
-        return '#2196F3';
+        return $r('app.color.primary');
       case SyncStatus.NETWORK_ERROR:
       case SyncStatus.PAUSED:
       case SyncStatus.STORAGE_FULL:
       case SyncStatus.WIFI_ONLY:
       case SyncStatus.NOT_ENABLED:
-        return '#F44336';
+        return $r('app.color.danger');
       default:
-        return '#999';
+        return $r('app.color.text_secondary');
     }
   }
 
@@ -163,7 +163,7 @@ export struct SettingsPage {
         .textAlign(TextAlign.Center)
         .width('100%')
         .padding({ top: 46, bottom: 12 })
-        .backgroundColor($r('app.color.card_background'))
+        .backgroundColor($r('app.color.surface'))
 
       Scroll() {
         Column() {
@@ -197,7 +197,7 @@ export struct SettingsPage {
           }
           .width('100%')
           .padding(14)
-          .backgroundColor($r('app.color.card_background'))
+          .backgroundColor($r('app.color.surface'))
           .borderRadius(12)
           .margin({ top: 10 })
 
@@ -215,7 +215,7 @@ export struct SettingsPage {
                 .fontColor($r('app.color.text_primary'))
                 .layoutWeight(1)
               Toggle({ type: ToggleType.Switch, isOn: this.syncEnabled })
-                .selectedColor('#1677FF')
+                .selectedColor($r('app.color.primary'))
                 .onChange((isOn: boolean) => {
                   this.syncEnabled = isOn;
                   this.webdavService.setSyncEnabled(isOn);
@@ -223,7 +223,7 @@ export struct SettingsPage {
             }
             .width('100%')
             .padding({ top: 10, bottom: 10 })
-            .border({ width: { bottom: 1 }, color: $r('app.color.divider_color') })
+            .border({ width: { bottom: 1 }, color: $r('app.color.outline') })
 
             Row() {
               Text('WebDAV设置')
@@ -236,7 +236,7 @@ export struct SettingsPage {
             }
             .width('100%')
             .padding({ top: 10, bottom: 10 })
-            .border({ width: { bottom: 1 }, color: $r('app.color.divider_color') })
+            .border({ width: { bottom: 1 }, color: $r('app.color.outline') })
             .onClick(() => {
               if (this.syncEnabled) this.goToPage('pages/WebDavSyncPage');
             })
@@ -248,7 +248,7 @@ export struct SettingsPage {
                 .layoutWeight(1)
               if (this.isUploading) {
                 LoadingProgress()
-                  .width(20).height(20).color('#1677FF')
+                  .width(20).height(20).color($r('app.color.primary'))
               } else {
                 Text(this.uploadResultText)
                   .fontSize(13).fontColor($r('app.color.text_secondary'))
@@ -256,7 +256,7 @@ export struct SettingsPage {
             }
             .width('100%')
             .padding({ top: 10, bottom: 10 })
-            .border({ width: { bottom: 1 }, color: $r('app.color.divider_color') })
+            .border({ width: { bottom: 1 }, color: $r('app.color.outline') })
             .onClick(() => { this.triggerUpload(); })
 
             Row() {
@@ -266,7 +266,7 @@ export struct SettingsPage {
                 .layoutWeight(1)
               if (this.isDownloading) {
                 LoadingProgress()
-                  .width(20).height(20).color('#1677FF')
+                  .width(20).height(20).color($r('app.color.primary'))
               } else {
                 Text(this.downloadResultText)
                   .fontSize(13).fontColor($r('app.color.text_secondary'))
@@ -278,7 +278,7 @@ export struct SettingsPage {
           }
           .width('100%')
           .padding(14)
-          .backgroundColor($r('app.color.card_background'))
+          .backgroundColor($r('app.color.surface'))
           .borderRadius(12)
           .margin({ top: 10 })
 
@@ -303,7 +303,7 @@ export struct SettingsPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.background_color'))
+    .backgroundColor($r('app.color.background'))
   }
 
   @Builder
@@ -334,7 +334,7 @@ export struct SettingsPage {
         }
         .width('100%')
         .padding({ top: 10, bottom: 10 })
-        .border(index < items.length - 1 ? { width: { bottom: 1 }, color: $r('app.color.divider_color') } : {})
+        .border(index < items.length - 1 ? { width: { bottom: 1 }, color: $r('app.color.outline') } : {})
         .onClick(() => {
           if (item.routeName) this.goToPage(item.routeName);
         })
@@ -342,7 +342,7 @@ export struct SettingsPage {
     }
     .width('100%')
     .padding(14)
-    .backgroundColor($r('app.color.card_background'))
+    .backgroundColor($r('app.color.surface'))
     .borderRadius(12)
     .margin({ top: 10 })
   }

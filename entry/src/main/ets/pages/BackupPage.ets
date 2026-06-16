@@ -1,5 +1,3 @@
-import { router } from '@kit.ArkUI';
-import { promptAction } from '@kit.ArkUI';
 import { picker, fileIo as fs } from '@kit.CoreFileKit';
 import { common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
@@ -10,7 +8,7 @@ import { formatFileSize } from '../utils/DateUtils';
 
 @Entry
 @Component
-export struct BackupPage {
+struct BackupPage {
   private backupService: BackupService = BackupService.getInstance();
 
   // ========== 状态变量 ==========
@@ -79,7 +77,7 @@ export struct BackupPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.background_color'))
+    .backgroundColor($r('app.color.background'))
   }
 
   // ==================== 顶部导航 ====================
@@ -95,10 +93,10 @@ export struct BackupPage {
       .width(36)
       .height(36)
       .borderRadius(18)
-      .backgroundColor($r('app.color.nav_back_bg'))
+      .backgroundColor($r('app.color.surface'))
       .justifyContent(FlexAlign.Center)
       .alignItems(VerticalAlign.Center)
-      .onClick(() => router.back())
+      .onClick(() => this.getUIContext().getRouter().back())
       Text('备份')
         .fontSize(17)
         .fontWeight(FontWeight.Medium)
@@ -109,7 +107,7 @@ export struct BackupPage {
     }
     .width('100%')
     .padding({ left: 18, right: 18, top: 46, bottom: 12 })
-    .backgroundColor($r('app.color.card_background'))
+    .backgroundColor($r('app.color.surface'))
   }
 
   // ==================== 通用卡片容器 ====================
@@ -140,8 +138,8 @@ export struct BackupPage {
           .height(44)
           .layoutWeight(1)
           .fontSize(13)
-          .backgroundColor(this.isLocalBackingUp ? $r('app.color.button_disabled_bg') : $r('app.color.primary_color'))
-          .fontColor($r('app.color.button_text'))
+          .backgroundColor(this.isLocalBackingUp ? $r('app.color.disabled') : $r('app.color.primary'))
+          .fontColor($r('app.color.on_primary'))
           .enabled(!this.isLocalBackingUp && !this.isExporting)
           .borderRadius(10)
           .onClick(() => this.doLocalBackup())
@@ -152,8 +150,8 @@ export struct BackupPage {
           .height(44)
           .layoutWeight(1)
           .fontSize(13)
-          .backgroundColor(this.isExporting ? $r('app.color.button_disabled_bg') : $r('app.color.button_confirm_bg'))
-          .fontColor($r('app.color.button_text'))
+          .backgroundColor(this.isExporting ? $r('app.color.disabled') : $r('app.color.success'))
+          .fontColor($r('app.color.on_primary'))
           .enabled(!this.isLocalBackingUp && !this.isExporting)
           .borderRadius(10)
           .onClick(() => this.doExportToFile())
@@ -165,8 +163,8 @@ export struct BackupPage {
         .width('100%')
         .height(44)
         .fontSize(14)
-        .backgroundColor(this.isImporting ? $r('app.color.button_disabled_bg') : $r('app.color.button_warn_bg'))
-        .fontColor($r('app.color.button_text'))
+        .backgroundColor(this.isImporting ? $r('app.color.disabled') : $r('app.color.warning'))
+        .fontColor($r('app.color.on_primary'))
         .enabled(!this.isLocalBackingUp && !this.isExporting && !this.isImporting)
         .borderRadius(10)
         .margin({ top: 10 })
@@ -174,9 +172,9 @@ export struct BackupPage {
     }
     .width('100%')
     .padding(16)
-    .backgroundColor($r('app.color.card_background'))
+    .backgroundColor($r('app.color.surface'))
     .borderRadius(12)
-    .shadow({ radius: 6, color: $r('app.color.card_shadow'), offsetY: 2 })
+    .shadow({ radius: 6, color: $r('app.color.shadow'), offsetY: 2 })
     .margin({ bottom: 12 })
   }
 
@@ -213,7 +211,7 @@ export struct BackupPage {
       .width('100%')
       .margin({ top: 14 })
       .padding(12)
-      .backgroundColor($r('app.color.surface_option_bg'))
+      .backgroundColor($r('app.color.surface'))
       .borderRadius(10)
 
       // 频率选择（仅在启用时显示）
@@ -221,7 +219,7 @@ export struct BackupPage {
         Row() {
           Text('备份频率')
             .fontSize(13)
-            .fontColor($r('app.color.text_tertiary'))
+            .fontColor($r('app.color.text_secondary'))
           Blank()
           this.buildFreqChip('每日', 'daily')
           this.buildFreqChip('每周', 'weekly')
@@ -233,9 +231,9 @@ export struct BackupPage {
     }
     .width('100%')
     .padding(16)
-    .backgroundColor($r('app.color.card_background'))
+    .backgroundColor($r('app.color.surface'))
     .borderRadius(12)
-    .shadow({ radius: 6, color: $r('app.color.card_shadow'), offsetY: 2 })
+    .shadow({ radius: 6, color: $r('app.color.shadow'), offsetY: 2 })
     .margin({ bottom: 12 })
   }
 
@@ -243,9 +241,9 @@ export struct BackupPage {
   buildFreqChip(label: string, value: string) {
     Text(label)
       .fontSize(12)
-      .fontColor(this.autoBackupFrequency === value ? $r('app.color.button_text') : $r('app.color.text_tertiary'))
+      .fontColor(this.autoBackupFrequency === value ? $r('app.color.on_primary') : $r('app.color.text_secondary'))
       .padding({ left: 14, right: 14, top: 6, bottom: 6 })
-      .backgroundColor(this.autoBackupFrequency === value ? $r('app.color.primary_color') : $r('app.color.freq_chip_unselected_bg'))
+      .backgroundColor(this.autoBackupFrequency === value ? $r('app.color.primary') : $r('app.color.surface'))
       .borderRadius(14)
       .margin({ left: 8 })
       .onClick(() => {
@@ -272,11 +270,11 @@ export struct BackupPage {
 
         Text('请先在「设置 → WebDAV 同步」中配置服务器')
           .fontSize(12)
-          .fontColor($r('app.color.button_warn_bg'))
+          .fontColor($r('app.color.warning'))
           .margin({ top: 10 })
           .padding(10)
           .width('100%')
-          .backgroundColor($r('app.color.warn_hint_bg'))
+          .backgroundColor($r('app.color.warning_bg'))
           .borderRadius(8)
       } else {
         Text('上传本地最新数据到云端，或从云端下载备份恢复')
@@ -291,8 +289,8 @@ export struct BackupPage {
             .fontSize(13)
             .height(42)
             .layoutWeight(1)
-            .backgroundColor(this.isCloudUploading ? $r('app.color.button_disabled_bg') : $r('app.color.button_confirm_bg'))
-            .fontColor($r('app.color.button_text'))
+            .backgroundColor(this.isCloudUploading ? $r('app.color.disabled') : $r('app.color.success'))
+            .fontColor($r('app.color.on_primary'))
             .enabled(!this.isCloudUploading)
             .borderRadius(10)
             .onClick(() => this.doCloudUpload())
@@ -303,8 +301,8 @@ export struct BackupPage {
             .fontSize(13)
             .height(42)
             .layoutWeight(1)
-            .backgroundColor(this.isCloudListing ? $r('app.color.button_disabled_bg') : $r('app.color.primary_color'))
-            .fontColor($r('app.color.button_text'))
+            .backgroundColor(this.isCloudListing ? $r('app.color.disabled') : $r('app.color.primary'))
+            .fontColor($r('app.color.on_primary'))
             .enabled(!this.isCloudListing)
             .borderRadius(10)
             .onClick(() => this.loadCloudBackups())
@@ -316,7 +314,7 @@ export struct BackupPage {
         if (this.cloudBackups.length > 0) {
           Text('云端备份列表')
             .fontSize(12)
-            .fontColor($r('app.color.text_tertiary'))
+            .fontColor($r('app.color.text_secondary'))
             .margin({ top: 16, bottom: 6 })
             .width('100%')
 
@@ -328,18 +326,18 @@ export struct BackupPage {
             })
           }
           .width('100%')
-          .divider({ strokeWidth: 0.5, color: $r('app.color.divider_color') })
+          .divider({ strokeWidth: 0.5, color: $r('app.color.outline') })
           .constraintSize({ maxHeight: 240 })
-          .backgroundColor($r('app.color.surface_list_bg'))
+          .backgroundColor($r('app.color.surface'))
           .borderRadius(8)
         }
       }
     }
     .width('100%')
     .padding(16)
-    .backgroundColor($r('app.color.card_background'))
+    .backgroundColor($r('app.color.surface'))
     .borderRadius(12)
-    .shadow({ radius: 6, color: $r('app.color.card_shadow'), offsetY: 2 })
+    .shadow({ radius: 6, color: $r('app.color.shadow'), offsetY: 2 })
     .margin({ bottom: 12 })
   }
 
@@ -355,15 +353,15 @@ export struct BackupPage {
 
       Text(formatFileSize(item.size))
         .fontSize(10)
-        .fontColor($r('app.color.placeholder_color'))
+        .fontColor($r('app.color.disabled'))
         .margin({ right: 8 })
 
       Button('下载恢复')
         .fontSize(10)
         .height(26)
         .padding({ left: 8, right: 8 })
-        .backgroundColor($r('app.color.button_warn_bg'))
-        .fontColor($r('app.color.button_text'))
+        .backgroundColor($r('app.color.warning'))
+        .fontColor($r('app.color.on_primary'))
         .borderRadius(4)
         .enabled(!this.isCloudDownloading)
         .onClick(() => this.doCloudDownload(item))
@@ -412,17 +410,17 @@ export struct BackupPage {
           })
         }
         .width('100%')
-        .divider({ strokeWidth: 0.5, color: $r('app.color.divider_color') })
+        .divider({ strokeWidth: 0.5, color: $r('app.color.outline') })
         .margin({ top: 8 })
-        .backgroundColor($r('app.color.surface_list_bg'))
+        .backgroundColor($r('app.color.surface'))
         .borderRadius(8)
       }
     }
     .width('100%')
     .padding(16)
-    .backgroundColor($r('app.color.card_background'))
+    .backgroundColor($r('app.color.surface'))
     .borderRadius(12)
-    .shadow({ radius: 6, color: $r('app.color.card_shadow'), offsetY: 2 })
+    .shadow({ radius: 6, color: $r('app.color.shadow'), offsetY: 2 })
     .margin({ bottom: 12 })
   }
 
@@ -451,8 +449,8 @@ export struct BackupPage {
         .fontSize(10)
         .height(26)
         .width(56)
-        .backgroundColor($r('app.color.button_warn_bg'))
-        .fontColor($r('app.color.button_text'))
+        .backgroundColor($r('app.color.warning'))
+        .fontColor($r('app.color.on_primary'))
         .borderRadius(4)
         .onClick(() => this.confirmRestoreFromHistory(item))
 
@@ -460,8 +458,8 @@ export struct BackupPage {
         .fontSize(10)
         .height(26)
         .width(56)
-        .backgroundColor($r('app.color.button_danger_bg'))
-        .fontColor($r('app.color.button_text'))
+        .backgroundColor($r('app.color.danger'))
+        .fontColor($r('app.color.on_primary'))
         .borderRadius(4)
         .margin({ left: 4 })
         .onClick(() => this.confirmDeleteBackup(item))
@@ -558,14 +556,14 @@ export struct BackupPage {
         return;
       }
 
-      AlertDialog.show({
+      this.getUIContext().showAlertDialog({
         title: '确认导入',
         message: `将覆盖当前全部数据：\n${summary.deckCount} 牌组 · ${summary.cardCount} 卡片 · ${summary.recordCount} 记录`,
         autoCancel: true,
         alignment: DialogAlignment.Center,
         primaryButton: {
           value: '确定导入',
-          fontColor: $r('app.color.button_warn_bg'),
+          fontColor: $r('app.color.warning'),
           action: async () => {
             try {
               const result: BackupSummary = await this.backupService.restoreFromBackup(ctx, jsonString);
@@ -579,7 +577,7 @@ export struct BackupPage {
         },
         secondaryButton: {
           value: '取消',
-          fontColor: $r('app.color.text_tertiary'),
+          fontColor: $r('app.color.text_secondary'),
           action: () => {}
         }
       });
@@ -651,14 +649,14 @@ export struct BackupPage {
       return;
     }
 
-    AlertDialog.show({
+    this.getUIContext().showAlertDialog({
       title: '确认恢复',
       message: `将覆盖当前全部数据：\n${summary.deckCount} 牌组 · ${summary.cardCount} 卡片 · ${summary.recordCount} 记录`,
       autoCancel: true,
       alignment: DialogAlignment.Center,
       primaryButton: {
         value: '确定恢复',
-        fontColor: $r('app.color.button_warn_bg'),
+        fontColor: $r('app.color.warning'),
         action: async () => {
           try {
             const result: BackupSummary = await this.backupService.restoreFromBackup(ctx, jsonString);
@@ -671,21 +669,21 @@ export struct BackupPage {
       },
       secondaryButton: {
         value: '取消',
-        fontColor: $r('app.color.text_tertiary'),
+        fontColor: $r('app.color.text_secondary'),
         action: () => {}
       }
     });
   }
 
   confirmDeleteBackup(item: BackupFileInfo): void {
-    AlertDialog.show({
+    this.getUIContext().showAlertDialog({
       title: '删除备份',
       message: `确定删除 ${item.fileName}？`,
       autoCancel: true,
       alignment: DialogAlignment.Center,
       primaryButton: {
         value: '删除',
-        fontColor: $r('app.color.button_danger_bg'),
+        fontColor: $r('app.color.danger'),
         action: () => {
           const ctx: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
           if (this.backupService.deleteLocalBackup(ctx, item.fileName)) {
@@ -696,7 +694,7 @@ export struct BackupPage {
       },
       secondaryButton: {
         value: '取消',
-        fontColor: $r('app.color.text_tertiary'),
+        fontColor: $r('app.color.text_secondary'),
         action: () => {}
       }
     });
@@ -731,14 +729,14 @@ export struct BackupPage {
   }
 
   doCloudDownload(item: WebDAVItem): void {
-    AlertDialog.show({
+    this.getUIContext().showAlertDialog({
       title: '从云端恢复',
       message: `将从云端下载 "${item.name}" 并覆盖当前全部数据，确定吗？`,
       autoCancel: true,
       alignment: DialogAlignment.Center,
       primaryButton: {
         value: '确定恢复',
-        fontColor: $r('app.color.button_warn_bg'),
+        fontColor: $r('app.color.warning'),
         action: async () => {
           this.isCloudDownloading = true;
           try {
@@ -756,7 +754,7 @@ export struct BackupPage {
       },
       secondaryButton: {
         value: '取消',
-        fontColor: $r('app.color.text_tertiary'),
+        fontColor: $r('app.color.text_secondary'),
         action: () => {}
       }
     });
@@ -764,6 +762,6 @@ export struct BackupPage {
 
   // ==================== 工具方法 ====================
   private showToast(message: string): void {
-    promptAction.showToast({ message: message, duration: 2000 });
+    this.getUIContext().getPromptAction().showToast({ message: message, duration: 2000 });
   }
 }

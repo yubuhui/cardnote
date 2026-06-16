@@ -1,11 +1,9 @@
-import { router } from '@kit.ArkUI';
-import { promptAction } from '@kit.ArkUI';
 import { HuaweiAuthService, HuaweiUserInfo } from '../service/HuaweiAuthService';
 import { common } from '@kit.AbilityKit';
 
 @Entry
 @Component
-export struct LoginPage {
+struct LoginPage {
   @State isLoading: boolean = false;
   @State unionID: string = '';
   @State openID: string = '';
@@ -45,11 +43,11 @@ export struct LoginPage {
         this.openID = userInfo.openID;
         this.loginText = '已登录';
 
-        promptAction.showToast({ message: '华为账号登录成功' });
+        this.getUIContext().getPromptAction().showToast({ message: '华为账号登录成功' });
       }
     } catch (err) {
       const message: string = (err as Error).message;
-      promptAction.showToast({ message: message });
+      this.getUIContext().getPromptAction().showToast({ message: message });
     } finally {
       this.isLoading = false;
     }
@@ -62,7 +60,7 @@ export struct LoginPage {
       this.unionID = '';
       this.openID = '';
       this.loginText = '未登录';
-      promptAction.showToast({ message: '已退出登录' });
+      this.getUIContext().getPromptAction().showToast({ message: '已退出登录' });
     } catch (err) {
       console.error('退出登录失败:', JSON.stringify(err));
     }
@@ -81,11 +79,11 @@ export struct LoginPage {
         .width(36)
         .height(36)
         .borderRadius(18)
-        .backgroundColor('#E0E0E0')
+        .backgroundColor($r('app.color.surface'))
         .justifyContent(FlexAlign.Center)
         .alignItems(VerticalAlign.Center)
         .onClick(() => {
-          router.back();
+          this.getUIContext().getRouter().back();
         })
 
         Text('华为账号')
@@ -103,7 +101,7 @@ export struct LoginPage {
       .width('100%')
       .height(56)
       .padding({ left: 8, right: 8 })
-      .backgroundColor($r('app.color.card_background'))
+      .backgroundColor($r('app.color.surface'))
 
       Scroll() {
         Column() {
@@ -120,17 +118,17 @@ export struct LoginPage {
 
                 Text('UnionID')
                   .fontSize(12)
-                  .fontColor('#999')
+                  .fontColor($r('app.color.text_secondary'))
                   .margin({ bottom: 4 })
                 Text(this.unionID ? this.maskUnionID(this.unionID) : '')
                   .fontSize(13)
-                  .fontColor('#666')
+                  .fontColor($r('app.color.text_secondary'))
                   .margin({ bottom: 12 })
 
                 Button('退出登录')
                   .fontSize(14)
-                  .fontColor('#CE0E2D')
-                  .backgroundColor('#FFEBEE')
+                  .fontColor($r('app.color.danger'))
+                  .backgroundColor($r('app.color.danger_bg'))
                   .borderRadius(8)
                   .height(40)
                   .padding({ left: 20, right: 20 })
@@ -140,7 +138,7 @@ export struct LoginPage {
               }
               .width('100%')
               .padding(20)
-              .backgroundColor($r('app.color.card_background'))
+              .backgroundColor($r('app.color.surface'))
               .borderRadius(12)
             } else {
               // 未登录状态：显示登录入口
@@ -153,13 +151,13 @@ export struct LoginPage {
 
                 Text('使用华为账号登录，同步您的背诵数据')
                   .fontSize(13)
-                  .fontColor('#999')
+                  .fontColor($r('app.color.text_secondary'))
                   .margin({ bottom: 16 })
 
                 Button(this.isLoading ? '正在登录...' : '华为账号登录')
                   .fontSize(15)
-                  .fontColor(Color.White)
-                  .backgroundColor('#CE0E2D')
+                  .fontColor($r('app.color.on_primary'))
+                  .backgroundColor($r('app.color.danger'))
                   .borderRadius(8)
                   .width('100%')
                   .height(44)
@@ -170,7 +168,7 @@ export struct LoginPage {
               }
               .width('100%')
               .padding(20)
-              .backgroundColor($r('app.color.card_background'))
+              .backgroundColor($r('app.color.surface'))
               .borderRadius(12)
             }
           }
@@ -186,12 +184,12 @@ export struct LoginPage {
 
             Text('• 登录华为账号后，可获得用户唯一标识（UnionID），用于数据同步与备份。\n• 本功能仅获取账号标识，不会获取您的手机号、头像等隐私信息。\n• 登录后可在设置中随时退出。')
               .fontSize(12)
-              .fontColor('#999')
+              .fontColor($r('app.color.text_secondary'))
               .lineHeight(20)
           }
           .width('100%')
           .padding(14)
-          .backgroundColor($r('app.color.card_background'))
+          .backgroundColor($r('app.color.surface'))
           .borderRadius(12)
           .margin({ top: 10 })
         }
@@ -201,7 +199,7 @@ export struct LoginPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F5F6FA')
+    .backgroundColor($r('app.color.background'))
   }
 
   /**

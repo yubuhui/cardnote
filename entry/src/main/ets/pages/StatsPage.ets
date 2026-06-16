@@ -1,4 +1,3 @@
-import { router } from '@kit.ArkUI';
 import { StudyViewModel, TodayStats, DayDetail, DayDetailRecord } from '../viewmodel/StudyViewModel';
 import { DailyDuration } from '../data/MemoryRecordDao';
 
@@ -130,7 +129,7 @@ export struct StatsPage {
         .textAlign(TextAlign.Center)
         .width('100%')
         .padding({ top: 46, bottom: 12 })
-        .backgroundColor($r('app.color.card_background'))
+        .backgroundColor($r('app.color.surface'))
 
       Scroll() {
         Column() {
@@ -138,7 +137,7 @@ export struct StatsPage {
           Row() {
             Text('◀')
               .fontSize(16)
-              .fontColor($r('app.color.primary_color'))
+              .fontColor($r('app.color.primary'))
               .padding({ left: 8, right: 8, top: 4, bottom: 4 })
               .onClick(() => { this.prevMonth() })
 
@@ -151,7 +150,7 @@ export struct StatsPage {
 
             Text('▶')
               .fontSize(16)
-              .fontColor($r('app.color.primary_color'))
+              .fontColor($r('app.color.primary'))
               .padding({ left: 8, right: 8, top: 4, bottom: 4 })
               .onClick(() => { this.nextMonth() })
           }
@@ -184,7 +183,7 @@ export struct StatsPage {
                   Column() {
                     Text(`${day}`)
                       .fontSize(14)
-                      .fontColor(this.reviewDates.has(day) ? Color.White : $r('app.color.text_primary'))
+                      .fontColor(this.reviewDates.has(day) ? $r('app.color.on_primary') : $r('app.color.text_primary'))
                   }
                   .width('14.28%')
                   .height(42)
@@ -192,12 +191,12 @@ export struct StatsPage {
                   .borderRadius(21)
                   .backgroundColor(
                     this.selectedDay === day
-                      ? $r('app.color.calendar_selected_bg')
-                      : (this.reviewDates.has(day) ? $r('app.color.primary_color') : Color.Transparent)
+                      ? $r('app.color.warning')
+                      : (this.reviewDates.has(day) ? $r('app.color.primary') : $r('app.color.transparent'))
                   )
                   .border(
                     this.isToday(day) && !this.reviewDates.has(day)
-                      ? { width: 1.5, color: $r('app.color.primary_color'), style: BorderStyle.Solid }
+                      ? { width: 1.5, color: $r('app.color.primary'), style: BorderStyle.Solid }
                       : {}
                   )
                   .onClick(() => { this.selectDay(day) })
@@ -208,7 +207,7 @@ export struct StatsPage {
             .padding({ left: 2, right: 2, top: 4, bottom: 8 })
           }
           .width('100%')
-          .backgroundColor($r('app.color.card_background'))
+          .backgroundColor($r('app.color.surface'))
           .borderRadius(12)
           .padding({ left: 6, right: 6, bottom: 6 })
           .margin({ left: 14, right: 14 })
@@ -224,7 +223,7 @@ export struct StatsPage {
               Text(`${this.todayForget}`)
                 .fontSize(22)
                 .fontWeight(FontWeight.Bold)
-                .fontColor($r('app.color.rating_forget'))
+                .fontColor($r('app.color.danger'))
               Text('忘记')
                 .fontSize(11)
                 .fontColor($r('app.color.text_secondary'))
@@ -237,7 +236,7 @@ export struct StatsPage {
               Text(`${this.todayHard}`)
                 .fontSize(22)
                 .fontWeight(FontWeight.Bold)
-                .fontColor($r('app.color.rating_hard'))
+                .fontColor($r('app.color.warning'))
               Text('困难')
                 .fontSize(11)
                 .fontColor($r('app.color.text_secondary'))
@@ -250,7 +249,7 @@ export struct StatsPage {
               Text(`${this.todayGood}`)
                 .fontSize(22)
                 .fontWeight(FontWeight.Bold)
-                .fontColor($r('app.color.rating_good'))
+                .fontColor($r('app.color.success'))
               Text('良好')
                 .fontSize(11)
                 .fontColor($r('app.color.text_secondary'))
@@ -263,7 +262,7 @@ export struct StatsPage {
               Text(`${this.todayEasy}`)
                 .fontSize(22)
                 .fontWeight(FontWeight.Bold)
-                .fontColor($r('app.color.rating_easy'))
+                .fontColor($r('app.color.success'))
               Text('容易')
                 .fontSize(11)
                 .fontColor($r('app.color.text_secondary'))
@@ -274,7 +273,7 @@ export struct StatsPage {
           }
           .width('100%')
           .padding({ top: 18, bottom: 18 })
-          .backgroundColor($r('app.color.card_background'))
+          .backgroundColor($r('app.color.surface'))
           .borderRadius(12)
           .margin({ left: 14, right: 14, top: 12 })
 
@@ -293,7 +292,7 @@ export struct StatsPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.background_color'))
+    .backgroundColor($r('app.color.background'))
   }
 
   @Builder
@@ -318,7 +317,7 @@ export struct StatsPage {
                   ? Math.max(4, Math.min(100, (item.totalSeconds / 60) * 1.5))
                   : 4
               )
-              .backgroundColor(item.totalSeconds > 0 ? $r('app.color.primary_color') : $r('app.color.input_border'))
+              .backgroundColor(item.totalSeconds > 0 ? $r('app.color.primary') : $r('app.color.outline'))
               .borderRadius(4)
 
             Text(item.dateLabel)
@@ -344,7 +343,7 @@ export struct StatsPage {
               : '-'
           )
             .fontSize(9)
-            .fontColor(item.totalSeconds > 0 ? $r('app.color.primary_color') : $r('app.color.text_secondary'))
+            .fontColor(item.totalSeconds > 0 ? $r('app.color.primary') : $r('app.color.text_secondary'))
             .width('14.28%')
             .textAlign(TextAlign.Center)
         }, (item: DailyDuration, index: number) => item.dateLabel + '_num_' + index.toString())
@@ -354,7 +353,7 @@ export struct StatsPage {
     }
     .width('100%')
     .padding(14)
-    .backgroundColor($r('app.color.card_background'))
+    .backgroundColor($r('app.color.surface'))
     .borderRadius(12)
     .margin({ left: 14, right: 14, top: 12 })
   }
@@ -402,7 +401,7 @@ export struct StatsPage {
             Text(item.resultLabel)
               .fontSize(11)
               .fontWeight(FontWeight.Medium)
-              .fontColor(Color.White)
+              .fontColor($r('app.color.on_primary'))
               .backgroundColor(item.resultColor)
               .borderRadius(4)
               .padding({ left: 8, right: 8, top: 3, bottom: 3 })
@@ -410,7 +409,7 @@ export struct StatsPage {
           .width('100%')
           .padding({ top: 6, bottom: 6 })
           .onClick(() => {
-            router.pushUrl({
+            this.getUIContext().getRouter().pushUrl({
               url: 'pages/LearningDetailPage',
               params: { cardId: item.cardId }
             });
@@ -419,14 +418,14 @@ export struct StatsPage {
           if (index < this.todayCards.length - 1) {
             Divider()
               .height(1)
-              .color($r('app.color.divider_color'))
+              .color($r('app.color.outline'))
           }
         }, (item: DayDetailRecord, index: number) => `today_${item.cardId}_${index}`)
       }
     }
     .width('100%')
     .padding(14)
-    .backgroundColor($r('app.color.card_background'))
+    .backgroundColor($r('app.color.surface'))
     .borderRadius(12)
     .margin({ left: 14, right: 14, top: 12 })
   }
@@ -460,7 +459,7 @@ export struct StatsPage {
 
       Divider()
         .height(1)
-        .color($r('app.color.divider_color'))
+        .color($r('app.color.outline'))
         .margin({ bottom: 6 })
 
       // 卡片列表
@@ -488,7 +487,7 @@ export struct StatsPage {
           Text(item.resultLabel)
             .fontSize(11)
             .fontWeight(FontWeight.Medium)
-            .fontColor(Color.White)
+            .fontColor($r('app.color.on_primary'))
             .backgroundColor(item.resultColor)
             .borderRadius(4)
             .padding({ left: 8, right: 8, top: 3, bottom: 3 })
@@ -499,13 +498,13 @@ export struct StatsPage {
         if (index < this.dayDetail!.records.length - 1) {
           Divider()
             .height(1)
-            .color($r('app.color.divider_color'))
+            .color($r('app.color.outline'))
         }
       }, (item: DayDetailRecord, index: number) => `${item.cardId}_${index}`)
     }
     .width('100%')
     .padding(14)
-    .backgroundColor($r('app.color.card_background'))
+    .backgroundColor($r('app.color.surface'))
     .borderRadius(12)
     .margin({ top: 12 })
   }

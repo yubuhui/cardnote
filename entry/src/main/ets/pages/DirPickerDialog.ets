@@ -1,4 +1,3 @@
-import { promptAction } from '@kit.ArkUI';
 import { WebDAVSyncService } from '../service/WebDAVSyncService';
 
 // ==========================================
@@ -28,18 +27,18 @@ struct CreateDirDialog {
   private async confirmCreateDirectory(): Promise<void> {
     const name: string = this.newDirName.trim();
     if (!name) {
-      promptAction.showToast({ message: '请输入目录名', duration: 1500 });
+      this.getUIContext().getPromptAction().showToast({ message: '请输入目录名', duration: 1500 });
       return;
     }
     try {
       await this.syncService.createDirectory(name, this.currentDirPath);
-      promptAction.showToast({ message: `目录 "${name}" 已创建`, duration: 1500 });
+      this.getUIContext().getPromptAction().showToast({ message: `目录 "${name}" 已创建`, duration: 1500 });
       this.closeDialog();
       if (this.onCreated) {
         this.onCreated();
       }
     } catch (err) {
-      promptAction.showToast({ message: '创建失败: ' + (err as Error).message, duration: 2000 });
+      this.getUIContext().getPromptAction().showToast({ message: '创建失败: ' + (err as Error).message, duration: 2000 });
     }
   }
 
@@ -48,7 +47,7 @@ struct CreateDirDialog {
       Text('新建目录')
         .fontSize(16)
         .fontWeight(FontWeight.Medium)
-        .fontColor('#333')
+        .fontColor($r('app.color.text_primary'))
         .margin({ top: 18, bottom: 14 })
 
       TextInput({ placeholder: '输入目录名', text: this.newDirName })
@@ -57,20 +56,20 @@ struct CreateDirDialog {
         .width('100%')
         .height(42)
         .borderRadius(8)
-        .backgroundColor('#F5F5F5')
+        .backgroundColor($r('app.color.surface'))
         .onChange((v: string) => { this.newDirName = v; })
 
       Row() {
         Text('取消')
           .fontSize(14)
-          .fontColor('#999')
+          .fontColor($r('app.color.text_secondary'))
           .layoutWeight(1)
           .textAlign(TextAlign.Center)
           .padding({ top: 14, bottom: 10 })
           .onClick(() => { this.closeDialog(); })
         Text('创建')
           .fontSize(14)
-          .fontColor('#1677FF')
+          .fontColor($r('app.color.primary'))
           .fontWeight(FontWeight.Medium)
           .layoutWeight(1)
           .textAlign(TextAlign.Center)
@@ -81,7 +80,7 @@ struct CreateDirDialog {
       .margin({ top: 14 })
     }
     .width('75%')
-    .backgroundColor(Color.White)
+    .backgroundColor($r('app.color.surface'))
     .borderRadius(12)
     .padding({ left: 20, right: 20 })
   }
@@ -102,7 +101,7 @@ export struct DirPickerDialog {
   @State currentDirPath: string = '';
 
   // 新建目录弹窗的控制器
-  private createDirController?: CustomDialogController;
+  private createDirController: CustomDialogController | null = null;
 
   aboutToAppear(): void {
     this.loadDirectoryList('');
@@ -116,7 +115,7 @@ export struct DirPickerDialog {
       const dirs: string[] = await this.syncService.listDirectories(subPath);
       this.dirList = dirs;
     } catch (err) {
-      promptAction.showToast({ message: '获取目录失败: ' + (err as Error).message, duration: 2000 });
+      this.getUIContext().getPromptAction().showToast({ message: '获取目录失败: ' + (err as Error).message, duration: 2000 });
       this.closeDialog();
     } finally {
       this.isLoadingDirs = false;
@@ -161,13 +160,13 @@ export struct DirPickerDialog {
         syncService: this.syncService,
         currentDirPath: this.currentDirPath,
         onCreated: () => { this.loadDirectoryList(this.currentDirPath); },
-        onCloseDialog: () => { this.createDirController?.close(); },
+        onCloseDialog: () => { if (this.createDirController) { this.createDirController.close(); } },
       }),
       alignment: DialogAlignment.Center,
       customStyle: true,
       autoCancel: true,
     });
-    this.createDirController.open();
+    this.createDirController!.open();
   }
 
   build() {
@@ -179,11 +178,11 @@ export struct DirPickerDialog {
           Text('选择同步目录')
             .fontSize(16)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#333')
+            .fontColor($r('app.color.text_primary'))
           Blank()
           Text('✕')
             .fontSize(18)
-            .fontColor('#999')
+            .fontColor($r('app.color.text_secondary'))
             .onClick(() => { this.closeDialog(); })
         }
         .width('100%')
@@ -196,7 +195,7 @@ export struct DirPickerDialog {
           // 根目录
           Text('根目录')
             .fontSize(12)
-            .fontColor('#1677FF')
+            .fontColor($r('app.color.primary'))
             .padding({ left: 6, right: 4 })
             .onClick(() => {
               this.currentDirPath = '';
@@ -208,11 +207,11 @@ export struct DirPickerDialog {
             Row() {
               Text('›')
                 .fontSize(11)
-                .fontColor('#999')
+                .fontColor($r('app.color.text_secondary'))
                 .margin({ left: 2, right: 4 })
               Text(seg)
                 .fontSize(12)
-                .fontColor('#1677FF')
+                .fontColor($r('app.color.primary'))
                 .maxLines(1)
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
                 .constraintSize({ maxWidth: 120 })
@@ -230,7 +229,7 @@ export struct DirPickerDialog {
         .padding({ left: 16, right: 12, bottom: 6 })
         .onClick(() => { this.selectCurrentDirectory(); })
 
-        Divider().color('#E0E0E0').strokeWidth(0.5).width('100%')
+        Divider().color($r('app.color.surface')).strokeWidth(0.5).width('100%')
 
         // 可滚动内容区域
         Column() {
@@ -240,10 +239,10 @@ export struct DirPickerDialog {
                 LoadingProgress()
                   .width(32)
                   .height(32)
-                  .color('#1677FF')
+                  .color($r('app.color.primary'))
                 Text('正在获取目录...')
                   .fontSize(13)
-                  .fontColor('#999')
+                  .fontColor($r('app.color.text_secondary'))
                   .margin({ top: 10 })
               }
               .width('100%')
@@ -256,9 +255,9 @@ export struct DirPickerDialog {
                   Row() {
                     Text('📂')
                       .fontSize(16)
-                    Text('..')
-                      .fontSize(14)
-                      .fontColor('#1677FF')
+                  Text('..')
+                    .fontSize(14)
+                    .fontColor($r('app.color.primary'))
                       .layoutWeight(1)
                       .margin({ left: 8 })
                   }
@@ -271,7 +270,7 @@ export struct DirPickerDialog {
                 if (this.dirList.length === 0) {
                   Text('此目录下无子目录')
                     .fontSize(13)
-                    .fontColor('#999')
+                    .fontColor($r('app.color.text_secondary'))
                     .width('100%')
                     .textAlign(TextAlign.Center)
                     .padding({ top: 20, bottom: 20 })
@@ -281,14 +280,14 @@ export struct DirPickerDialog {
                   Row() {
                     Text('📁')
                       .fontSize(16)
-                    Text(dir)
-                      .fontSize(14)
-                      .fontColor('#333')
-                      .layoutWeight(1)
-                      .margin({ left: 8 })
-                    Text('›')
-                      .fontSize(16)
-                      .fontColor('#CCC')
+                  Text(dir)
+                    .fontSize(14)
+                    .fontColor($r('app.color.text_primary'))
+                    .layoutWeight(1)
+                    .margin({ left: 8 })
+                  Text('›')
+                    .fontSize(16)
+                    .fontColor($r('app.color.disabled'))
                   }
                   .width('100%')
                   .height(44)
@@ -307,25 +306,25 @@ export struct DirPickerDialog {
         }
         .layoutWeight(1)
 
-        Divider().color('#E0E0E0').strokeWidth(0.5).width('100%')
+        Divider().color($r('app.color.surface')).strokeWidth(0.5).width('100%')
 
         // 底部操作栏
         Row() {
           Text('新建目录')
             .fontSize(14)
-            .fontColor('#1677FF')
+            .fontColor($r('app.color.primary'))
             .padding({ top: 12, bottom: 12 })
             .onClick(() => { this.showCreateDirDialog(); })
           Blank()
           Text('确定')
             .fontSize(14)
-            .fontColor('#1677FF')
+            .fontColor($r('app.color.primary'))
             .fontWeight(FontWeight.Medium)
             .padding({ top: 12, bottom: 12, left: 16, right: 16 })
             .onClick(() => { this.selectCurrentDirectory(); })
           Text('取消')
             .fontSize(14)
-            .fontColor('#999')
+            .fontColor($r('app.color.text_secondary'))
             .padding({ top: 12, bottom: 12 })
             .onClick(() => { this.closeDialog(); })
         }
@@ -334,7 +333,7 @@ export struct DirPickerDialog {
       }
       .width('90%')
       .constraintSize({ maxHeight: '38%' })
-      .backgroundColor(Color.White)
+      .backgroundColor($r('app.color.surface'))
       .borderRadius(12)
     }
     .width('100%')

@@ -52,10 +52,10 @@ const RATING_LABELS: string[] = ['忘记', '困难', '良好', '容易'];
 /** 根据评分获取对应的颜色资源引用（适配深色模式） */
 function getRatingColor(rating: number): ResourceColor {
   switch (rating) {
-    case 0: return $r('app.color.rating_forget');
-    case 1: return $r('app.color.rating_hard');
-    case 2: return $r('app.color.rating_good');
-    case 3: return $r('app.color.rating_easy');
+    case 0: return $r('app.color.danger');
+    case 1: return $r('app.color.warning');
+    case 2: return $r('app.color.success');
+    case 3: return $r('app.color.success');
     default: return $r('app.color.text_secondary');
   }
 }

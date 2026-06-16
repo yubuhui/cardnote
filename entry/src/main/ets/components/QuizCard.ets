@@ -53,8 +53,8 @@ export struct QuizCard {
         Column() {
           Text(this.getFeedbackText())
             .fontSize(12)
-            .fontColor(this.isCorrect() ? $r('app.color.correct_green') : $r('app.color.delete_text'))
-            .backgroundColor(this.isCorrect() ? $r('app.color.answer_green_bg') : $r('app.color.answer_red_bg'))
+            .fontColor(this.isCorrect() ? $r('app.color.success') : $r('app.color.danger'))
+            .backgroundColor(this.isCorrect() ? $r('app.color.success_bg') : $r('app.color.danger_bg'))
             .borderRadius(8)
             .padding(8)
             .width('100%')
@@ -64,7 +64,7 @@ export struct QuizCard {
             Text(`解析：${this.card.analysis}`)
               .fontSize(12)
               .fontColor($r('app.color.text_secondary'))
-              .backgroundColor($r('app.color.background_color'))
+              .backgroundColor($r('app.color.background'))
               .borderRadius(8)
               .padding(8)
               .width('100%')
@@ -77,9 +77,9 @@ export struct QuizCard {
     }
     .width('100%')
     .padding(16)
-    .backgroundColor($r('app.color.card_background'))
+    .backgroundColor($r('app.color.surface'))
     .borderRadius(18)
-    .shadow({ radius: 8, color: $r('app.color.card_shadow'), offsetX: 0, offsetY: 4 })
+    .shadow({ radius: 8, color: $r('app.color.shadow'), offsetX: 0, offsetY: 4 })
   }
 
   private getTypeLabel(): string {
@@ -133,24 +133,24 @@ export struct QuizCard {
 
   private getOptionColor(displayIdx: number): ResourceColor {
     if (!this.showResult) {
-      return $r('app.color.card_background');
+      return $r('app.color.surface');
     }
     const selectedOrigIdx: number = this.getOriginalIndex(displayIdx);
     const isSelected: boolean = this.selectedOptions.indexOf(selectedOrigIdx.toString()) >= 0;
     const isCorrect: boolean = this.isOptionCorrect(displayIdx);
     if (isSelected && isCorrect) {
-      return $r('app.color.answer_green_bg'); // 选对 → 绿
+      return $r('app.color.success_bg'); // 选对 → 绿
     }
     if (isSelected && !isCorrect) {
-      return $r('app.color.answer_red_bg'); // 选错 → 红
+      return $r('app.color.danger_bg'); // 选错 → 红
     }
     if (!isSelected && isCorrect) {
       if (this.isMultiCorrect()) {
-        return $r('app.color.analysis_bg'); // 多选题漏选 → 黄
+        return $r('app.color.warning_bg'); // 多选题漏选 → 黄
       }
-      return $r('app.color.answer_green_bg'); // 单选正确（未被选中情况极少）
+      return $r('app.color.success_bg'); // 单选正确（未被选中情况极少）
     }
-    return $r('app.color.card_background');
+    return $r('app.color.surface');
   }
 
   private getOptionTextColor(displayIdx: number): ResourceColor {
@@ -161,7 +161,7 @@ export struct QuizCard {
     const isSelected: boolean = this.selectedOptions.indexOf(selectedOrigIdx.toString()) >= 0;
     const isCorrect: boolean = this.isOptionCorrect(displayIdx);
     if (isSelected && !isCorrect) {
-      return $r('app.color.delete_text');
+      return $r('app.color.danger');
     }
     return $r('app.color.text_primary');
   }

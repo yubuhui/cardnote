@@ -1,5 +1,3 @@
-import { router } from '@kit.ArkUI';
-import { promptAction } from '@kit.ArkUI';
 import { WebDAVSyncService } from '../service/WebDAVSyncService';
 import { WebDAVConfig } from '../webdav/SyncModels';
 import { DirPickerDialog } from './DirPickerDialog';
@@ -10,7 +8,7 @@ const syncService: WebDAVSyncService = WebDAVSyncService.getInstance();
 
 @Entry
 @Component
-export struct WebDavSyncPage {
+struct WebDavSyncPage {
   // 服务器配置
   @State serverUrl: string = '';
   @State username: string = '';
@@ -79,7 +77,7 @@ export struct WebDavSyncPage {
   /** 保存配置 */
   private saveConfig(): void {
     if (!this.serverUrl || !this.username || !this.password) {
-      promptAction.showToast({ message: '请填写完整的服务器信息', duration: 2000 });
+      this.getUIContext().getPromptAction().showToast({ message: '请填写完整的服务器信息', duration: 2000 });
       return;
     }
     syncService.saveConfig({
@@ -117,7 +115,7 @@ export struct WebDavSyncPage {
           });
         }
         this.statusText = '连接成功！';
-        promptAction.showToast({ message: 'WebDAV 连接成功', duration: 2000 });
+        this.getUIContext().getPromptAction().showToast({ message: 'WebDAV 连接成功', duration: 2000 });
       } else {
         this.statusText = '连接失败（请检查地址和认证信息）';
       }
@@ -156,14 +154,14 @@ export struct WebDavSyncPage {
       return;
     }
 
-    AlertDialog.show({
+    this.getUIContext().showAlertDialog({
       title: '确认下载',
       message: '从云端下载将覆盖本地数据，确定吗？',
       autoCancel: true,
       alignment: DialogAlignment.Center,
       primaryButton: {
         value: '确定',
-        fontColor: $r('app.color.button_warn_bg'),
+        fontColor: $r('app.color.warning'),
         action: async () => {
           this.isDownloading = true;
           this.statusText = '正在从云端下载...';
@@ -213,13 +211,13 @@ export struct WebDavSyncPage {
         .padding(16)
       }
       .layoutWeight(1)
-      .backgroundColor($r('app.color.background_color'))
+      .backgroundColor($r('app.color.background'))
       .align(Alignment.TopStart)
       .scrollBar(BarState.Off)
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.start_window_background'))
+    .backgroundColor($r('app.color.background'))
   }
 
   @Builder
@@ -233,9 +231,9 @@ export struct WebDavSyncPage {
       .width(36)
       .height(36)
       .borderRadius(18)
-      .backgroundColor($r('app.color.nav_back_bg'))
+      .backgroundColor($r('app.color.surface'))
       .justifyContent(FlexAlign.Center)
-      .onClick(() => { router.back(); })
+      .onClick(() => { this.getUIContext().getRouter().back(); })
 
       Text('WebDAV 同步')
         .fontSize(17)
@@ -249,9 +247,9 @@ export struct WebDavSyncPage {
     .width('100%')
     .height(44)
     .padding({ left: 16, right: 16 })
-    .backgroundColor($r('app.color.start_window_background'))
+    .backgroundColor($r('app.color.background'))
 
-    Divider().color($r('app.color.sync_divider_strong')).strokeWidth(0.5)
+    Divider().color($r('app.color.outline')).strokeWidth(0.5)
   }
 
   /** 服务器配置区域 */
@@ -276,7 +274,7 @@ export struct WebDavSyncPage {
             .type(InputType.Normal)
             .fontSize(14)
             .layoutWeight(1)
-            .backgroundColor(Color.Transparent)
+            .backgroundColor($r('app.color.transparent'))
             .enabled(this.syncEnabled)
             .onChange((v: string) => { this.serverUrl = v; })
         }
@@ -284,7 +282,7 @@ export struct WebDavSyncPage {
         .height(44)
         .padding({ left: 12, right: 12 })
 
-        Divider().color($r('app.color.divider_color')).strokeWidth(0.5).margin({ left: 12 })
+        Divider().color($r('app.color.outline')).strokeWidth(0.5).margin({ left: 12 })
 
         // 同步目录
         Row() {
@@ -294,12 +292,12 @@ export struct WebDavSyncPage {
             .width(72)
           Text(this.syncPath || 'cardnote')
             .fontSize(14)
-            .fontColor(this.syncEnabled ? $r('app.color.text_primary') : $r('app.color.sync_disabled_text'))
+            .fontColor(this.syncEnabled ? $r('app.color.text_primary') : $r('app.color.disabled'))
             .margin({ left: 4 })
             .layoutWeight(1)
           Text('选择')
             .fontSize(13)
-            .fontColor(this.syncEnabled ? $r('app.color.primary_color') : $r('app.color.sync_action_disabled_text'))
+            .fontColor(this.syncEnabled ? $r('app.color.primary') : $r('app.color.disabled'))
             .padding({ left: 8, right: 4 })
             .onClick(() => {
               if (this.syncEnabled) {
@@ -311,7 +309,7 @@ export struct WebDavSyncPage {
         .height(44)
         .padding({ left: 12, right: 12 })
 
-        Divider().color($r('app.color.divider_color')).strokeWidth(0.5).margin({ left: 12 })
+        Divider().color($r('app.color.outline')).strokeWidth(0.5).margin({ left: 12 })
 
         // 用户名
         Row() {
@@ -323,7 +321,7 @@ export struct WebDavSyncPage {
             .type(InputType.Normal)
             .fontSize(14)
             .layoutWeight(1)
-            .backgroundColor(Color.Transparent)
+            .backgroundColor($r('app.color.transparent'))
             .enabled(this.syncEnabled)
             .onChange((v: string) => { this.username = v; })
         }
@@ -331,7 +329,7 @@ export struct WebDavSyncPage {
         .height(44)
         .padding({ left: 12, right: 12 })
 
-        Divider().color($r('app.color.divider_color')).strokeWidth(0.5).margin({ left: 12 })
+        Divider().color($r('app.color.outline')).strokeWidth(0.5).margin({ left: 12 })
 
         // 密码
         Row() {
@@ -343,12 +341,12 @@ export struct WebDavSyncPage {
             .type(this.showPassword ? InputType.Normal : InputType.Password)
             .fontSize(14)
             .layoutWeight(1)
-            .backgroundColor(Color.Transparent)
+            .backgroundColor($r('app.color.transparent'))
             .enabled(this.syncEnabled)
             .onChange((v: string) => { this.password = v; })
           Text(this.showPassword ? '隐藏' : '显示')
             .fontSize(13)
-            .fontColor(this.syncEnabled ? $r('app.color.primary_color') : $r('app.color.sync_action_disabled_text'))
+            .fontColor(this.syncEnabled ? $r('app.color.primary') : $r('app.color.disabled'))
             .padding({ left: 8 })
             .onClick(() => {
               if (this.syncEnabled) {
@@ -361,7 +359,7 @@ export struct WebDavSyncPage {
         .padding({ left: 12, right: 12 })
       }
       .width('100%')
-      .backgroundColor($r('app.color.card_background'))
+      .backgroundColor($r('app.color.surface'))
       .borderRadius(10)
     }
     .width('100%')
@@ -377,9 +375,9 @@ export struct WebDavSyncPage {
         .width('100%')
         .height(44)
         .fontSize(15)
-        .backgroundColor($r('app.color.primary_color'))
+        .backgroundColor($r('app.color.primary'))
         .borderRadius(22)
-        .fontColor($r('app.color.button_text'))
+        .fontColor($r('app.color.on_primary'))
         .enabled(this.syncEnabled && !this.isTesting)
         .onClick(() => { this.testConnection(); })
 
@@ -388,9 +386,9 @@ export struct WebDavSyncPage {
         .width('100%')
         .height(44)
         .fontSize(15)
-        .backgroundColor($r('app.color.button_confirm_bg'))
+        .backgroundColor($r('app.color.success'))
         .borderRadius(22)
-        .fontColor($r('app.color.button_text'))
+        .fontColor($r('app.color.on_primary'))
         .margin({ top: 10 })
         .enabled(this.syncEnabled && !this.isUploading)
         .onClick(() => { this.uploadToCloud(); })
@@ -400,9 +398,9 @@ export struct WebDavSyncPage {
         .width('100%')
         .height(44)
         .fontSize(15)
-        .backgroundColor($r('app.color.button_warn_bg'))
+        .backgroundColor($r('app.color.warning'))
         .borderRadius(22)
-        .fontColor($r('app.color.button_text'))
+        .fontColor($r('app.color.on_primary'))
         .margin({ top: 10 })
         .enabled(this.syncEnabled && !this.isDownloading)
         .onClick(() => { this.downloadFromCloud(); })
@@ -419,12 +417,12 @@ export struct WebDavSyncPage {
         Row() {
           Text(this.statusText)
             .fontSize(13)
-            .fontColor($r('app.color.text_tertiary'))
+            .fontColor($r('app.color.text_secondary'))
             .flexShrink(1)
         }
         .width('100%')
         .padding(12)
-        .backgroundColor(this.statusText.includes('失败') ? $r('app.color.sync_status_error_bg') : $r('app.color.sync_status_info_bg'))
+        .backgroundColor(this.statusText.includes('失败') ? $r('app.color.danger_bg') : $r('app.color.surface'))
         .borderRadius(8)
         .margin({ bottom: 10 })
       }

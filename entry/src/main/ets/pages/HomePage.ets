@@ -1,4 +1,3 @@
-import { router, promptAction } from '@kit.ArkUI';
 import { Card, CardStatus } from '../model/Card';
 import { Deck } from '../model/Deck';
 import { CardViewModel } from '../viewmodel/CardViewModel';
@@ -7,6 +6,8 @@ import { MemoryRecordDao } from '../data/MemoryRecordDao';
 import { StatsPage } from './StatsPage';
 import { SettingsPage } from './SettingsPage';
 import { HdsTabs, hdsMaterial } from '@kit.UIDesignKit';
+
+const DECK_COLORS: string[] = ['#4A90D9', '#E85D75', '#50C878', '#FFB347', '#9B59B6', '#1ABC9C'];
 
 interface CardSectionParams {
   title: string;
@@ -44,20 +45,20 @@ struct CardItem {
         Text(this.cardStatus === CardStatus.unlearned ? '未背诵' :
              this.cardStatus === CardStatus.reviewing ? '待复习' : '已掌握')
           .fontSize(10)
-          .fontColor(this.cardStatus === CardStatus.unlearned ? $r('app.color.status_unlearned') :
-                     this.cardStatus === CardStatus.reviewing ? $r('app.color.status_reviewing') : $r('app.color.status_mastered'))
+          .fontColor(this.cardStatus === CardStatus.unlearned ? $r('app.color.disabled') :
+                     this.cardStatus === CardStatus.reviewing ? $r('app.color.primary') : $r('app.color.success'))
           .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-          .backgroundColor(this.cardStatus === CardStatus.unlearned ? $r('app.color.status_bg_unlearned') :
-                           this.cardStatus === CardStatus.reviewing ? $r('app.color.status_bg_reviewing') : $r('app.color.status_bg_mastered'))
+          .backgroundColor(this.cardStatus === CardStatus.unlearned ? $r('app.color.surface') :
+                           this.cardStatus === CardStatus.reviewing ? $r('app.color.warning_bg') : $r('app.color.success_bg'))
           .borderRadius(4)
       }
       .layoutWeight(1)
     }
     .width('100%')
     .padding({ left: 14, right: 14, top: 12, bottom: 12 })
-    .backgroundColor($r('app.color.card_background'))
+    .backgroundColor($r('app.color.surface'))
     .borderRadius(10)
-    .shadow({ radius: 3, color: $r('app.color.shadow_light'), offsetY: 1 })
+    .shadow({ radius: 3, color: $r('app.color.shadow'), offsetY: 1 })
     .margin({ bottom: 6 })
     .gesture(
       GestureGroup(GestureMode.Exclusive,
@@ -83,9 +84,9 @@ struct AddDeckDialog {
         .onChange((value: string) => { this.inputName = value; })
         .width('100%').margin({ bottom: 20 })
       Row({ space: 12 }) {
-        Button('取消').fontSize(14).backgroundColor($r('app.color.dialog_btn_cancel_bg')).fontColor($r('app.color.dialog_btn_cancel_text')).layoutWeight(1)
+        Button('取消').fontSize(14).backgroundColor($r('app.color.surface')).fontColor($r('app.color.text_secondary')).layoutWeight(1)
           .onClick(() => { this.controller?.close(); })
-        Button('确定').fontSize(14).backgroundColor($r('app.color.primary_color')).fontColor(Color.White).layoutWeight(1)
+        Button('确定').fontSize(14).backgroundColor($r('app.color.primary')).fontColor($r('app.color.on_primary')).layoutWeight(1)
           .onClick(() => {
             if (this.inputName.trim()) {
               this.onConfirm(this.inputName.trim());
@@ -125,7 +126,7 @@ struct DeckSettingsDialog {
           Text(`${this.newCardsPerDay}`)
             .fontSize(16)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.primary_color'))
+            .fontColor($r('app.color.primary'))
         }
         .width('100%')
         .margin({ bottom: 8 })
@@ -149,7 +150,7 @@ struct DeckSettingsDialog {
       Divider()
         .width('100%')
         .strokeWidth(0.5)
-        .color($r('app.color.divider_color'))
+        .color($r('app.color.outline'))
         .margin({ top: 4, bottom: 12 })
 
       // 每日复习
@@ -163,7 +164,7 @@ struct DeckSettingsDialog {
           Text(`${this.reviewCardsPerDay}`)
             .fontSize(16)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.primary_color'))
+            .fontColor($r('app.color.primary'))
         }
         .width('100%')
         .margin({ bottom: 8 })
@@ -187,15 +188,15 @@ struct DeckSettingsDialog {
         Button('取消')
           .fontSize(14)
           .height(40)
-          .backgroundColor($r('app.color.dialog_btn_cancel_bg'))
-          .fontColor($r('app.color.dialog_btn_cancel_text'))
+          .backgroundColor($r('app.color.surface'))
+          .fontColor($r('app.color.text_secondary'))
           .layoutWeight(1)
           .onClick(() => { this.controller?.close(); })
         Button('确定')
           .fontSize(14)
           .height(40)
-          .backgroundColor($r('app.color.primary_color'))
-          .fontColor(Color.White)
+          .backgroundColor($r('app.color.primary'))
+          .fontColor($r('app.color.on_primary'))
           .layoutWeight(1)
           .onClick(() => {
             this.onSave(this.newCardsPerDay, this.reviewCardsPerDay, this.deckId);
@@ -239,9 +240,9 @@ struct MoveToDeckDialog {
         }
       }.constraintSize({ maxHeight: 300 })
       Row({ space: 12 }) {
-        Button('取消').fontSize(14).backgroundColor($r('app.color.dialog_btn_cancel_bg')).fontColor($r('app.color.dialog_btn_cancel_text')).layoutWeight(1)
+        Button('取消').fontSize(14).backgroundColor($r('app.color.surface')).fontColor($r('app.color.text_secondary')).layoutWeight(1)
           .onClick(() => { this.controller?.close(); })
-        Button('确定').fontSize(14).backgroundColor($r('app.color.primary_color')).fontColor(Color.White).layoutWeight(1)
+        Button('确定').fontSize(14).backgroundColor($r('app.color.primary')).fontColor($r('app.color.on_primary')).layoutWeight(1)
           .onClick(() => {
             if (this.selectedDeckIds.length > 0) {
               this.onMoveToDeck(this.selectedDeckIds);
@@ -277,9 +278,9 @@ struct DeckActionDialog {
         Button('牌组设置')
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.primary_color'))
-          .backgroundColor($r('app.color.card_background'))
-          .border({ width: 1.2, color: $r('app.color.primary_color'), style: BorderStyle.Solid })
+          .fontColor($r('app.color.primary'))
+          .backgroundColor($r('app.color.surface'))
+          .border({ width: 1.2, color: $r('app.color.primary'), style: BorderStyle.Solid })
           .borderRadius(20)
           .height(40)
           .layoutWeight(1)
@@ -290,9 +291,9 @@ struct DeckActionDialog {
         Button('删除牌组')
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
-          .fontColor(this.isDefault ? $r('app.color.sync_disabled_text') : $r('app.color.delete_text'))
-          .backgroundColor($r('app.color.card_background'))
-          .border({ width: 1.2, color: this.isDefault ? $r('app.color.sync_disabled_text') : $r('app.color.delete_text'), style: BorderStyle.Solid })
+          .fontColor(this.isDefault ? $r('app.color.disabled') : $r('app.color.danger'))
+          .backgroundColor($r('app.color.surface'))
+          .border({ width: 1.2, color: this.isDefault ? $r('app.color.disabled') : $r('app.color.danger'), style: BorderStyle.Solid })
           .borderRadius(20)
           .height(40)
           .layoutWeight(1)
@@ -308,8 +309,8 @@ struct DeckActionDialog {
       Button('取消')
         .fontSize(14)
         .height(38)
-        .backgroundColor($r('app.color.dialog_btn_cancel_bg'))
-        .fontColor($r('app.color.dialog_btn_cancel_text'))
+        .backgroundColor($r('app.color.surface'))
+        .fontColor($r('app.color.text_secondary'))
         .borderRadius(20)
         .width('100%')
         .onClick(() => { this.controller?.close(); })
@@ -378,6 +379,22 @@ struct HomePage {
 
   onPageShow() { this.loadHomeData(); this.statsRefreshSignal++; }
 
+  private showToast(message: string): void {
+    this.getUIContext().getPromptAction().showToast({ message: message, duration: 2000 });
+  }
+
+  private showConfirmDialog(title: string, message: string, confirmText: string, confirmColor: ResourceColor,
+    onConfirm: () => void, cancelText: string = '取消'): void {
+    this.getUIContext().showAlertDialog({
+      title: title,
+      message: message,
+      autoCancel: true,
+      alignment: DialogAlignment.Center,
+      primaryButton: { value: confirmText, fontColor: confirmColor, action: onConfirm },
+      secondaryButton: { value: cancelText, fontColor: $r('app.color.text_secondary'), action: () => {} },
+    });
+  }
+
   private getFilteredCards(): Card[] {
     return this.selectedDeckId === 0 ? this.cards : this.cards.filter(c => c.deckId === this.selectedDeckId);
   }
@@ -399,33 +416,33 @@ struct HomePage {
               Text('CardNote').fontSize(20).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_primary')).margin({ top: 8, bottom: 14 }).alignSelf(ItemAlign.Start)
               Row({ space: 10 }) {
                 Column() {
-                  Text(`${this.cards.filter((c: Card) => c.status === CardStatus.reviewing).length}`).fontSize(26).fontWeight(FontWeight.Bold).fontColor($r('app.color.primary_color')).fontFamily('HarmonyHeiTi')
+                  Text(`${this.cards.filter((c: Card) => c.status === CardStatus.reviewing).length}`).fontSize(26).fontWeight(FontWeight.Bold).fontColor($r('app.color.primary')).fontFamily('HarmonyHeiTi')
                   Text('待复习').fontSize(11).fontColor($r('app.color.text_secondary')).margin({ top: 2 })
-                }.layoutWeight(1).padding({ top: 12, bottom: 12 }).backgroundColor($r('app.color.card_background')).borderRadius(12).shadow({ radius: 6, color: $r('app.color.card_shadow'), offsetY: 2 })
+                }.layoutWeight(1).padding({ top: 12, bottom: 12 }).backgroundColor($r('app.color.surface')).borderRadius(12).shadow({ radius: 6, color: $r('app.color.shadow'), offsetY: 2 })
                 Column() {
-                  Text(`${this.cards.filter((c: Card) => c.status === CardStatus.unlearned).length}`).fontSize(26).fontWeight(FontWeight.Bold).fontColor($r('app.color.accent_orange')).fontFamily('HarmonyHeiTi')
+                  Text(`${this.cards.filter((c: Card) => c.status === CardStatus.unlearned).length}`).fontSize(26).fontWeight(FontWeight.Bold).fontColor($r('app.color.warning')).fontFamily('HarmonyHeiTi')
                   Text('新卡片').fontSize(11).fontColor($r('app.color.text_secondary')).margin({ top: 2 })
-                }.layoutWeight(1).padding({ top: 12, bottom: 12 }).backgroundColor($r('app.color.card_background')).borderRadius(12).shadow({ radius: 6, color: $r('app.color.card_shadow'), offsetY: 2 })
+                }.layoutWeight(1).padding({ top: 12, bottom: 12 }).backgroundColor($r('app.color.surface')).borderRadius(12).shadow({ radius: 6, color: $r('app.color.shadow'), offsetY: 2 })
                 Column() {
-                  Text(`${this.cards.length}`).fontSize(26).fontWeight(FontWeight.Bold).fontColor($r('app.color.accent_green')).fontFamily('HarmonyHeiTi')
+                  Text(`${this.cards.length}`).fontSize(26).fontWeight(FontWeight.Bold).fontColor($r('app.color.success')).fontFamily('HarmonyHeiTi')
                   Text('总卡片').fontSize(11).fontColor($r('app.color.text_secondary')).margin({ top: 2 })
-                }.layoutWeight(1).padding({ top: 12, bottom: 12 }).backgroundColor($r('app.color.card_background')).borderRadius(12).shadow({ radius: 6, color: $r('app.color.card_shadow'), offsetY: 2 })
+                }.layoutWeight(1).padding({ top: 12, bottom: 12 }).backgroundColor($r('app.color.surface')).borderRadius(12).shadow({ radius: 6, color: $r('app.color.shadow'), offsetY: 2 })
               }.width('100%')
-            }.width('100%').padding({ left: 16, right: 16, top: 12, bottom: 14 }).backgroundColor($r('app.color.card_background'))
+            }.width('100%').padding({ left: 16, right: 16, top: 12, bottom: 14 }).backgroundColor($r('app.color.surface'))
 
             if (this.decks.length > 0) { this.buildDeckFilter() }
             if (this.isMultiSelectMode) { this.buildMultiSelectBar() }
 
             Scroll() {
               Column() {
-                this.buildCardSection({ title: '未背诵', circleColor: $r('app.color.status_unlearned'), status: CardStatus.unlearned, isOpen: this.unlearnedOpen, section: 'unlearned' })
-                this.buildCardSection({ title: '复习中', circleColor: $r('app.color.primary_color'), status: CardStatus.reviewing, isOpen: this.reviewingOpen, section: 'reviewing' })
-                this.buildCardSection({ title: '已掌握', circleColor: $r('app.color.status_mastered'), status: CardStatus.mastered, isOpen: this.masteredOpen, section: 'mastered' })
+                this.buildCardSection({ title: '未背诵', circleColor: $r('app.color.disabled'), status: CardStatus.unlearned, isOpen: this.unlearnedOpen, section: 'unlearned' })
+                this.buildCardSection({ title: '复习中', circleColor: $r('app.color.primary'), status: CardStatus.reviewing, isOpen: this.reviewingOpen, section: 'reviewing' })
+                this.buildCardSection({ title: '已掌握', circleColor: $r('app.color.success'), status: CardStatus.mastered, isOpen: this.masteredOpen, section: 'mastered' })
               }.width('100%').justifyContent(FlexAlign.Start).padding({ bottom: 68 })
             }.width('100%').layoutWeight(1).scrollBar(BarState.Off).align(Alignment.TopStart)
 
             if (this.isMultiSelectMode) { this.buildBatchActionBar() } else { this.buildBottomBar() }
-          }.width('100%').height('100%').backgroundColor($r('app.color.background_color'))
+          }.width('100%').height('100%').backgroundColor($r('app.color.background'))
         }.tabBar(this.buildTab('首页', 0))
 
         TabContent() { StatsPage() }.tabBar(this.buildTab('统计', 1))
@@ -435,39 +452,39 @@ struct HomePage {
       .barFloatingStyle({ barBottomMargin: 3, systemMaterialEffect: { materialType: hdsMaterial.MaterialType.ADAPTIVE, materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE } })
       .layoutWeight(1)
       .onChange((index: number) => { this.currentTabIndex = index; if (index === 1) this.statsRefreshSignal++; })
-    }.width('100%').height('100%').backgroundColor($r('app.color.background_color'))
+    }.width('100%').height('100%').backgroundColor($r('app.color.background'))
   }
 
   @Builder buildDeckFilter() {
     Scroll() {
       Row({ space: 8 }) {
         Text('全部').fontSize(13).fontWeight(FontWeight.Medium)
-          .fontColor(this.selectedDeckId === 0 ? Color.White : $r('app.color.filter_text'))
+          .fontColor(this.selectedDeckId === 0 ? $r('app.color.on_primary') : $r('app.color.text_secondary'))
           .padding({ left: 16, right: 16, top: 7, bottom: 7 })
-          .backgroundColor(this.selectedDeckId === 0 ? $r('app.color.primary_color') : $r('app.color.filter_bg_unselected'))
+          .backgroundColor(this.selectedDeckId === 0 ? $r('app.color.primary') : $r('app.color.surface'))
           .borderRadius(16).onClick(() => { this.selectedDeckId = 0; })
         ForEach(this.decks, (deck: Deck) => {
           Text(deck.name).fontSize(13).fontWeight(FontWeight.Medium)
-            .fontColor(this.selectedDeckId === deck.id ? Color.White : $r('app.color.filter_text'))
+            .fontColor(this.selectedDeckId === deck.id ? $r('app.color.on_primary') : $r('app.color.text_secondary'))
             .padding({ left: 16, right: 16, top: 7, bottom: 7 })
-            .backgroundColor(this.selectedDeckId === deck.id ? $r('app.color.primary_color') : $r('app.color.filter_bg_unselected'))
+            .backgroundColor(this.selectedDeckId === deck.id ? $r('app.color.primary') : $r('app.color.surface'))
             .borderRadius(16).onClick(() => { this.selectedDeckId = deck.id; })
             .gesture(LongPressGesture({ repeat: false, duration: 400 }).onAction(() => { this.showDeckActionMenu(deck); }))
         }, (deck: Deck) => deck.id.toString())
         Text('+').fontSize(16).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_secondary')).width(30).height(30).textAlign(TextAlign.Center)
-          .backgroundColor($r('app.color.filter_bg_unselected')).borderRadius(15).onClick(() => { this.addDeckDialogController.open(); })
+          .backgroundColor($r('app.color.surface')).borderRadius(15).onClick(() => { this.addDeckDialogController.open(); })
       }.padding({ left: 16, right: 16, top: 8, bottom: 10 })
-    }.width('100%').scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off).constraintSize({ maxHeight: 60 }).backgroundColor($r('app.color.card_background'))
+    }.width('100%').scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off).constraintSize({ maxHeight: 60 }).backgroundColor($r('app.color.surface'))
   }
 
   @Builder buildMultiSelectBar() {
     Row() {
       Text(`已选 ${this.selectedCardIds.length} 项`).fontSize(13).fontColor($r('app.color.text_secondary'))
       Blank()
-      Text('全选').fontSize(13).fontColor($r('app.color.primary_color')).onClick(() => { this.selectedCardIds = this.getFilteredCards().map(c => c.id); })
+      Text('全选').fontSize(13).fontColor($r('app.color.primary')).onClick(() => { this.selectedCardIds = this.getFilteredCards().map(c => c.id); })
       Blank().width(16)
-      Text('取消').fontSize(13).fontColor($r('app.color.delete_text')).onClick(() => { this.exitMultiSelectMode(); })
-    }.width('100%').padding({ left: 16, right: 16, top: 8, bottom: 8 }).backgroundColor($r('app.color.multiselect_bar_bg'))
+      Text('取消').fontSize(13).fontColor($r('app.color.danger')).onClick(() => { this.exitMultiSelectMode(); })
+    }.width('100%').padding({ left: 16, right: 16, top: 8, bottom: 8 }).backgroundColor($r('app.color.surface'))
   }
 
   @Builder buildCardSection($$: CardSectionParams) {
@@ -479,7 +496,7 @@ struct HomePage {
           Text(`(${this.getFilteredCards().filter(c => c.status === $$.status).length})`).fontSize(12).fontColor($r('app.color.text_secondary'))
         }
         Blank()
-        Text($$.isOpen ? '▼' : '▶').fontSize(10).fontColor($r('app.color.expand_arrow'))
+        Text($$.isOpen ? '▼' : '▶').fontSize(10).fontColor($r('app.color.disabled'))
       }.width('100%').padding({ top: 14, bottom: 10, left: 4, right: 4 })
       .onClick(() => {
         if ($$.section === 'unlearned') this.unlearnedOpen = !this.unlearnedOpen;
@@ -494,53 +511,53 @@ struct HomePage {
             onTap: () => {
               this.deletingDeckId = -1;
               if (this.isMultiSelectMode) { this.toggleCardSelection(card.id); }
-              else { router.pushUrl({ url: 'pages/LearningDetailPage', params: { cardId: card.id } }); }
+              else { this.getUIContext().getRouter().pushUrl({ url: 'pages/LearningDetailPage', params: { cardId: card.id } }); }
             },
             onLongPress: () => { if (!this.isMultiSelectMode) this.enterMultiSelectMode(card.id); }
           })
         }, (card: Card) => card.id.toString())
       }
     }.width('100%').padding({ left: 16, right: 16, top: 4, bottom: 16 })
-    .backgroundColor($r('app.color.card_background')).borderRadius(14).margin({ top: 10 }).shadow({ radius: 4, color: $r('app.color.shadow_light'), offsetY: 1 })
+    .backgroundColor($r('app.color.surface')).borderRadius(14).margin({ top: 10 }).shadow({ radius: 4, color: $r('app.color.shadow'), offsetY: 1 })
   }
 
   @Builder buildBottomBar() {
     Row() {
       if (this.cards.length > 0) {
-        Button('开始学习').layoutWeight(1).height(46).fontSize(15).fontWeight(FontWeight.Medium).fontColor($r('app.color.button_text'))
-          .backgroundColor($r('app.color.primary_color')).borderRadius(23).shadow({ radius: 8, color: $r('app.color.button_shadow'), offsetY: 3 })
-          .onClick(() => { router.pushUrl({ url: 'pages/LearningPage', params: { selectedDeckId: this.selectedDeckId } }); })
+        Button('开始学习').layoutWeight(1).height(46).fontSize(15).fontWeight(FontWeight.Medium).fontColor($r('app.color.on_primary'))
+          .backgroundColor($r('app.color.primary')).borderRadius(23).shadow({ radius: 8, color: $r('app.color.shadow'), offsetY: 3 })
+          .onClick(() => { this.getUIContext().getRouter().pushUrl({ url: 'pages/LearningPage', params: { selectedDeckId: this.selectedDeckId } }); })
         Blank().width(12)
       }
       Button('新建卡片').layoutWeight(1).height(46).fontSize(14).fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.primary_color')).backgroundColor($r('app.color.card_background'))
-        .border({ width: 1.5, color: $r('app.color.primary_color'), style: BorderStyle.Solid }).borderRadius(23)
-        .onClick(() => { router.pushUrl({ url: 'pages/EditorPage' }); })
-    }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 68 }).backgroundColor($r('app.color.card_background')).shadow({ radius: 6, color: $r('app.color.shadow_bottom_bar'), offsetY: -2 })
+        .fontColor($r('app.color.primary')).backgroundColor($r('app.color.surface'))
+        .border({ width: 1.5, color: $r('app.color.primary'), style: BorderStyle.Solid }).borderRadius(23)
+        .onClick(() => { this.getUIContext().getRouter().pushUrl({ url: 'pages/EditorPage' }); })
+    }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 68 }).backgroundColor($r('app.color.surface')).shadow({ radius: 6, color: $r('app.color.shadow'), offsetY: -2 })
   }
 
   @Builder buildBatchActionBar() {
     Row({ space: 8 }) {
-      Button('重学').layoutWeight(1).height(42).fontSize(13).fontWeight(FontWeight.Medium).fontColor($r('app.color.primary_color'))
-        .backgroundColor($r('app.color.card_background')).border({ width: 1.2, color: $r('app.color.primary_color'), style: BorderStyle.Solid }).borderRadius(21)
+      Button('重学').layoutWeight(1).height(42).fontSize(13).fontWeight(FontWeight.Medium).fontColor($r('app.color.primary'))
+        .backgroundColor($r('app.color.surface')).border({ width: 1.2, color: $r('app.color.primary'), style: BorderStyle.Solid }).borderRadius(21)
         .onClick(() => { this.batchRelearn(); })
-      Button('晋级').layoutWeight(1).height(42).fontSize(13).fontWeight(FontWeight.Medium).fontColor($r('app.color.primary_color'))
-        .backgroundColor($r('app.color.card_background')).border({ width: 1.2, color: $r('app.color.primary_color'), style: BorderStyle.Solid }).borderRadius(21)
+      Button('晋级').layoutWeight(1).height(42).fontSize(13).fontWeight(FontWeight.Medium).fontColor($r('app.color.primary'))
+        .backgroundColor($r('app.color.surface')).border({ width: 1.2, color: $r('app.color.primary'), style: BorderStyle.Solid }).borderRadius(21)
         .onClick(() => { this.batchPromote(); })
-      Button('移动').layoutWeight(1).height(42).fontSize(13).fontWeight(FontWeight.Medium).fontColor($r('app.color.primary_color'))
-        .backgroundColor($r('app.color.card_background')).border({ width: 1.2, color: $r('app.color.primary_color'), style: BorderStyle.Solid }).borderRadius(21)
+      Button('移动').layoutWeight(1).height(42).fontSize(13).fontWeight(FontWeight.Medium).fontColor($r('app.color.primary'))
+        .backgroundColor($r('app.color.surface')).border({ width: 1.2, color: $r('app.color.primary'), style: BorderStyle.Solid }).borderRadius(21)
         .onClick(() => { this.moveToDeckDialogController.open(); })
-      Button('删除').layoutWeight(1).height(42).fontSize(13).fontWeight(FontWeight.Medium).fontColor(Color.White)
-        .backgroundColor($r('app.color.delete_text')).borderRadius(21)
+      Button('删除').layoutWeight(1).height(42).fontSize(13).fontWeight(FontWeight.Medium).fontColor($r('app.color.on_primary'))
+        .backgroundColor($r('app.color.danger')).borderRadius(21)
         .onClick(() => { this.batchDelete(); })
-    }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 68 }).backgroundColor($r('app.color.card_background')).shadow({ radius: 6, color: $r('app.color.shadow_bottom_bar'), offsetY: -2 })
+    }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 68 }).backgroundColor($r('app.color.surface')).shadow({ radius: 6, color: $r('app.color.shadow'), offsetY: -2 })
   }
 
   @Builder buildTab(label: string, index: number) {
     Column() {
       Text(label).fontSize(11).fontWeight(FontWeight.Medium)
-        .fontColor(this.currentTabIndex === index ? $r('app.color.primary_color') : $r('app.color.text_secondary'))
-      if (this.currentTabIndex === index) { Circle({ width: 4, height: 4 }).fill($r('app.color.primary_color')).margin({ top: 2 }) }
+        .fontColor(this.currentTabIndex === index ? $r('app.color.primary') : $r('app.color.text_secondary'))
+      if (this.currentTabIndex === index) { Circle({ width: 4, height: 4 }).fill($r('app.color.primary')).margin({ top: 2 }) }
     }.width('100%').justifyContent(FlexAlign.Center)
   }
 
@@ -551,8 +568,7 @@ struct HomePage {
 
   async addDeck(name: string) {
     if (!name.trim()) return;
-    const colors = ['#4A90D9', '#E85D75', '#50C878', '#FFB347', '#9B59B6', '#1ABC9C'];
-    const deck: Deck = { id: 0, name: name.trim(), color: colors[Math.floor(Math.random() * colors.length)], createdAt: 0, updatedAt: 0 };
+    const deck: Deck = { id: 0, name: name.trim(), color: DECK_COLORS[Math.floor(Math.random() * DECK_COLORS.length)], createdAt: 0, updatedAt: 0 };
     await this.cardVm.createDeck(deck);
     await this.loadHomeData();
   }
@@ -568,42 +584,32 @@ struct HomePage {
     const promotedCount: number = this.selectedCardIds.length;
     this.exitMultiSelectMode();
     await this.loadHomeData();
-    promptAction.showToast({ message: `已将 ${promotedCount} 张卡片晋级`, duration: 2000 });
+    this.showToast(`已将 ${promotedCount} 张卡片晋级`);
   }
 
   async batchRelearn() {
-    AlertDialog.show({
-      title: '清除学习数据', message: `将删除选中的 ${this.selectedCardIds.length} 张卡片的所有记忆记录，并重置学习进度。确定继续吗？`,
-      autoCancel: true, alignment: DialogAlignment.Center,
-      primaryButton: { value: '取消', action: () => {} },
-      secondaryButton: {
-        value: '确定', fontColor: $r('app.color.primary_color'),
-        action: async () => {
-          const recordDao = new MemoryRecordDao();
-          for (const id of this.selectedCardIds) {
-            const card = this.cards.find(c => c.id === id);
-            if (card) { await recordDao.deleteByCardId(card.id); card.status = CardStatus.unlearned; await this.cardVm.updateCard(card); }
-          }
-          this.exitMultiSelectMode();
-          await this.loadHomeData();
+    this.showConfirmDialog('清除学习数据',
+      `将删除选中的 ${this.selectedCardIds.length} 张卡片的所有记忆记录，并重置学习进度。确定继续吗？`,
+      '确定', $r('app.color.primary'),
+      async () => {
+        const recordDao = new MemoryRecordDao();
+        for (const id of this.selectedCardIds) {
+          const card = this.cards.find(c => c.id === id);
+          if (card) { await recordDao.deleteByCardId(card.id); card.status = CardStatus.unlearned; await this.cardVm.updateCard(card); }
         }
-      }
-    });
+        this.exitMultiSelectMode();
+        await this.loadHomeData();
+      });
   }
 
   async batchDelete() {
-    AlertDialog.show({
-      title: '删除卡片', message: `确定要删除选中的 ${this.selectedCardIds.length} 张卡片吗？此操作不可撤销。`,
-      autoCancel: true, alignment: DialogAlignment.Center,
-      primaryButton: { value: '取消', action: () => {} },
-      secondaryButton: {
-        value: '删除', fontColor: $r('app.color.delete_text'),
-        action: async () => {
-          for (const id of this.selectedCardIds) { await this.cardVm.deleteCard(id); }
-          this.exitMultiSelectMode(); await this.loadHomeData();
-        }
-      }
-    });
+    this.showConfirmDialog('删除卡片',
+      `确定要删除选中的 ${this.selectedCardIds.length} 张卡片吗？此操作不可撤销。`,
+      '删除', $r('app.color.danger'),
+      async () => {
+        for (const id of this.selectedCardIds) { await this.cardVm.deleteCard(id); }
+        this.exitMultiSelectMode(); await this.loadHomeData();
+      });
   }
 
   async batchMoveToDeck(deckIds: number[]) {
@@ -614,7 +620,7 @@ struct HomePage {
       if (card) { card.deckId = deckIds[0]; await this.cardVm.updateCard(card); }
     }
     this.exitMultiSelectMode(); await this.loadHomeData();
-    promptAction.showToast({ message: `已将 ${count} 张卡片移动`, duration: 2000 });
+    this.showToast(`已将 ${count} 张卡片移动`);
   }
 
   showDeckActionMenu(deck: Deck) {
@@ -635,37 +641,28 @@ struct HomePage {
 
   async deleteDeck(deck: Deck) {
     if (deck.isDefault) {
-      promptAction.showToast({ message: '系统默认牌组不可删除', duration: 2000 });
+      this.showToast('系统默认牌组不可删除');
       return;
     }
-    // 统计该牌组下的卡片数量
     const cardCount: number = this.cards.filter(c => c.deckId === deck.id).length;
-    AlertDialog.show({
-      title: '删除牌组',
-      message: cardCount > 0
+    this.showConfirmDialog('删除牌组',
+      cardCount > 0
         ? `牌组「${deck.name}」下有 ${cardCount} 张卡片，删除牌组将同时删除所有卡片。确定继续吗？`
         : `确定删除牌组「${deck.name}」吗？`,
-      autoCancel: true,
-      alignment: DialogAlignment.Center,
-      primaryButton: { value: '取消', action: () => {} },
-      secondaryButton: {
-        value: '删除',
-        fontColor: $r('app.color.delete_text'),
-        action: async () => {
-          await this.cardVm.deleteDeck(deck.id);
-          if (this.selectedDeckId === deck.id) {
-            this.selectedDeckId = 0;
-          }
-          await this.loadHomeData();
-          promptAction.showToast({ message: '牌组已删除', duration: 2000 });
+      '删除', $r('app.color.danger'),
+      async () => {
+        await this.cardVm.deleteDeck(deck.id);
+        if (this.selectedDeckId === deck.id) {
+          this.selectedDeckId = 0;
         }
-      }
-    });
+        await this.loadHomeData();
+        this.showToast('牌组已删除');
+      });
   }
 
   async saveDeckSettings(newLimit: number, reviewLimit: number, deckId: number) {
     await this.cardVm.updateDeckSettings(deckId, newLimit, reviewLimit);
     await this.loadHomeData();
-    promptAction.showToast({ message: '牌组设置已保存', duration: 2000 });
+    this.showToast('牌组设置已保存');
   }
 }

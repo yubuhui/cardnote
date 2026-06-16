@@ -1,6 +1,4 @@
-import { router } from '@kit.ArkUI';
 
-/** 帮助与反馈页面 */
 @Entry
 @Component
 struct HelpFeedbackPage {
@@ -17,11 +15,11 @@ struct HelpFeedbackPage {
         .width(36)
         .height(36)
         .borderRadius(18)
-        .backgroundColor($r('app.color.nav_back_bg'))
+        .backgroundColor($r('app.color.surface'))
         .justifyContent(FlexAlign.Center)
         .alignItems(VerticalAlign.Center)
         .onClick(() => {
-          router.back();
+          this.getUIContext().getRouter().back();
         })
         Text('帮助与反馈')
           .fontSize(17)
@@ -34,8 +32,8 @@ struct HelpFeedbackPage {
       .width('100%')
       .height(44)
       .padding({ left: 16, right: 16 })
-      .backgroundColor($r('app.color.card_background'))
-      .border({ width: { bottom: 0.5 }, color: $r('app.color.sync_divider_strong') })
+      .backgroundColor($r('app.color.surface'))
+      .border({ width: { bottom: 0.5 }, color: $r('app.color.outline') })
 
       // 内容区域
       Column() {
@@ -43,24 +41,24 @@ struct HelpFeedbackPage {
           Text('Bug反馈邮箱')
             .fontSize(13)
             .fontWeight(FontWeight.Medium)
-            .fontColor($r('app.color.text_tertiary'))
+            .fontColor($r('app.color.text_secondary'))
             .margin({ bottom: 6 })
           Text('huangbh2001@qq.com')
             .fontSize(15)
-            .fontColor($r('app.color.primary_color'))
+            .fontColor($r('app.color.primary'))
         }
         .width('100%')
         .padding(16)
-        .backgroundColor($r('app.color.card_background'))
+        .backgroundColor($r('app.color.surface'))
         .borderRadius(12)
         .margin(12)
       }
       .layoutWeight(1)
       .width('100%')
-      .backgroundColor($r('app.color.background_color'))
+      .backgroundColor($r('app.color.background'))
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.card_background'))
+    .backgroundColor($r('app.color.surface'))
   }
 }

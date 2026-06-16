@@ -1,4 +1,3 @@
-import { router } from '@kit.ArkUI';
 import { Card } from '../model/Card';
 import { CardType, CardStatus } from '../model/CardTypeEnum';
 import { CardViewModel } from '../viewmodel/CardViewModel';
@@ -16,7 +15,7 @@ struct LearningDetailPage {
   private studyVm: StudyViewModel = new StudyViewModel();
 
   aboutToAppear() {
-    const params = router.getParams() as Record<string, Object>;
+    const params = this.getUIContext().getRouter().getParams() as Record<string, Object>;
     if (params && params['cardId'] !== undefined) {
       this.cardId = params['cardId'] as number;
     }
@@ -45,11 +44,11 @@ struct LearningDetailPage {
         .width(36)
         .height(36)
         .borderRadius(18)
-        .backgroundColor($r('app.color.nav_back_bg'))
+        .backgroundColor($r('app.color.surface'))
         .justifyContent(FlexAlign.Center)
         .alignItems(VerticalAlign.Center)
         .onClick(() => {
-          router.back();
+          this.getUIContext().getRouter().back();
         })
 
         Text('学习详情')
@@ -69,8 +68,8 @@ struct LearningDetailPage {
           .bindPopup(this.showMenu, {
             builder: this.buildDropdownMenu,
             placement: Placement.BottomRight,
-            maskColor: '#00000000',
-            popupColor: $r('app.color.card_background'),
+            maskColor: $r('app.color.transparent'),
+            popupColor: $r('app.color.surface'),
             enableArrow: false,
             radius: 10,
             onStateChange: (e) => {
@@ -83,7 +82,7 @@ struct LearningDetailPage {
       .width('100%')
       .justifyContent(FlexAlign.SpaceBetween)
       .padding({ left: 18, right: 18, top: 46, bottom: 10 })
-      .backgroundColor($r('app.color.card_background'))
+      .backgroundColor($r('app.color.surface'))
 
       if (this.card) {
         Scroll() {
@@ -103,7 +102,7 @@ struct LearningDetailPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.background_color'))
+    .backgroundColor($r('app.color.background'))
   }
 
   @Builder
@@ -123,13 +122,13 @@ struct LearningDetailPage {
 
       Divider()
         .height(1)
-        .color($r('app.color.divider_color'))
+        .color($r('app.color.outline'))
         .margin({ left: 14, right: 14 })
 
       Row() {
         Text('清除数据')
           .fontSize(13)
-          .fontColor($r('app.color.delete_text'))
+          .fontColor($r('app.color.danger'))
       }
       .width('100%')
       .padding({ left: 14, right: 14, top: 10, bottom: 10 })
@@ -143,21 +142,21 @@ struct LearningDetailPage {
   }
 
   goToEditCard() {
-    router.pushUrl({
+    this.getUIContext().getRouter().pushUrl({
       url: 'pages/EditorPage',
       params: { cardId: this.cardId }
     });
   }
 
   confirmClearData() {
-    AlertDialog.show({
+    this.getUIContext().showAlertDialog({
       title: '清除学习数据',
       message: '将删除该卡片的所有记忆记录，并重置学习进度。确定继续吗？',
       autoCancel: true,
       alignment: DialogAlignment.Center,
       primaryButton: {
         value: '确定',
-        fontColor: $r('app.color.delete_text'),
+        fontColor: $r('app.color.danger'),
         action: async () => {
           await this.studyVm.resetCardData(this.cardId);
           await this.loadCard();
@@ -168,8 +167,8 @@ struct LearningDetailPage {
         fontColor: $r('app.color.text_secondary'),
         action: () => {}
       }
-    });
-  }
+     });
+   }
 
   @Builder
   buildCardDetail() {
@@ -216,7 +215,7 @@ struct LearningDetailPage {
       }
       .width('100%')
       .padding(16)
-      .backgroundColor($r('app.color.background_color'))
+      .backgroundColor($r('app.color.background'))
       .borderRadius(10)
 
       // 答案
@@ -237,7 +236,7 @@ struct LearningDetailPage {
       }
       .width('100%')
       .padding(16)
-      .backgroundColor($r('app.color.answer_green_bg'))
+      .backgroundColor($r('app.color.success_bg'))
       .borderRadius(10)
 
       // 解析（可选）
@@ -247,9 +246,9 @@ struct LearningDetailPage {
     }
     .width('100%')
     .padding(16)
-    .backgroundColor($r('app.color.card_background'))
+    .backgroundColor($r('app.color.surface'))
     .borderRadius(18)
-    .shadow({ radius: 8, color: $r('app.color.card_shadow'), offsetX: 0, offsetY: 4 })
+    .shadow({ radius: 8, color: $r('app.color.shadow'), offsetX: 0, offsetY: 4 })
   }
 
   // ===== 选择题 =====
@@ -274,7 +273,7 @@ struct LearningDetailPage {
       }
       .width('100%')
       .padding(16)
-      .backgroundColor($r('app.color.background_color'))
+      .backgroundColor($r('app.color.background'))
       .borderRadius(10)
 
       // 答案
@@ -295,7 +294,7 @@ struct LearningDetailPage {
       }
       .width('100%')
       .padding(16)
-      .backgroundColor($r('app.color.answer_green_bg'))
+      .backgroundColor($r('app.color.success_bg'))
       .borderRadius(10)
 
       // 选项列表（正确答案高亮为绿色）
@@ -322,9 +321,9 @@ struct LearningDetailPage {
     }
     .width('100%')
     .padding(16)
-    .backgroundColor($r('app.color.card_background'))
+    .backgroundColor($r('app.color.surface'))
     .borderRadius(18)
-    .shadow({ radius: 8, color: $r('app.color.card_shadow'), offsetX: 0, offsetY: 4 })
+    .shadow({ radius: 8, color: $r('app.color.shadow'), offsetX: 0, offsetY: 4 })
   }
 
   @Builder
@@ -332,7 +331,7 @@ struct LearningDetailPage {
     Row() {
       Text(String.fromCharCode(65 + idx) + '.')
         .fontSize(13)
-        .fontColor(this.isOptionCorrect(idx) ? $r('app.color.correct_green') : $r('app.color.text_secondary'))
+        .fontColor(this.isOptionCorrect(idx) ? $r('app.color.success') : $r('app.color.text_secondary'))
         .fontWeight(this.isOptionCorrect(idx) ? FontWeight.Bold : FontWeight.Normal)
         .width(28)
         .textAlign(TextAlign.Start)
@@ -348,9 +347,9 @@ struct LearningDetailPage {
     .borderRadius(8)
     .border({
       width: this.isOptionCorrect(idx) ? 1.5 : 0.5,
-      color: this.isOptionCorrect(idx) ? $r('app.color.correct_border') : $r('app.color.input_border')
+      color: this.isOptionCorrect(idx) ? $r('app.color.outline') : $r('app.color.outline')
     })
-    .backgroundColor(this.isOptionCorrect(idx) ? $r('app.color.answer_green_bg') : $r('app.color.choice_option_bg'))
+    .backgroundColor(this.isOptionCorrect(idx) ? $r('app.color.success_bg') : $r('app.color.surface'))
   }
 
   // ===== 填空题 =====
@@ -373,8 +372,8 @@ struct LearningDetailPage {
                 Text(seg.text)
                   .fontSize(16)
                   .fontWeight(FontWeight.Medium)
-                  .fontColor($r('app.color.primary_color'))
-                  .backgroundColor($r('app.color.hint_box_bg'))
+                  .fontColor($r('app.color.primary'))
+                  .backgroundColor($r('app.color.surface'))
                   .borderRadius(4)
                   .padding({ left: 8, right: 8, top: 4, bottom: 4 })
                   .margin({ left: 2, right: 2 })
@@ -392,7 +391,7 @@ struct LearningDetailPage {
       }
       .width('100%')
       .padding(16)
-      .backgroundColor($r('app.color.background_color'))
+      .backgroundColor($r('app.color.background'))
       .borderRadius(10)
 
       // 答案
@@ -413,7 +412,7 @@ struct LearningDetailPage {
       }
       .width('100%')
       .padding(16)
-      .backgroundColor($r('app.color.answer_green_bg'))
+      .backgroundColor($r('app.color.success_bg'))
       .borderRadius(10)
 
       // 解析（可选）
@@ -423,9 +422,9 @@ struct LearningDetailPage {
     }
     .width('100%')
     .padding(16)
-    .backgroundColor($r('app.color.card_background'))
+    .backgroundColor($r('app.color.surface'))
     .borderRadius(18)
-    .shadow({ radius: 8, color: $r('app.color.card_shadow'), offsetX: 0, offsetY: 4 })
+    .shadow({ radius: 8, color: $r('app.color.shadow'), offsetX: 0, offsetY: 4 })
   }
 
   // ===== 共享：解析板块 =====
@@ -447,7 +446,7 @@ struct LearningDetailPage {
     }
     .width('100%')
     .padding(16)
-    .backgroundColor($r('app.color.analysis_bg'))
+    .backgroundColor($r('app.color.warning_bg'))
     .borderRadius(10)
   }
 
@@ -474,9 +473,9 @@ struct LearningDetailPage {
         // 统计概览
         Row() {
           this.buildStatItem('开始学习', this.getFirstStudyDate(), $r('app.color.text_secondary'))
-          this.buildStatItem('已掌握', this.getMasteredDate(), $r('app.color.correct_green'))
-          this.buildStatItem('间隔', this.getStudyDuration(), $r('app.color.primary_color'))
-          this.buildStatItem('总时长', this.getTotalStudyTime(), $r('app.color.stat_orange'))
+          this.buildStatItem('已掌握', this.getMasteredDate(), $r('app.color.success'))
+          this.buildStatItem('间隔', this.getStudyDuration(), $r('app.color.primary'))
+          this.buildStatItem('总时长', this.getTotalStudyTime(), $r('app.color.warning'))
         }
         .width('100%')
         .justifyContent(FlexAlign.SpaceBetween)
@@ -484,7 +483,7 @@ struct LearningDetailPage {
 
         Divider()
           .height(1)
-          .color($r('app.color.divider_color'))
+          .color($r('app.color.outline'))
           .margin({ bottom: 4 })
 
         // 历史列表
@@ -512,7 +511,7 @@ struct LearningDetailPage {
               Text(record.resultLabel)
                 .fontSize(11)
                 .fontWeight(FontWeight.Medium)
-                .fontColor($r('app.color.card_background'))
+                .fontColor($r('app.color.surface'))
                 .backgroundColor(record.resultColor)
                 .borderRadius(4)
                 .padding({ left: 8, right: 8, top: 3, bottom: 3 })
@@ -523,7 +522,7 @@ struct LearningDetailPage {
             if (index < this.reviewHistory.length - 1) {
               Divider()
                 .height(1)
-                .color($r('app.color.divider_color'))
+                .color($r('app.color.outline'))
             }
           }
           .width('100%')
@@ -532,7 +531,7 @@ struct LearningDetailPage {
     }
     .width('100%')
     .padding(14)
-    .backgroundColor($r('app.color.card_background'))
+    .backgroundColor($r('app.color.surface'))
     .borderRadius(12)
     .margin({ left: 14, right: 14, top: 12, bottom: 20 })
   }

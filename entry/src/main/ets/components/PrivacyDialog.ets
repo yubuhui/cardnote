@@ -22,11 +22,11 @@ export struct PrivacyDialog {
       Column() {
         Text('欢迎使用 CardNote！\n\n为了更好地保障您的权益，请阅读我们的')
           .fontSize(14)
-          .fontColor($r('app.color.text_tertiary'))
+          .fontColor($r('app.color.text_secondary'))
           .lineHeight(22)
         Text('《隐私政策》')
           .fontSize(14)
-          .fontColor($r('app.color.primary_color'))
+          .fontColor($r('app.color.primary'))
           .decoration({ type: TextDecorationType.Underline })
           .onClick(() => {
             if (this.onViewDetail) {
@@ -35,12 +35,12 @@ export struct PrivacyDialog {
           })
         Text('了解我们如何收集、使用和保护您的个人信息。\n\n如您同意，请点击"同意"开始使用；如您不同意，我们将无法为您提供服务。')
           .fontSize(14)
-          .fontColor($r('app.color.text_tertiary'))
+          .fontColor($r('app.color.text_secondary'))
           .lineHeight(22)
       }
       .padding(12)
       .borderRadius(8)
-      .backgroundColor($r('app.color.surface_option_bg'))
+      .backgroundColor($r('app.color.surface'))
       .margin({ left: 16, right: 16, bottom: 20 })
       .alignItems(HorizontalAlign.Start)
 
@@ -50,8 +50,8 @@ export struct PrivacyDialog {
           .fontSize(15)
           .flexGrow(1)
           .height(42)
-          .backgroundColor($r('app.color.freq_chip_unselected_bg'))
-          .fontColor($r('app.color.text_tertiary'))
+          .backgroundColor($r('app.color.surface'))
+          .fontColor($r('app.color.text_secondary'))
           .borderRadius(8)
           .onClick(() => {
             if (this.onDisagree) {
@@ -64,8 +64,8 @@ export struct PrivacyDialog {
           .fontSize(15)
           .flexGrow(2)
           .height(42)
-          .backgroundColor($r('app.color.primary_color'))
-          .fontColor($r('app.color.button_text'))
+          .backgroundColor($r('app.color.primary'))
+          .fontColor($r('app.color.on_primary'))
           .borderRadius(8)
           .margin({ left: 12 })
           .onClick(() => {
@@ -80,7 +80,7 @@ export struct PrivacyDialog {
     }
     .width('100%')
     .borderRadius(16)
-    .backgroundColor($r('app.color.card_background'))
+    .backgroundColor($r('app.color.surface'))
     .padding(0)
   }
 }

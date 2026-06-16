@@ -1,4 +1,3 @@
-import { router } from '@kit.ArkUI';
 import { ReviewSettingsManager, ReviewSettings } from '../data/ReviewSettingsManager';
 
 /**
@@ -74,7 +73,7 @@ struct ReviewSettingsPage {
 
   /** 弹出每日新卡数量选择器 */
   private showNewCardPicker(): void {
-    TextPickerDialog.show({
+    this.getUIContext().showTextPickerDialog({
       range: this.newCardRange,
       selected: this.getIndexForValue(this.dailyNewCards),
       onAccept: (result: TextPickerResult) => {
@@ -94,7 +93,7 @@ struct ReviewSettingsPage {
 
   /** 弹出每日复习卡数量选择器 */
   private showReviewCardPicker(): void {
-    TextPickerDialog.show({
+    this.getUIContext().showTextPickerDialog({
       range: this.reviewCardRange,
       selected: this.getReviewIndexForValue(this.dailyReviewCards),
       onAccept: (result: TextPickerResult) => {
@@ -114,7 +113,7 @@ struct ReviewSettingsPage {
 
   /** 弹出 SM-2 算法倍率选择器 */
   private showSm2Picker(): void {
-    TextPickerDialog.show({
+    this.getUIContext().showTextPickerDialog({
       range: this.sm2Range,
       selected: this.getSm2IndexForValue(this.sm2Factor),
       onAccept: (result: TextPickerResult) => {
@@ -146,10 +145,10 @@ struct ReviewSettingsPage {
         .width(36)
         .height(36)
         .borderRadius(18)
-        .backgroundColor($r('app.color.nav_back_bg'))
+        .backgroundColor($r('app.color.surface'))
         .justifyContent(FlexAlign.Center)
         .alignItems(VerticalAlign.Center)
-        .onClick(() => router.back())
+        .onClick(() => this.getUIContext().getRouter().back())
 
         Text('背诵设置')
           .fontSize(17)
@@ -165,7 +164,7 @@ struct ReviewSettingsPage {
       }
       .width('100%')
       .padding({ left: 18, right: 18, top: 46, bottom: 12 })
-      .backgroundColor($r('app.color.card_background'))
+      .backgroundColor($r('app.color.surface'))
 
       // 第二层：内容区
       Scroll() {
@@ -186,7 +185,7 @@ struct ReviewSettingsPage {
                      index === 2 ? this.sm2Factor.toString() :
                      item.value.toString())
                   .fontSize(14)
-                  .fontColor($r('app.color.primary_color'))
+                  .fontColor($r('app.color.primary'))
                   .fontWeight(FontWeight.Medium)
                 if (item.unit) {
                   Text(item.unit)
@@ -202,7 +201,7 @@ struct ReviewSettingsPage {
             }
             .width('100%')
             .padding({ top: 14, bottom: 14 })
-            .border({ width: { bottom: 1 }, color: $r('app.color.divider_color') })
+            .border({ width: { bottom: 1 }, color: $r('app.color.outline') })
             .onClick(() => {
               if (index === 0) {
                 this.showNewCardPicker();
@@ -228,7 +227,7 @@ struct ReviewSettingsPage {
               }
               .width('100%')
               .padding({ top: 14, bottom: 14 })
-              .border({ width: { bottom: 1 }, color: $r('app.color.divider_color') })
+              .border({ width: { bottom: 1 }, color: $r('app.color.outline') })
             }
 
             // SM-2 倍率说明（跟随该行）
@@ -243,7 +242,7 @@ struct ReviewSettingsPage {
         }
         .width('100%')
         .padding({ left: 16, right: 16 })
-        .backgroundColor($r('app.color.card_background'))
+        .backgroundColor($r('app.color.surface'))
         .borderRadius(12)
         .margin({ top: 12 })
       }
@@ -256,8 +255,8 @@ struct ReviewSettingsPage {
       Column() {
         Button('恢复默认')
           .fontSize(14)
-          .fontColor($r('app.color.primary_color'))
-          .backgroundColor($r('app.color.card_background'))
+          .fontColor($r('app.color.primary'))
+          .backgroundColor($r('app.color.surface'))
           .width('100%')
           .height(44)
           .borderRadius(12)
@@ -267,6 +266,6 @@ struct ReviewSettingsPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.background_color'))
+    .backgroundColor($r('app.color.background'))
   }
 }

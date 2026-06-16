@@ -42,7 +42,7 @@ export struct FlipCard {
             }
             .width('100%')
             .padding(16)
-            .backgroundColor($r('app.color.background_color'))
+            .backgroundColor($r('app.color.background'))
             .borderRadius(10)
 
             // 答案
@@ -63,7 +63,7 @@ export struct FlipCard {
             }
             .width('100%')
             .padding(16)
-            .backgroundColor($r('app.color.answer_green_bg'))
+            .backgroundColor($r('app.color.success_bg'))
             .borderRadius(10)
 
             // 解析（可选）
@@ -84,7 +84,7 @@ export struct FlipCard {
               }
               .width('100%')
               .padding(16)
-              .backgroundColor($r('app.color.analysis_bg'))
+              .backgroundColor($r('app.color.warning_bg'))
               .borderRadius(10)
             }
           }
@@ -99,9 +99,9 @@ export struct FlipCard {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.card_background'))
+    .backgroundColor($r('app.color.surface'))
     .borderRadius(18)
-    .shadow({ radius: 8, color: $r('app.color.card_shadow'), offsetX: 0, offsetY: 4 })
+    .shadow({ radius: 8, color: $r('app.color.shadow'), offsetX: 0, offsetY: 4 })
     .onClick(() => {
       this.isFlipped = true;
     })

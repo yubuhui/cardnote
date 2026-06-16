@@ -15,16 +15,16 @@ export struct RatingButtons {
 
   build() {
     Row() {
-      this.buildButton('忘记', '1 分钟', 0, $r('app.color.rating_forget'), this.forgetPressed);
-      this.buildButton('困难', '10 分钟', 1, $r('app.color.rating_hard'), this.hardPressed);
-      this.buildButton('良好', '1 天', 2, $r('app.color.rating_good'), this.goodPressed);
-      this.buildButton('容易', '4 天', 3, $r('app.color.rating_easy'), this.easyPressed);
+      this.buildButton('忘记', '1 分钟', 0, $r('app.color.danger'), this.forgetPressed);
+      this.buildButton('困难', '10 分钟', 1, $r('app.color.warning'), this.hardPressed);
+      this.buildButton('良好', '1 天', 2, $r('app.color.success'), this.goodPressed);
+      this.buildButton('容易', '4 天', 3, $r('app.color.success'), this.easyPressed);
     }
     .width('100%')
     .justifyContent(FlexAlign.SpaceAround)
-    .backgroundColor($r('app.color.card_background'))
+    .backgroundColor($r('app.color.surface'))
     .padding({ top: 12, bottom: 12 })
-    .border({ width: { top: 1 }, color: $r('app.color.divider_color') })
+    .border({ width: { top: 1 }, color: $r('app.color.outline') })
   }
 
   @Builder
@@ -33,10 +33,10 @@ export struct RatingButtons {
       Text(label)
         .fontSize(11)
         .fontWeight(FontWeight.Medium)
-        .fontColor(Color.White)
+        .fontColor($r('app.color.on_primary'))
       Text(interval)
         .fontSize(9)
-        .fontColor('rgba(255,255,255,0.8)')
+        .fontColor($r('app.color.on_primary'))
         .fontWeight(FontWeight.Normal)
     }
     .layoutWeight(1)
