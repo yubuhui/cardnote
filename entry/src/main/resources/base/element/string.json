@@ -9,6 +9,10 @@
     { "name": "sync_now", "value": "立即同步" },
     { "name": "sync_status", "value": "同步状态" },
     { "name": "last_sync", "value": "上次同步" },
-    { "name": "sync_never", "value": "从未同步" }
+    { "name": "sync_never", "value": "从未同步" },
+    { "name": "search_hint", "value": "搜索卡片内容" },
+    { "name": "search_cancel", "value": "取消" },
+    { "name": "search_no_result", "value": "未找到匹配的卡片" },
+    { "name": "search_title", "value": "搜索" }
   ]
 }

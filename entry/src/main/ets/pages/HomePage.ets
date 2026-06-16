@@ -22,11 +22,24 @@ interface CardSectionParams {
 struct CardItem {
   @Prop cardId: number = 0;
   @Prop cardFront: string = '';
-  @Prop cardStatus: CardStatus = CardStatus.unlearned;
+  @Prop nextReviewTime: number = 0;
   @Prop isMultiSelect: boolean = false;
   @Prop isSelected: boolean = false;
   onTap: () => void = () => {};
   onLongPress: () => void = () => {};
+
+  private formatNextReviewTime(timestamp: number): string {
+    const now: Date = new Date();
+    const todayStart: number = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const todayEnd: number = todayStart + 24 * 60 * 60 * 1000;
+    if (timestamp >= todayStart && timestamp < todayEnd) {
+      return '今天';
+    }
+    const date: Date = new Date(timestamp);
+    const month: number = date.getMonth() + 1;
+    const day: number = date.getDate();
+    return month.toString() + '月' + day.toString() + '日';
+  }
 
   build() {
     Row() {
@@ -42,14 +55,11 @@ struct CardItem {
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .layoutWeight(1)
         Blank().width(8)
-        Text(this.cardStatus === CardStatus.unlearned ? '未背诵' :
-             this.cardStatus === CardStatus.reviewing ? '待复习' : '已掌握')
+        Text(this.formatNextReviewTime(this.nextReviewTime))
           .fontSize(10)
-          .fontColor(this.cardStatus === CardStatus.unlearned ? $r('app.color.disabled') :
-                     this.cardStatus === CardStatus.reviewing ? $r('app.color.primary') : $r('app.color.success'))
+          .fontColor($r('app.color.text_secondary'))
           .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-          .backgroundColor(this.cardStatus === CardStatus.unlearned ? $r('app.color.surface') :
-                           this.cardStatus === CardStatus.reviewing ? $r('app.color.warning_bg') : $r('app.color.success_bg'))
+          .backgroundColor($r('app.color.surface'))
           .borderRadius(4)
       }
       .layoutWeight(1)
@@ -340,6 +350,8 @@ struct HomePage {
   @State isMultiSelectMode: boolean = false;
   @State selectedCardIds: number[] = [];
   @StorageLink('dataVersion') @Watch('onDataVersionChange') dataVersion: number = 0;
+  @State isSearching: boolean = false;
+  @State searchQuery: string = '';
   private cardVm: CardViewModel = new CardViewModel();
   private studyVm: StudyViewModel = new StudyViewModel();
   private addDeckDialogController: CustomDialogController = new CustomDialogController({
@@ -380,6 +392,14 @@ struct HomePage {
   onPageShow() {
     this.lastLoadTime = 0;
     this.loadHomeData();
+  }
+
+  onBackPress(): boolean {
+    if (this.isSearching) {
+      this.exitSearch();
+      return true;
+    }
+    return false;
   }
 
   private lastLoadTime: number = 0;
@@ -428,8 +448,60 @@ struct HomePage {
       HdsTabs({ index: this.currentTabIndex }) {
         TabContent() {
           Flex({ direction: FlexDirection.Column }) {
+            if (this.isSearching) {
+              Row() {
+                Search({ placeholder: '搜索卡片内容', value: this.searchQuery })
+                  .onChange((value: string) => { this.searchQuery = value; })
+                  .layoutWeight(1)
+                Button('取消')
+                  .fontSize(14)
+                  .fontColor($r('app.color.primary'))
+                  .backgroundColor(Color.Transparent)
+                  .margin({ left: 8 })
+                  .onClick(() => { this.exitSearch(); })
+              }.width('100%').padding({ left: 12, right: 12, top: 12, bottom: 8 }).backgroundColor($r('app.color.surface'))
+
+              if (this.searchQuery.trim().length > 0) {
+                Scroll() {
+                  Column() {
+                    ForEach(this.getSearchResults(), (card: Card) => {
+                      Row() {
+                        Text(card.front)
+                          .fontSize(14)
+                          .maxLines(1)
+                          .textOverflow({ overflow: TextOverflow.Ellipsis })
+                          .layoutWeight(1)
+                        Text(this.decks.find((d: Deck) => d.id === card.deckId)?.name ?? '')
+                          .fontSize(11)
+                          .fontColor($r('app.color.text_secondary'))
+                          .margin({ left: 8 })
+                      }
+                      .width('100%')
+                      .padding({ left: 14, right: 14, top: 12, bottom: 12 })
+                      .backgroundColor($r('app.color.surface'))
+                      .borderRadius(10)
+                      .shadow({ radius: 3, color: $r('app.color.shadow'), offsetY: 1 })
+                      .margin({ left: 16, right: 16, bottom: 6 })
+                      .onClick(() => {
+                        this.getUIContext().getRouter().pushUrl({ url: 'pages/LearningDetailPage', params: { cardId: card.id } });
+                      })
+                    }, (card: Card) => card.id.toString())
+                  }.width('100%').justifyContent(FlexAlign.Start).padding({ top: 10, bottom: 68 })
+                }.width('100%').layoutWeight(1).scrollBar(BarState.Off).align(Alignment.TopStart)
+              } else {
+                Column() {
+                  Text('输入关键词搜索卡片')
+                    .fontSize(14)
+                    .fontColor($r('app.color.text_secondary'))
+                }.width('100%').layoutWeight(1).justifyContent(FlexAlign.Center)
+              }
+            } else {
             Column() {
-              Text('CardNote').fontSize(20).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_primary')).margin({ top: 8, bottom: 14 }).alignSelf(ItemAlign.Start)
+              Row() {
+                Text('CardNote').fontSize(20).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_primary')).layoutWeight(1)
+                Text('搜索').fontSize(14).fontColor($r('app.color.primary'))
+                  .onClick(() => { this.enterSearch(); })
+              }.width('100%').margin({ top: 8, bottom: 14 })
               Row({ space: 10 }) {
                 Column() {
                   Text(`${this.cards.filter((c: Card) => c.status === CardStatus.reviewing).length}`).fontSize(26).fontWeight(FontWeight.Bold).fontColor($r('app.color.primary')).fontFamily('HarmonyHeiTi')
@@ -458,6 +530,7 @@ struct HomePage {
             }.width('100%').layoutWeight(1).scrollBar(BarState.Off).align(Alignment.TopStart)
 
             if (this.isMultiSelectMode) { this.buildBatchActionBar() } else { this.buildBottomBar() }
+            }
           }.width('100%').height('100%').backgroundColor($r('app.color.background'))
         }.tabBar(this.buildTab('首页', 0))
 
@@ -522,7 +595,7 @@ struct HomePage {
       if ($$.isOpen) {
         ForEach(this.getFilteredCards().filter(c => c.status === $$.status), (card: Card) => {
           CardItem({
-            cardId: card.id, cardFront: card.front, cardStatus: card.status,
+            cardId: card.id, cardFront: card.front, nextReviewTime: card.nextReviewTime,
             isMultiSelect: this.isMultiSelectMode, isSelected: this.isCardSelected(card.id),
             onTap: () => {
               this.deletingDeckId = -1;
@@ -680,5 +753,31 @@ struct HomePage {
     await this.cardVm.updateDeckSettings(deckId, newLimit, reviewLimit);
     await this.loadHomeData();
     this.showToast('牌组设置已保存');
+  }
+
+  private enterSearch(): void {
+    this.isSearching = true;
+    this.searchQuery = '';
+  }
+
+  private exitSearch(): void {
+    this.isSearching = false;
+    this.searchQuery = '';
+  }
+
+  private getSearchResults(): Card[] {
+    const q: string = this.searchQuery.trim().toLowerCase();
+    if (q.length === 0) {
+      return [];
+    }
+    const results: Card[] = [];
+    for (let i: number = 0; i < this.cards.length; i++) {
+      const card: Card = this.cards[i];
+      if (card.front.toLowerCase().indexOf(q) >= 0 ||
+          card.analysis.toLowerCase().indexOf(q) >= 0) {
+        results.push(card);
+      }
+    }
+    return results;
   }
 }
