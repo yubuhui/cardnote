@@ -7,6 +7,7 @@ import { SM2Algorithm, Rating } from '../data/SM2Algorithm';
 import { ReviewSettingsManager } from '../data/ReviewSettingsManager';
 import { WebDAVSyncService } from '../service/WebDAVSyncService';
 import { util } from '@kit.ArkTS';
+import { DataRefreshHelper } from '../utils/DataRefreshHelper';
 
 /** 卡片视图模型 */
 export class CardViewModel {
@@ -32,11 +33,13 @@ export class CardViewModel {
     deck.createdAt = Date.now();
     deck.updatedAt = Date.now();
     await this.deckDao.insert(deck);
+    DataRefreshHelper.notify();
   }
 
   async updateDeck(deck: Deck): Promise<void> {
     deck.updatedAt = Date.now();
     await this.deckDao.update(deck);
+    DataRefreshHelper.notify();
   }
 
   async deleteDeck(id: number): Promise<void> {
@@ -64,10 +67,12 @@ export class CardViewModel {
     if (deck.uuid && WebDAVSyncService.getInstance().isConfigured()) {
       WebDAVSyncService.getInstance().markDeckDeleted(deck.uuid);
     }
+    DataRefreshHelper.notify();
   }
 
   async updateDeckSettings(deckId: number, dailyNewCards: number, dailyReviewCards: number): Promise<void> {
     await this.deckDao.updateDeckSettings(deckId, dailyNewCards, dailyReviewCards);
+    DataRefreshHelper.notify();
   }
 
   // ===== 卡片操作 =====
@@ -101,15 +106,15 @@ export class CardViewModel {
       }
     }
     await this.cardDao.insert(card);
-    // 更新所属牌组的 updatedAt，使同步生效
     await this.deckDao.touchUpdatedAt(card.deckId);
+    DataRefreshHelper.notify();
   }
 
   async updateCard(card: Card): Promise<void> {
     card.updatedAt = Date.now();
     await this.cardDao.update(card);
-    // 更新所属牌组的 updatedAt，使同步生效
     await this.deckDao.touchUpdatedAt(card.deckId);
+    DataRefreshHelper.notify();
   }
 
   async deleteCard(id: number): Promise<void> {
@@ -123,6 +128,7 @@ export class CardViewModel {
     if (card) {
       await this.deckDao.touchUpdatedAt(card.deckId);
     }
+    DataRefreshHelper.notify();
   }
 
   // ===== 学习流程 =====
@@ -136,8 +142,8 @@ export class CardViewModel {
     card.status = result.status;
     card.nextReviewTime = Date.now() + result.interval * 60000;
     await this.cardDao.update(card);
-    // 更新所属牌组的 updatedAt，使同步生效
     await this.deckDao.touchUpdatedAt(card.deckId);
+    DataRefreshHelper.notify();
   }
 
   // ===== 统计 =====

@@ -12,6 +12,7 @@ import { WebDAVClient, WebDAVItem } from '../webdav/WebDAVClient';
 import { WebDAVConfig } from '../webdav/SyncModels';
 import { formatFileSize, formatTimestamp } from '../utils/DateUtils';
 import { util } from '@kit.ArkTS';
+import { DataRefreshHelper } from '../utils/DataRefreshHelper';
 import relationalStore from '@ohos.data.relationalStore';
 
 /** 备份文件格式版本 */
@@ -141,6 +142,8 @@ export class BackupService {
 
     // 恢复 Preferences
     this.restoreAllPreferences(context, backup.preferences);
+
+    DataRefreshHelper.notify();
 
     return {
       deckCount: backup.decks.length,

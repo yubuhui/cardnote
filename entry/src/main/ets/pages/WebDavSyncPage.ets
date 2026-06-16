@@ -227,12 +227,14 @@ struct WebDavSyncPage {
         Text('‹')
           .fontSize(22)
           .fontColor($r('app.color.text_primary'))
+          .textAlign(TextAlign.Center)
       }
       .width(36)
       .height(36)
       .borderRadius(18)
       .backgroundColor($r('app.color.surface'))
       .justifyContent(FlexAlign.Center)
+      .alignItems(VerticalAlign.Center)
       .onClick(() => { this.getUIContext().getRouter().back(); })
 
       Text('WebDAV 同步')
@@ -245,9 +247,8 @@ struct WebDavSyncPage {
       Row().width(36)
     }
     .width('100%')
-    .height(44)
-    .padding({ left: 16, right: 16 })
-    .backgroundColor($r('app.color.background'))
+    .padding({ left: 18, right: 18, top: 46, bottom: 12 })
+    .backgroundColor($r('app.color.surface'))
 
     Divider().color($r('app.color.outline')).strokeWidth(0.5)
   }

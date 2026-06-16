@@ -14,7 +14,7 @@ export struct StatsPage {
   @State selectedDay: number = 0;
   @State dayDetail: DayDetail | null = null;
   @State todayCards: DayDetailRecord[] = [];
-  @Consume('statsRefreshSignal') @Watch('onStatsRefresh') remoteRefreshSignal: number = 0;
+  @StorageLink('dataVersion') @Watch('onDataVersionChange') dataVersion: number = 0;
   private studyVm: StudyViewModel = new StudyViewModel();
 
   aboutToAppear() {
@@ -99,10 +99,23 @@ export struct StatsPage {
   private clearSelection() {
     this.selectedDay = 0;
     this.dayDetail = null;
+    this.loadTodayCards();
+  }
+
+  private async loadTodayCards(): Promise<void> {
+    try {
+      const today: Date = new Date();
+      const dayDetail: DayDetail = await this.studyVm.getDayDetail(
+        today.getFullYear(), today.getMonth() + 1, today.getDate()
+      );
+      this.todayCards = dayDetail.records;
+    } catch (err) {
+      console.error('Load today cards failed:', JSON.stringify(err));
+    }
   }
 
   // 外部刷新信号触发
-  onStatsRefresh() {
+  onDataVersionChange() {
     this.loadData();
   }
 
@@ -114,6 +127,7 @@ export struct StatsPage {
     this.dayDetail = null;
     try {
       this.dayDetail = await this.studyVm.getDayDetail(this.currentYear, this.currentMonth, day);
+      this.todayCards = this.dayDetail.records;
     } catch (err) {
       console.error('Load day detail failed:', JSON.stringify(err));
     }
@@ -420,7 +434,7 @@ export struct StatsPage {
               .height(1)
               .color($r('app.color.outline'))
           }
-        }, (item: DayDetailRecord, index: number) => `today_${item.cardId}_${index}`)
+        }, (item: DayDetailRecord) => `today_${item.cardId}_${item.durationSeconds}`)
       }
     }
     .width('100%')
@@ -500,7 +514,7 @@ export struct StatsPage {
             .height(1)
             .color($r('app.color.outline'))
         }
-      }, (item: DayDetailRecord, index: number) => `${item.cardId}_${index}`)
+      }, (item: DayDetailRecord) => `${item.cardId}_${item.durationSeconds}`)
     }
     .width('100%')
     .padding(14)

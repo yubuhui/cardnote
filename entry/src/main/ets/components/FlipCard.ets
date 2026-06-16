@@ -1,4 +1,5 @@
 import { Card } from '../model/Card';
+import { TreeDiagramView } from './TreeDiagramView';
 
 @Component
 export struct FlipCard {
@@ -53,12 +54,14 @@ export struct FlipCard {
                 .textAlign(TextAlign.Start)
                 .width('100%')
                 .margin({ bottom: 6 })
-              Text(this.card.correctAnswer)
-                .fontSize(16)
-                .fontWeight(FontWeight.Medium)
-                .fontColor($r('app.color.text_primary'))
-                .lineHeight(24)
-                .textAlign(TextAlign.Start)
+              TreeDiagramView({
+                content: this.card.correctAnswer,
+                fontSize: 16,
+                fontWeight: FontWeight.Medium,
+                fontColor: $r('app.color.text_primary'),
+                lineHeight: 24,
+
+              })
                 .width('100%')
             }
             .width('100%')
@@ -69,18 +72,21 @@ export struct FlipCard {
             // 解析（可选）
             if (this.card.analysis) {
               Column() {
-                Text('解析')
-                  .fontSize(11)
-                  .fontColor($r('app.color.text_secondary'))
-                  .textAlign(TextAlign.Start)
-                  .width('100%')
-                  .margin({ bottom: 6 })
-                Text(this.card.analysis)
-                  .fontSize(13)
-                  .fontColor($r('app.color.text_secondary'))
-                  .lineHeight(20)
-                  .textAlign(TextAlign.Start)
-                  .width('100%')
+                  Text('解析')
+                    .fontSize(11)
+                    .fontColor($r('app.color.text_secondary'))
+                    .textAlign(TextAlign.Start)
+                    .width('100%')
+                    .margin({ bottom: 6 })
+                  TreeDiagramView({
+                    content: this.card.analysis,
+                    fontSize: 13,
+                    fontWeight: FontWeight.Normal,
+                    fontColor: $r('app.color.text_secondary'),
+                    lineHeight: 20,
+    
+                  })
+                    .width('100%')
               }
               .width('100%')
               .padding(16)

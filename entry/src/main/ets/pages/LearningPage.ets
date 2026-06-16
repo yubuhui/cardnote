@@ -6,6 +6,7 @@ import { Rating } from '../data/SM2Algorithm';
 import { CardType as CardTypeEnum } from '../model/CardTypeEnum';
 import { parseFillBlanks, TextSegment } from '../utils/FillBlankParser';
 import { shuffleFisherYates } from '../utils/ArrayUtils';
+import { TreeDiagramView } from '../components/TreeDiagramView';
 
 @Entry
 @Component
@@ -22,6 +23,7 @@ struct LearningPage {
   @State lastRatedCardSnapshot: Card | null = null;
   @State canUndo: boolean = false;
   @StorageLink('isForeground') isForeground: boolean = true;
+  @StorageLink('dataVersion') @Watch('onDataVersionChange') dataVersion: number = 0;
   private timerId: number = -1;
   private cardActiveSeconds: number = 0;
   private lastInteractionTime: number = 0;
@@ -33,6 +35,14 @@ struct LearningPage {
     // selectedDeckId === 0 表示"全部牌组"，传 undefined 给后端
     const deckIds: number[] | undefined = (deckId > 0) ? [deckId] : undefined;
     this.loadDueCards(deckIds);
+  }
+
+  onPageShow() {
+    this.refreshCurrentCard();
+  }
+
+  onDataVersionChange() {
+    this.refreshCurrentCard();
   }
 
   aboutToDisappear() {
@@ -56,6 +66,37 @@ struct LearningPage {
       }
     } catch (err) {
       console.error('Load due cards failed:', err);
+    }
+  }
+
+  async refreshCurrentCard() {
+    if (!this.currentCard) {
+      return;
+    }
+    try {
+      const updated: Card | null = await this.studyViewModel.getCardById(this.currentCard.id);
+      if (updated) {
+        this.currentCard = updated;
+        this.dueCards[this.currentIndex] = updated;
+      } else {
+        // 卡片已被删除，从列表中移除
+        this.dueCards.splice(this.currentIndex, 1);
+        if (this.dueCards.length > 0) {
+          if (this.currentIndex >= this.dueCards.length) {
+            this.currentIndex = this.dueCards.length - 1;
+          }
+          this.currentCard = this.dueCards[this.currentIndex];
+          this.updateCurrentDeck();
+        } else {
+          this.currentCard = null;
+          this.currentDeck = null;
+        }
+        this.showAnswer = false;
+        this.showRating = false;
+        this.selectedChoiceIndex = -1;
+      }
+    } catch (err) {
+      console.error('Refresh current card failed:', JSON.stringify(err));
     }
   }
 
@@ -277,12 +318,14 @@ struct LearningPage {
               .textAlign(TextAlign.Start)
               .width('100%')
               .margin({ bottom: 6 })
-            Text(this.currentCard.correctAnswer)
-              .fontSize(15)
-              .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.text_primary'))
-              .lineHeight(24)
-              .textAlign(TextAlign.Start)
+            TreeDiagramView({
+              content: this.currentCard.correctAnswer,
+              fontSize: 15,
+              fontWeight: FontWeight.Medium,
+              fontColor: $r('app.color.text_primary'),
+              lineHeight: 24,
+  
+            })
               .width('100%')
           }
           .width('100%')
@@ -300,11 +343,14 @@ struct LearningPage {
                 .textAlign(TextAlign.Start)
                 .width('100%')
                 .margin({ bottom: 6 })
-              Text(this.currentCard.analysis)
-                .fontSize(13)
-                .fontColor($r('app.color.text_secondary'))
-                .lineHeight(20)
-                .textAlign(TextAlign.Start)
+              TreeDiagramView({
+                content: this.currentCard.analysis,
+                fontSize: 13,
+                fontWeight: FontWeight.Normal,
+                fontColor: $r('app.color.text_secondary'),
+                lineHeight: 20,
+    
+              })
                 .width('100%')
             }
             .width('100%')
@@ -383,12 +429,14 @@ struct LearningPage {
             .textAlign(TextAlign.Start)
             .width('100%')
             .margin({ bottom: 6 })
-          Text(this.currentCard!.correctAnswer)
-            .fontSize(15)
-            .fontWeight(FontWeight.Medium)
-            .fontColor($r('app.color.text_primary'))
-            .lineHeight(24)
-            .textAlign(TextAlign.Start)
+          TreeDiagramView({
+            content: this.currentCard!.correctAnswer,
+            fontSize: 15,
+            fontWeight: FontWeight.Medium,
+            fontColor: $r('app.color.text_primary'),
+            lineHeight: 24,
+
+          })
             .width('100%')
         }
         .width('100%')
@@ -406,11 +454,14 @@ struct LearningPage {
               .textAlign(TextAlign.Start)
               .width('100%')
               .margin({ bottom: 6 })
-            Text(this.currentCard!.analysis)
-              .fontSize(13)
-              .fontColor($r('app.color.text_secondary'))
-              .lineHeight(20)
-              .textAlign(TextAlign.Start)
+            TreeDiagramView({
+              content: this.currentCard!.analysis,
+              fontSize: 13,
+              fontWeight: FontWeight.Normal,
+              fontColor: $r('app.color.text_secondary'),
+              lineHeight: 20,
+  
+            })
               .width('100%')
           }
           .width('100%')
@@ -473,11 +524,14 @@ struct LearningPage {
               .textAlign(TextAlign.Start)
               .width('100%')
               .margin({ bottom: 6 })
-            Text(this.currentCard!.analysis)
-              .fontSize(13)
-              .fontColor($r('app.color.text_secondary'))
-              .lineHeight(20)
-              .textAlign(TextAlign.Start)
+            TreeDiagramView({
+              content: this.currentCard!.analysis,
+              fontSize: 13,
+              fontWeight: FontWeight.Normal,
+              fontColor: $r('app.color.text_secondary'),
+              lineHeight: 20,
+  
+            })
               .width('100%')
           }
           .width('100%')

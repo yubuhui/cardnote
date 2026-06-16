@@ -35,8 +35,14 @@ struct ImportExportPage {
   private cardVm: CardViewModel = new CardViewModel();
   @State deckList: Deck[] = [];
   @State selectedDeckId: number = 1;
+  @StorageLink('dataVersion') @Watch('onDataVersionChange') dataVersion: number = 0;
 
   aboutToAppear() {
+    this.loadCounts();
+    this.loadDecks();
+  }
+
+  onDataVersionChange() {
     this.loadCounts();
     this.loadDecks();
   }
@@ -80,9 +86,9 @@ struct ImportExportPage {
       let txtContent: string = '';
       for (let i = 0; i < cards.length; i++) {
         const card: Card = cards[i];
-        // 清理字段中的制表符和换行符
-        const cleanFront: string = card.front.replace(/\t/g, ' ').replace(/\n/g, ' ');
-        const cleanAnalysis: string = (card.analysis || '').replace(/\t/g, ' ').replace(/\n/g, ' ');
+        // 清理字段中的制表符和换行符（新行转为 \n 占位符）
+        const cleanFront: string = this.escapeForExport(card.front);
+        const cleanAnalysis: string = this.escapeForExport(card.analysis || '');
 
         if (card.type === CardType.choice) {
           // 选择题：题目 → 选项行（每行一条）→ 答案 → 解析
@@ -91,7 +97,7 @@ struct ImportExportPage {
           txtContent += frontToExport + '\n';
           // 选项
           for (const opt of card.options) {
-            txtContent += opt.replace(/\t/g, ' ').replace(/\n/g, ' ') + '\n';
+            txtContent += this.escapeForExport(opt) + '\n';
           }
           // 答案行（索引 → 字母）
           const answerIndex: number = parseInt(card.correctAnswer);
@@ -111,7 +117,7 @@ struct ImportExportPage {
           }
         } else {
           // 问答题：题目 → 答案 → 解析
-          const cleanAnswer: string = card.correctAnswer.replace(/\t/g, ' ').replace(/\n/g, ' ');
+          const cleanAnswer: string = this.escapeForExport(card.correctAnswer);
           txtContent += cleanFront + '\n';
           txtContent += cleanAnswer + '\n';
           if (cleanAnalysis.length > 0) {
@@ -225,7 +231,7 @@ struct ImportExportPage {
           // 格式A：制表符分隔（TSV / 旧版 TXT）—— 复用统一解析逻辑，支持选择/填空/问答
           const lines: string[] = text.split('\n').filter((line: string) => line.trim().length > 0);
           for (const line of lines) {
-            const parts: string[] = line.split('\t').map((p: string) => p.trim());
+            const parts: string[] = line.split('\t').map((p: string) => this.restoreNewlines(p.trim()));
             items.push(this.parseCardBlock(parts));
           }
         } else {
@@ -280,12 +286,12 @@ struct ImportExportPage {
    * - 问答题：其他
    */
   private parseCardBlock(blockLines: string[]): PreviewItem {
-    const front: string = blockLines[0];
+    const front: string = this.restoreNewlines(blockLines[0]);
 
     // ---- 填空题：第一行包含 [[...]] ----
     if (front.includes('[[') && front.includes(']]')) {
       const blankMatch: RegExpMatchArray | null = front.match(/\[\[(.+?)\]\]/);
-      const answer: string = blankMatch ? blankMatch[1] : '';
+      const answer: string = blankMatch ? this.restoreNewlines(blankMatch[1]) : '';
       const analysis: string = this.extractAnalysis(blockLines.slice(1));
       return {
         front, answer, analysis,
@@ -303,14 +309,14 @@ struct ImportExportPage {
 
     for (const line of remaining) {
       if (line.startsWith('解析：') || line.startsWith('解析:')) {
-        analysisFromLine = line.replace(/^解析[：:]/, '').trim();
+        analysisFromLine = this.restoreNewlines(line.replace(/^解析[：:]/, '').trim());
       } else if (line.startsWith('答案：') || line.startsWith('答案:')) {
         const match: RegExpMatchArray | null = line.match(/^答案[：:]([A-F])/);
         if (match) {
           explicitAnswerLetter = match[1];
         }
       } else {
-        optionLines.push(line);
+        optionLines.push(this.restoreNewlines(line));
       }
     }
 
@@ -340,7 +346,7 @@ struct ImportExportPage {
     }
 
     // ---- 普通问答题（原有逻辑） ----
-    const answer: string = blockLines.length >= 2 ? blockLines[1] : '';
+    const answer: string = blockLines.length >= 2 ? this.restoreNewlines(blockLines[1]) : '';
     const analysis: string = this.extractAnalysis(blockLines.slice(2));
     return {
       front, answer, analysis,
@@ -354,11 +360,19 @@ struct ImportExportPage {
   private extractAnalysis(lines: string[]): string {
     for (const line of lines) {
       if (line.startsWith('解析：') || line.startsWith('解析:')) {
-        return line.replace(/^解析[：:]/, '').trim();
+        return this.restoreNewlines(line.replace(/^解析[：:]/, '').trim());
       }
     }
     // 没有「解析：」前缀时，取最后一行作为解析（兼容旧格式）
-    return lines.length > 0 ? lines[lines.length - 1].trim() : '';
+    return lines.length > 0 ? this.restoreNewlines(lines[lines.length - 1].trim()) : '';
+  }
+
+  private escapeForExport(text: string): string {
+    return text.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/\t/g, ' ');
+  }
+
+  private restoreNewlines(text: string): string {
+    return text.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
   }
 
   // ==================== 确认导入 ====================

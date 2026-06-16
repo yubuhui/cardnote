@@ -4,6 +4,8 @@ import { Deck } from '../model/Deck';
 import { CardViewModel } from '../viewmodel/CardViewModel';
 import { extractBlankAnswers } from '../utils/FillBlankParser';
 
+import { KeyboardAvoidMode } from '@kit.ArkUI';
+
 class OptionItem {
   text: string = '';
 
@@ -30,6 +32,7 @@ struct EditorPage {
   private frontTextController: TextAreaController = new TextAreaController();
 
   aboutToAppear() {
+    this.getUIContext().setKeyboardAvoidMode(KeyboardAvoidMode.RESIZE);
     const params = this.getUIContext().getRouter().getParams() as Record<string, Object>;
     if (params && params['cardId']) {
       this.cardId = params['cardId'] as number;
@@ -136,8 +139,8 @@ struct EditorPage {
         .height(36)
     }
     .width('100%')
-    .padding({ left: 16, right: 16, top: 46, bottom: 14 })
-    .backgroundColor($r('app.color.background'))
+    .padding({ left: 18, right: 18, top: 46, bottom: 12 })
+    .backgroundColor($r('app.color.surface'))
   }
 
   // ==================== 牌组选择卡片 ====================

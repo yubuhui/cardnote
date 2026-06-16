@@ -10,6 +10,7 @@ import { DeckDao } from '../data/DeckDao';
 import { CardDao } from '../data/CardDao';
 import { MemoryRecordDao } from '../data/MemoryRecordDao';
 import { preferences } from '@kit.ArkData';
+import { DataRefreshHelper } from '../utils/DataRefreshHelper';
 
 /** 持久化存储名 */
 const PREF_NAME: string = 'webdav_sync';
@@ -428,6 +429,9 @@ export class WebDAVSyncService {
       result.deletedDecks = pushR.deletedDecks;
 
       this.setLastSyncTime(Date.now());
+      if (pullR.pulledDecks > 0) {
+        DataRefreshHelper.notify();
+      }
     } catch (err) {
       result.error = `同步失败: ${(err as Error).message}`;
     }
@@ -481,6 +485,9 @@ export class WebDAVSyncService {
       const pullR: PullPhaseResult = await this.pullChanges();
       result.pulledDecks = pullR.pulledDecks;
       this.setLastSyncTime(Date.now());
+      if (pullR.pulledDecks > 0) {
+        DataRefreshHelper.notify();
+      }
     } catch (err) {
       result.error = `下载失败: ${(err as Error).message}`;
     }

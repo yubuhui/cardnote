@@ -3,6 +3,7 @@ import { CardType, CardStatus } from '../model/CardTypeEnum';
 import { CardViewModel } from '../viewmodel/CardViewModel';
 import { StudyViewModel, CardReviewRecord } from '../viewmodel/StudyViewModel';
 import { parseFillBlanks, TextSegment } from '../utils/FillBlankParser';
+import { TreeDiagramView } from '../components/TreeDiagramView';
 
 @Entry
 @Component
@@ -10,6 +11,7 @@ struct LearningDetailPage {
   @State card: Card | null = null;
   @State reviewHistory: CardReviewRecord[] = [];
   @State showMenu: boolean = false;
+  @StorageLink('dataVersion') @Watch('onDataVersionChange') dataVersion: number = 0;
   private cardId: number = 0;
   private cardVm: CardViewModel = new CardViewModel();
   private studyVm: StudyViewModel = new StudyViewModel();
@@ -19,6 +21,14 @@ struct LearningDetailPage {
     if (params && params['cardId'] !== undefined) {
       this.cardId = params['cardId'] as number;
     }
+    this.loadCard();
+  }
+
+  onPageShow() {
+    this.loadCard();
+  }
+
+  onDataVersionChange() {
     this.loadCard();
   }
 
@@ -226,12 +236,14 @@ struct LearningDetailPage {
           .textAlign(TextAlign.Start)
           .width('100%')
           .margin({ bottom: 6 })
-        Text(this.card!.correctAnswer)
-          .fontSize(15)
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.text_primary'))
-          .lineHeight(24)
-          .textAlign(TextAlign.Start)
+        TreeDiagramView({
+          content: this.card!.correctAnswer,
+          fontSize: 15,
+          fontWeight: FontWeight.Medium,
+          fontColor: $r('app.color.text_primary'),
+          lineHeight: 24,
+
+        })
           .width('100%')
       }
       .width('100%')
@@ -402,12 +414,14 @@ struct LearningDetailPage {
           .textAlign(TextAlign.Start)
           .width('100%')
           .margin({ bottom: 6 })
-        Text(this.card!.correctAnswer)
-          .fontSize(15)
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.text_primary'))
-          .lineHeight(24)
-          .textAlign(TextAlign.Start)
+        TreeDiagramView({
+          content: this.card!.correctAnswer,
+          fontSize: 15,
+          fontWeight: FontWeight.Medium,
+          fontColor: $r('app.color.text_primary'),
+          lineHeight: 24,
+
+        })
           .width('100%')
       }
       .width('100%')
@@ -437,11 +451,13 @@ struct LearningDetailPage {
         .textAlign(TextAlign.Start)
         .width('100%')
         .margin({ bottom: 6 })
-      Text(this.card!.analysis)
-        .fontSize(13)
-        .fontColor($r('app.color.text_secondary'))
-        .lineHeight(20)
-        .textAlign(TextAlign.Start)
+      TreeDiagramView({
+        content: this.card!.analysis,
+        fontSize: 13,
+        fontWeight: FontWeight.Normal,
+        fontColor: $r('app.color.text_secondary'),
+        lineHeight: 20
+      })
         .width('100%')
     }
     .width('100%')
@@ -526,7 +542,7 @@ struct LearningDetailPage {
             }
           }
           .width('100%')
-        }, (record: CardReviewRecord, index: number) => `${record.date}_${index}`)
+        }, (record: CardReviewRecord) => `${record.date}`)
       }
     }
     .width('100%')

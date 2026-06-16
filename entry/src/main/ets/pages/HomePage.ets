@@ -339,7 +339,7 @@ struct HomePage {
   @State currentTabIndex: number = 0;
   @State isMultiSelectMode: boolean = false;
   @State selectedCardIds: number[] = [];
-  @Provide statsRefreshSignal: number = 0;
+  @StorageLink('dataVersion') @Watch('onDataVersionChange') dataVersion: number = 0;
   private cardVm: CardViewModel = new CardViewModel();
   private studyVm: StudyViewModel = new StudyViewModel();
   private addDeckDialogController: CustomDialogController = new CustomDialogController({
@@ -377,7 +377,23 @@ struct HomePage {
 
   aboutToAppear() { this.loadHomeData(); }
 
-  onPageShow() { this.loadHomeData(); this.statsRefreshSignal++; }
+  onPageShow() {
+    this.lastLoadTime = 0;
+    this.loadHomeData();
+  }
+
+  private lastLoadTime: number = 0;
+
+  onDataVersionChange() { this.debouncedLoadData(); }
+
+  private debouncedLoadData(): void {
+    const now: number = Date.now();
+    if (now - this.lastLoadTime < 300) {
+      return;
+    }
+    this.lastLoadTime = now;
+    this.loadHomeData();
+  }
 
   private showToast(message: string): void {
     this.getUIContext().getPromptAction().showToast({ message: message, duration: 2000 });
@@ -451,7 +467,7 @@ struct HomePage {
       .barPosition(BarPosition.End).scrollable(false).barOverlap(true)
       .barFloatingStyle({ barBottomMargin: 3, systemMaterialEffect: { materialType: hdsMaterial.MaterialType.ADAPTIVE, materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE } })
       .layoutWeight(1)
-      .onChange((index: number) => { this.currentTabIndex = index; if (index === 1) this.statsRefreshSignal++; })
+      .onChange((index: number) => { this.currentTabIndex = index; })
     }.width('100%').height('100%').backgroundColor($r('app.color.background'))
   }
 
@@ -470,7 +486,7 @@ struct HomePage {
             .backgroundColor(this.selectedDeckId === deck.id ? $r('app.color.primary') : $r('app.color.surface'))
             .borderRadius(16).onClick(() => { this.selectedDeckId = deck.id; })
             .gesture(LongPressGesture({ repeat: false, duration: 400 }).onAction(() => { this.showDeckActionMenu(deck); }))
-        }, (deck: Deck) => deck.id.toString())
+        }, (deck: Deck) => `${deck.id}_${deck.updatedAt}`)
         Text('+').fontSize(16).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_secondary')).width(30).height(30).textAlign(TextAlign.Center)
           .backgroundColor($r('app.color.surface')).borderRadius(15).onClick(() => { this.addDeckDialogController.open(); })
       }.padding({ left: 16, right: 16, top: 8, bottom: 10 })
@@ -515,7 +531,7 @@ struct HomePage {
             },
             onLongPress: () => { if (!this.isMultiSelectMode) this.enterMultiSelectMode(card.id); }
           })
-        }, (card: Card) => card.id.toString())
+        }, (card: Card) => `${card.id}_${card.updatedAt}`)
       }
     }.width('100%').padding({ left: 16, right: 16, top: 4, bottom: 16 })
     .backgroundColor($r('app.color.surface')).borderRadius(14).margin({ top: 10 }).shadow({ radius: 4, color: $r('app.color.shadow'), offsetY: 1 })

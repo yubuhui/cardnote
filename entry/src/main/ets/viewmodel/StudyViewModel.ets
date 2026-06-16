@@ -129,6 +129,11 @@ export class StudyViewModel {
     return this.cardVm.getDeckById(id);
   }
 
+  // 根据 ID 获取卡片
+  async getCardById(id: number): Promise<Card | null> {
+    return this.cardVm.getById(id);
+  }
+
   // 记录评分（带事务性保护：Card 更新失败时回滚已写入的 MemoryRecord）
   async recordRating(cardId: number, rating: Rating, durationSeconds: number = 0): Promise<void> {
     // 先获取卡片信息（含 UUID），再记录学习结果

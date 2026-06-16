@@ -1,5 +1,6 @@
 import { Card, CardType } from '../model/Card';
 import { CardType as CardTypeEnum } from '../model/CardTypeEnum';
+import { TreeDiagramView } from './TreeDiagramView';
 
 @Component
 export struct QuizCard {
@@ -61,14 +62,21 @@ export struct QuizCard {
             .textAlign(TextAlign.Center)
 
           if (this.card.analysis) {
-            Text(`解析：${this.card.analysis}`)
-              .fontSize(12)
+            Text('解析：')
+              .fontSize(11)
               .fontColor($r('app.color.text_secondary'))
+              .margin({ bottom: 4 })
+            TreeDiagramView({
+              content: this.card.analysis,
+              fontSize: 12,
+              fontWeight: FontWeight.Normal,
+              fontColor: $r('app.color.text_secondary'),
+
+            })
+              .width('100%')
               .backgroundColor($r('app.color.background'))
               .borderRadius(8)
               .padding(8)
-              .width('100%')
-              .margin({ top: 6 })
           }
         }
         .width('100%')
