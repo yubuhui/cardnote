@@ -7,6 +7,7 @@ import { DatabaseManager } from '../data/DatabaseManager';
 import { ReviewSettingsManager } from '../data/ReviewSettingsManager';
 import { PrivacyDialog } from '../components/PrivacyDialog';
 import { WebDAVSyncService } from '../service/WebDAVSyncService';
+import { DataRefreshHelper } from '../utils/DataRefreshHelper';
 
 const DOMAIN = 0x0001;
 const TAG = 'CardNote';
@@ -50,16 +51,16 @@ export default class EntryAbility extends UIAbility {
         return;
       }
       hilog.info(DOMAIN, TAG, 'Succeeded in loading the content.');
+
+      const pref = preferences.getPreferencesSync(this.context, { name: 'app_settings' });
+      const hasAgreed: boolean = pref.getSync('privacy_agreed', true) as boolean;
+
+      if (hasAgreed) {
+        this.initServices();
+      } else {
+        this.showPrivacyDialogIfNeeded();
+      }
     });
-
-    const pref = preferences.getPreferencesSync(this.context, { name: 'app_settings' });
-    const hasAgreed: boolean = pref.getSync('privacy_agreed', false) as boolean;
-
-    if (hasAgreed) {
-      this.initServices();
-    } else {
-      this.showPrivacyDialogIfNeeded();
-    }
   }
 
   private async initServices(): Promise<void> {
@@ -73,6 +74,9 @@ export default class EntryAbility extends UIAbility {
     hilog.info(DOMAIN, TAG, 'WebDAVSyncService initialized.');
 
     ReviewSettingsManager.getInstance().init(this.context);
+
+    DataRefreshHelper.notify();
+    hilog.info(DOMAIN, TAG, 'Data refresh notified after initServices.');
   }
 
   private showPrivacyDialogIfNeeded(): void {

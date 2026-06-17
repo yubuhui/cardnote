@@ -38,25 +38,34 @@ struct ImportExportPage {
   @StorageLink('dataVersion') @Watch('onDataVersionChange') dataVersion: number = 0;
 
   aboutToAppear() {
-    this.loadCounts();
+  }
+
+  onPageShow() {
     this.loadDecks();
+    this.loadCounts();
   }
 
   onDataVersionChange() {
-    this.loadCounts();
     this.loadDecks();
+    this.loadCounts();
   }
 
   async loadCounts() {
     try {
+      const cards: Card[] = await this.cardVm.getAllCards();
       if (this.exportDeckId === 0) {
-        this.exportCount = await this.cardVm.getTotalCount();
-      } else {
-        const cards: Card[] = await this.cardVm.getCardsByDeckId(this.exportDeckId);
         this.exportCount = cards.length;
+      } else {
+        let count: number = 0;
+        for (const c of cards) {
+          if (c.deckId === this.exportDeckId) {
+            count++;
+          }
+        }
+        this.exportCount = count;
       }
     } catch (err) {
-      console.error('Load card count failed:', JSON.stringify(err));
+      console.error('Load card count failed: ' + JSON.stringify(err));
     }
   }
 
@@ -163,7 +172,7 @@ struct ImportExportPage {
       const context: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
       const selectOptions: picker.DocumentSelectOptions = new picker.DocumentSelectOptions();
       selectOptions.maxSelectNumber = 1;
-      selectOptions.fileSuffixFilters = ['.txt', '.tsv', '.xlsx', '.xls'];
+      selectOptions.fileSuffixFilters = ['.txt', '.xlsx', '.xls'];
 
       const documentPicker: picker.DocumentViewPicker = new picker.DocumentViewPicker(context);
       const uris: string[] = await documentPicker.select(selectOptions);
@@ -222,45 +231,30 @@ struct ImportExportPage {
           return;
         }
       } else {
-        // TSV/TXT 解析：自动识别格式
+        // TXT 解析
         const textDecoder: util.TextDecoder = new util.TextDecoder('utf-8');
         const text: string = textDecoder.decodeToString(new Uint8Array(buffer));
 
         items = [];
-        if (text.indexOf('\t') !== -1) {
-          // 格式A：制表符分隔（TSV / 旧版 TXT）—— 复用统一解析逻辑，支持选择/填空/问答
-          const lines: string[] = text.split('\n').filter((line: string) => line.trim().length > 0);
-          for (const line of lines) {
-            const parts: string[] = line.split('\t').map((p: string) => this.restoreNewlines(p.trim()));
-            items.push(this.parseCardBlock(parts));
+        // 空行分隔卡片（TXT）—— 支持三种题型：问答题、选择题、填空题
+        const allLines: string[] = text.split('\n');
+        let blockLines: string[] = [];
+        const flushBlock = () => {
+          if (blockLines.length >= 1) {
+            items.push(this.parseCardBlock(blockLines));
           }
-        } else {
-          // 格式B：空行分隔卡片（新版 TXT）
-          // 支持三种题型：问答题、选择题、填空题
-          const allLines: string[] = text.split('\n');
-          let blockLines: string[] = [];
-          const flushBlock = () => {
-            if (blockLines.length >= 2) {
-              items.push(this.parseCardBlock(blockLines));
-            } else if (blockLines.length === 1) {
-              items.push({
-                front: blockLines[0], answer: '', analysis: '',
-                valid: false, cardType: CardType.essay, options: []
-              });
-            }
-            blockLines = [];
-          };
-          for (const rawLine of allLines) {
-            const line: string = rawLine.trim();
-            if (line.length === 0) {
-              flushBlock();
-            } else {
-              blockLines.push(line);
-            }
+          blockLines = [];
+        };
+        for (const rawLine of allLines) {
+          const line: string = rawLine.trim();
+          if (line.length === 0) {
+            flushBlock();
+          } else {
+            blockLines.push(line);
           }
-          // 文件末尾的最后一张卡片（没有尾随空行）
-          flushBlock();
         }
+        // 文件末尾的最后一张卡片（没有尾随空行）
+        flushBlock();
       }
 
       if (items.length === 0) {
@@ -282,8 +276,8 @@ struct ImportExportPage {
   /**
    * 解析一个卡片块（空行分隔的一组行），自动识别题型：
    * - 填空题：第一行含 [[...]]
-   * - 选择题：有 3+ 选项行，或有「答案：X」/标题中嵌入（A）~（E）
-   * - 问答题：其他
+   * - 选择题：题干含（A-F）或剩余行中有「答案：X」
+   * - 问答题：其他（剩余行拼接为多行答案）
    */
   private parseCardBlock(blockLines: string[]): PreviewItem {
     const front: string = this.restoreNewlines(blockLines[0]);
@@ -301,9 +295,9 @@ struct ImportExportPage {
       };
     }
 
-    // ---- 分离选项行 / 答案行 / 解析行 ----
+    // ---- 扫描剩余行，分离答案标记行 / 解析行 / 内容行 ----
     const remaining: string[] = blockLines.slice(1);
-    const optionLines: string[] = [];
+    const contentLines: string[] = [];
     let analysisFromLine: string = '';
     let explicitAnswerLetter: string = '';
 
@@ -316,40 +310,39 @@ struct ImportExportPage {
           explicitAnswerLetter = match[1];
         }
       } else {
-        optionLines.push(this.restoreNewlines(line));
+        contentLines.push(this.restoreNewlines(line));
       }
     }
 
-    // ---- 选择题：选项行 ≥ 3，或有明确答案标记 + ≥ 2 选项 ----
-    if (optionLines.length >= 3 ||
-      (optionLines.length >= 2 && explicitAnswerLetter.length > 0) ||
-      (optionLines.length >= 2 && /（[A-F]）/.test(front) && explicitAnswerLetter.length === 0)) {
-
-      // 优先使用显式「答案：X」行，否则从题目中提取嵌入的（A）~（E）
-      const answerLetter: string = explicitAnswerLetter.length > 0 ? explicitAnswerLetter :
-        (front.match(/（([A-F])）/)?.[1] ?? '');
-      // 清理题目中嵌入的答案标记：光合作用的场所（C）→ 光合作用的场所（□）
-      const cleanedFront: string = answerLetter.length > 0 ? front.replace(/（[A-F]）/, '（□）') : front;
-      const answerIndex: number = answerLetter.length > 0 ?
-        answerLetter.charCodeAt(0) - 'A'.charCodeAt(0) : -1;
-      const correctAnswer: string = (answerIndex >= 0 && answerIndex < optionLines.length) ?
-        answerIndex.toString() : '';
-
+    // ---- 选择题：题干含（A-F）或剩余行中有「答案：X」 ----
+    const embeddedInFront: boolean = /（[A-F]）/.test(front);
+    if (explicitAnswerLetter.length > 0 || embeddedInFront) {
+      const answerLetter: string = explicitAnswerLetter.length > 0
+        ? explicitAnswerLetter
+        : (front.match(/（([A-F])）/)?.[1] ?? '');
+      const cleanedFront: string = answerLetter.length > 0
+        ? front.replace(/（[A-F]）/, '（□）')
+        : front;
+      const answerIndex: number = answerLetter.length > 0
+        ? answerLetter.charCodeAt(0) - 'A'.charCodeAt(0)
+        : -1;
+      const correctAnswer: string = (answerIndex >= 0 && answerIndex < contentLines.length)
+        ? answerIndex.toString()
+        : '';
       return {
         front: cleanedFront,
         answer: correctAnswer,
         analysis: analysisFromLine,
-        valid: optionLines.length >= 2 && correctAnswer.length > 0,
+        valid: contentLines.length >= 2 && correctAnswer.length > 0,
         cardType: CardType.choice,
-        options: optionLines
+        options: contentLines
       };
     }
 
-    // ---- 普通问答题（原有逻辑） ----
-    const answer: string = blockLines.length >= 2 ? this.restoreNewlines(blockLines[1]) : '';
-    const analysis: string = this.extractAnalysis(blockLines.slice(2));
+    // ---- 问答题：所有剩余行拼接为多行答案 ----
+    const answer: string = contentLines.join('\n');
     return {
-      front, answer, analysis,
+      front, answer, analysis: analysisFromLine,
       valid: front.length > 0 && answer.length > 0,
       cardType: CardType.essay,
       options: []
@@ -368,7 +361,7 @@ struct ImportExportPage {
   }
 
   private escapeForExport(text: string): string {
-    return text.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/\t/g, ' ');
+    return text.replace(/\\/g, '\\\\').replace(/\t/g, ' ');
   }
 
   private restoreNewlines(text: string): string {
@@ -506,15 +499,11 @@ struct ImportExportPage {
           .padding({ left: 8, right: 8 })
           .bindMenu([
             {
-              value: '下载 TXT 模板',
+              value: '下载 TXT 模板（支持全部题目）',
               action: () => { this.downloadTxtTemplate(); }
             } as MenuElement,
             {
-              value: '下载 TSV 模板',
-              action: () => { this.downloadTsvTemplate(); }
-            } as MenuElement,
-            {
-              value: '下载 XLSX 模板',
+              value: '下载 XLSX 模板（仅支持问答题）',
               action: () => { this.downloadXlsxTemplate(); }
             } as MenuElement,
           ] as Array<MenuElement>, {
@@ -544,9 +533,23 @@ struct ImportExportPage {
     Scroll() {
       Column() {
         // 导出卡片
-        this.buildSection('导出卡片',
-          `共有 ${this.exportCount} 张卡片，将导出为 TXT 文本文件（支持选择/填空/问答）。`,
-          '"问题\\n答案"')
+        Column() {
+          Text('导出卡片')
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('app.color.text_primary'))
+            .margin({ bottom: 4 })
+          Text('共有 ' + this.exportCount.toString() + ' 张卡片，将导出为 TXT 文本文件（支持选择/填空/问答）。')
+            .fontSize(13)
+            .fontColor($r('app.color.text_secondary'))
+            .margin({ bottom: 6 })
+            .width('100%')
+        }
+        .width('100%')
+        .padding({ left: 14, right: 14, top: 12, bottom: 12 })
+        .backgroundColor($r('app.color.surface'))
+        .borderRadius(10)
+        .margin({ bottom: 10 })
         // 导出牌组选择
         Row() {
           Text('牌组')
@@ -574,7 +577,7 @@ struct ImportExportPage {
         .backgroundColor($r('app.color.surface'))
         .borderRadius(10)
 
-        Button(`导出 (${this.exportCount} 条)`)
+        Button('导出 (' + this.exportCount.toString() + ' 条)')
           .width('100%')
           .height(48)
           .backgroundColor(this.exportCount > 0 ? $r('app.color.primary') : $r('app.color.text_secondary'))
@@ -591,8 +594,8 @@ struct ImportExportPage {
 
         // 导入卡片
         this.buildSection('导入卡片',
-          `选择 TSV/TXT/XLSX 文件，解析后预览再确认导入。`,
-          'A列=问题  B列=答案  C列=解析')
+          `选择 TXT/XLSX 文件，解析后预览再确认导入。`,
+          '')
         Button('选择文件')
           .width('100%')
           .height(48)
@@ -777,46 +780,44 @@ struct ImportExportPage {
 
   // ==================== 模板下载 ====================
 
-  /** 模板内容——TXT/TSV 共用同一份示例数据（含问答题、选择题、填空题） */
+  /** 模板内容——TXT 示例数据（含问答题、选择题、填空题） */
   private getTemplateText(): string {
-    return `问题（带解析）
-答案
-解析
-
-问题（不带解析）
-答案
-
-光合作用的场所（不带解析）
+    return `光合作用的场所（问答题不带解析）
 叶绿体
+/光合作用的场所
+线粒体
+/呼吸作用的场所
 
-光合作用的场所（带解析）
+光合作用的场所（问答题带解析）
 叶绿体
-光合作用的场所是叶绿体
+/光合作用的场所
+线粒体
+/呼吸作用的场所
+解析：光合作用的场所是叶绿体，不是线粒体。
 
-光合作用的场所（C）（选择题不带解析）
+光合作用的场所（C）（选择题不带解析，括号内答案）
 线粒体
 细胞壁
 叶绿体
 细胞膜
 
-光合作用的场所（选择题带解析）
+光合作用的场所（选择题带解析，单独答案行）
 线粒体
 叶绿体
 细胞壁
 答案：B
 解析：光合作用的场所是叶绿体
 
-光合作用的场所是[[叶绿体]]。
-解析：光合作用的场所是叶绿体。`;
+光合作用的场所是[[叶绿体]]。（填空题带解析）
+解析：光合作用的场所是叶绿体。
+
+光合作用的场所是[[叶绿体]]。（填空题不带解析）`;
   }
 
   async downloadTxtTemplate() {
     await this.saveTemplateFile('导入模板.txt', this.getTemplateText(), 'TXT');
   }
 
-  async downloadTsvTemplate() {
-    await this.saveTemplateFile('导入模板.tsv', this.getTemplateText(), 'TSV');
-  }
 
   async downloadXlsxTemplate() {
     try {

@@ -76,6 +76,19 @@ export class SM2Algorithm {
       return result;
     }
 
+    // 非首次学习中选择了"忘记"：重置学习进度
+    if (rating === Rating.forget) {
+      const efAdjust = getEfAdjust(rating);
+      const newEaseFactor = Math.max(1.3, Math.min(3.0, card.easeFactor + efAdjust));
+      const result: UpdateResult = {
+        interval: getInitialInterval(rating),
+        repetitions: 0,
+        easeFactor: newEaseFactor,
+        status: CardStatus.unlearned,
+      };
+      return result;
+    }
+
     // 非首次学习：使用可调节倍率
     let newInterval: number;
     if (card.repetitions === 1) {

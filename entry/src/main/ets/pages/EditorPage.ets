@@ -1,5 +1,5 @@
 import { Card, CardStatus } from '../model/Card';
-import { CardType, CardType as CardTypeEnum } from '../model/CardTypeEnum';
+import { CardType as CardTypeEnum } from '../model/CardTypeEnum';
 import { Deck } from '../model/Deck';
 import { CardViewModel } from '../viewmodel/CardViewModel';
 import { extractBlankAnswers } from '../utils/FillBlankParser';
@@ -431,7 +431,7 @@ struct EditorPage {
         }
         .width('100%')
 
-        Text('示例：我[[爱]]你 → 背诵时显示为「我▽你」')
+        Text('示例：我[[爱]]你 → 背诵时显示为「我□你」')
           .fontSize(11)
           .fontColor($r('app.color.disabled'))
           .margin({ top: 6 })
@@ -581,7 +581,7 @@ struct EditorPage {
     const card: Card = {
       id: this.card?.id || 0,
       deckId: this.selectedDeck?.id || 1,
-      type: this.selectedType as CardType,
+      type: this.selectedType as CardTypeEnum,
       front: this.frontText,
       options: options,
       correctAnswer: correctAnswer,
