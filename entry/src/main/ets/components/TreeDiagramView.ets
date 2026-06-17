@@ -17,9 +17,7 @@ export struct TreeDiagramView {
         (node: TreeNode, index: number) => {
           Row() {
             Blank().width(node.displayLevel * this.indentPerLevel)
-            Circle({ width: this.dotSize, height: this.dotSize })
-              .fill(this.fontColor)
-              .margin({ right: 6 })
+            Row().width(this.dotSize).height(this.dotSize).borderRadius(this.dotSize / 2).backgroundColor(this.fontColor).margin({ right: 6 })
             Text(node.text)
               .fontSize(this.fontSize)
               .fontWeight(this.fontWeight)

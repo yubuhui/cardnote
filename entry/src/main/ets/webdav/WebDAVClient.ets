@@ -123,7 +123,7 @@ export class WebDAVClient {
     }
     if (response.resultType === http.HttpDataType.ARRAY_BUFFER) {
       const decoder: util.TextDecoder = new util.TextDecoder('utf-8');
-      return decoder.decodeWithStream(new Uint8Array(response.result as ArrayBuffer));
+      return decoder.decodeToString(new Uint8Array(response.result as ArrayBuffer));
     }
     throw new Error('Unsupported response type from GET');
   }
@@ -217,7 +217,7 @@ export class WebDAVClient {
     }
     if (response.resultType === http.HttpDataType.ARRAY_BUFFER) {
       const decoder: util.TextDecoder = new util.TextDecoder('utf-8');
-      return decoder.decodeWithStream(new Uint8Array(response.result as ArrayBuffer));
+      return decoder.decodeToString(new Uint8Array(response.result as ArrayBuffer));
     }
     return '';
   }

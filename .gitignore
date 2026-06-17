@@ -14,3 +14,5 @@
 /preview
 /keystore
 temp_*.txt
+/.codegenie
+/build_output.log

@@ -546,7 +546,7 @@ struct BackupPage {
       fs.closeSync(file);
 
       const decoder: util.TextDecoder = util.TextDecoder.create('utf-8', { ignoreBOM: true });
-      const jsonString: string = decoder.decodeWithStream(new Uint8Array(arrayBuffer));
+      const jsonString: string = decoder.decodeToString(new Uint8Array(arrayBuffer));
 
       let summary: BackupSummary;
       try {

@@ -1,7 +1,7 @@
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
-import { router } from '@kit.ArkUI';
+
 import { preferences } from '@kit.ArkData';
 import { DatabaseManager } from '../data/DatabaseManager';
 import { ReviewSettingsManager } from '../data/ReviewSettingsManager';
@@ -13,6 +13,7 @@ const TAG = 'CardNote';
 
 export default class EntryAbility extends UIAbility {
   private privacyDialogController: CustomDialogController | null = null;
+  private windowStage: window.WindowStage | null = null;
 
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
     // 从偏好中读取深色模式设置（统一由此处管理，避免与 SettingsPage 竞态）
@@ -51,6 +52,7 @@ export default class EntryAbility extends UIAbility {
   }
 
   async onWindowStageCreate(windowStage: window.WindowStage): Promise<void> {
+    this.windowStage = windowStage;
     hilog.info(DOMAIN, TAG, '%{public}s', 'Ability onWindowStageCreate');
 
     // 确保数据库初始化完成后再加载页面。
@@ -98,11 +100,14 @@ export default class EntryAbility extends UIAbility {
               this.context.terminateSelf();
             },
             onViewDetail: () => {
-              // 不关闭弹窗，直接导航到隐私政策页面
-              // 用户返回后，弹窗仍在等待确认
-              router.pushUrl({ url: 'pages/PrivacyPolicyPage' })
-                .then(() => hilog.info(DOMAIN, TAG, 'Navigated to PrivacyPolicyPage'))
-                .catch((err: Error) => hilog.error(DOMAIN, TAG, 'Failed to navigate: %{public}s', err.message));
+              if (this.windowStage) {
+                const mainWindow = this.windowStage.getMainWindowSync();
+                if (mainWindow) {
+                  mainWindow.getUIContext().getRouter().pushUrl({ url: 'pages/PrivacyPolicyPage' })
+                    .then(() => hilog.info(DOMAIN, TAG, 'Navigated to PrivacyPolicyPage'))
+                    .catch((err: Error) => hilog.error(DOMAIN, TAG, 'Failed to navigate: %{public}s', err.message));
+                }
+              }
             }
           }),
           autoCancel: false,

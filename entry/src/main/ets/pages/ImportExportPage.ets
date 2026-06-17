@@ -224,7 +224,7 @@ struct ImportExportPage {
       } else {
         // TSV/TXT 解析：自动识别格式
         const textDecoder: util.TextDecoder = new util.TextDecoder('utf-8');
-        const text: string = textDecoder.decode(new Uint8Array(buffer));
+        const text: string = textDecoder.decodeToString(new Uint8Array(buffer));
 
         items = [];
         if (text.indexOf('\t') !== -1) {

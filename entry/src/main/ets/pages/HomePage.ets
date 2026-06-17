@@ -580,7 +580,7 @@ struct HomePage {
     Column() {
       Row() {
         Row({ space: 6 }) {
-          Circle({ width: 6, height: 6 }).fill($$.circleColor)
+          Row().width(6).height(6).borderRadius(3).backgroundColor($$.circleColor)
           Text($$.title).fontSize(15).fontWeight(FontWeight.Medium).fontColor($r('app.color.text_primary'))
           Text(`(${this.getFilteredCards().filter(c => c.status === $$.status).length})`).fontSize(12).fontColor($r('app.color.text_secondary'))
         }
@@ -646,7 +646,9 @@ struct HomePage {
     Column() {
       Text(label).fontSize(11).fontWeight(FontWeight.Medium)
         .fontColor(this.currentTabIndex === index ? $r('app.color.primary') : $r('app.color.text_secondary'))
-      if (this.currentTabIndex === index) { Circle({ width: 4, height: 4 }).fill($r('app.color.primary')).margin({ top: 2 }) }
+      if (this.currentTabIndex === index) {
+        Row().width(4).height(4).borderRadius(2).backgroundColor($r('app.color.primary')).margin({ top: 2 })
+      }
     }.width('100%').justifyContent(FlexAlign.Center)
   }
 
