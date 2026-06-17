@@ -682,12 +682,20 @@ struct HomePage {
     this.showConfirmDialog('清除学习数据',
       `将删除选中的 ${this.selectedCardIds.length} 张卡片的所有记忆记录，并重置学习进度。确定继续吗？`,
       '确定', $r('app.color.primary'),
-      async () => {
-        const recordDao = new MemoryRecordDao();
-        for (const id of this.selectedCardIds) {
-          const card = this.cards.find(c => c.id === id);
-          if (card) { await recordDao.deleteByCardId(card.id); card.status = CardStatus.unlearned; await this.cardVm.updateCard(card); }
-        }
+          async () => {
+            const recordDao = new MemoryRecordDao();
+            for (const id of this.selectedCardIds) {
+              const card = this.cards.find(c => c.id === id);
+              if (card) {
+                await recordDao.deleteByCardId(card.id);
+                card.status = CardStatus.unlearned;
+                card.interval = 0;
+                card.repetitions = 0;
+                card.easeFactor = 2.5;
+                card.nextReviewTime = Date.now();
+                await this.cardVm.updateCard(card);
+              }
+            }
         this.exitMultiSelectMode();
         await this.loadHomeData();
       });

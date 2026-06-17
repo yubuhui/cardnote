@@ -2,10 +2,6 @@
 @Component
 export struct RatingButtons {
   @Prop visible: boolean = false;
-  @State forgetPressed: boolean = false;
-  @State hardPressed: boolean = false;
-  @State goodPressed: boolean = false;
-  @State easyPressed: boolean = false;
 
   // 回调函数
   onForget?: () => void;
@@ -15,10 +11,10 @@ export struct RatingButtons {
 
   build() {
     Row() {
-      this.buildButton('忘记', '1 分钟', 0, $r('app.color.danger'), this.forgetPressed);
-      this.buildButton('困难', '10 分钟', 1, $r('app.color.warning'), this.hardPressed);
-      this.buildButton('良好', '1 天', 2, $r('app.color.success'), this.goodPressed);
-      this.buildButton('容易', '4 天', 3, $r('app.color.success'), this.easyPressed);
+      this.buildButton('忘记', '1 分钟', 0, $r('app.color.danger'));
+      this.buildButton('困难', '10 分钟', 1, $r('app.color.warning'));
+      this.buildButton('良好', '1 天', 2, $r('app.color.success'));
+      this.buildButton('容易', '4 天', 3, $r('app.color.success'));
     }
     .width('100%')
     .justifyContent(FlexAlign.SpaceAround)
@@ -28,7 +24,7 @@ export struct RatingButtons {
   }
 
   @Builder
-  buildButton(label: string, interval: string, rating: number, color: ResourceColor, isPressed: boolean) {
+  buildButton(label: string, interval: string, rating: number, color: ResourceColor) {
     Column() {
       Text(label)
         .fontSize(11)
@@ -48,34 +44,31 @@ export struct RatingButtons {
     .onClick(() => {
       this.handleRating(rating);
     })
-    .scale({
-      x: isPressed ? 0.95 : 1,
-      y: isPressed ? 0.95 : 1,
+    .stateStyles({
+      pressed: {
+        .scale({ x: 0.95, y: 0.95 })
+        .brightness(0.85)
+      },
+      normal: {
+        .scale({ x: 1, y: 1 })
+        .brightness(1)
+      }
     })
-    .transition(TransitionEffect.OPACITY.animation({ duration: 100 }))
   }
 
   private handleRating(rating: number) {
     switch (rating) {
       case 0:
-        this.forgetPressed = true;
         if (this.onForget) this.onForget();
-        setTimeout(() => { this.forgetPressed = false; }, 100);
         break;
       case 1:
-        this.hardPressed = true;
         if (this.onHard) this.onHard();
-        setTimeout(() => { this.hardPressed = false; }, 100);
         break;
       case 2:
-        this.goodPressed = true;
         if (this.onGood) this.onGood();
-        setTimeout(() => { this.goodPressed = false; }, 100);
         break;
       case 3:
-        this.easyPressed = true;
         if (this.onEasy) this.onEasy();
-        setTimeout(() => { this.easyPressed = false; }, 100);
         break;
     }
   }
