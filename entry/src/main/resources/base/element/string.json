@@ -1,9 +1,9 @@
 {
   "string": [
     { "name": "app_name", "value": "卡片笔记" },
-    { "name": "module_desc", "value": "module description" },
-    { "name": "EntryAbility_desc", "value": "CardNote 卡片背诵 App" },
-    { "name": "EntryAbility_label", "value": "CardNote" },
+    { "name": "module_desc", "value": "卡片笔记 — 基于间隔重复算法的智能学习工具" },
+    { "name": "EntryAbility_desc", "value": "卡片笔记 — 智能间隔重复学习" },
+    { "name": "EntryAbility_label", "value": "卡片笔记" },
     { "name": "internet_reason", "value": "用于网络通信与数据同步" },
     { "name": "cloud_sync_label", "value": "云同步" },
     { "name": "sync_now", "value": "立即同步" },

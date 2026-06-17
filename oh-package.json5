@@ -1,6 +1,6 @@
 {
   "modelVersion": "6.1.1",
-  "description": "Please describe the basic information.",
+  "description": "卡片笔记 — 基于间隔重复算法的卡片背诵应用",
   "dependencies": {
   },
   "devDependencies": {

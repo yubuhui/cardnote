@@ -108,6 +108,16 @@ export default class EntryAbility extends UIAbility {
                     .catch((err: Error) => hilog.error(DOMAIN, TAG, 'Failed to navigate: %{public}s', err.message));
                 }
               }
+            },
+            onViewUserAgreement: () => {
+              if (this.windowStage) {
+                const mainWindow = this.windowStage.getMainWindowSync();
+                if (mainWindow) {
+                  mainWindow.getUIContext().getRouter().pushUrl({ url: 'pages/UserAgreementPage' })
+                    .then(() => hilog.info(DOMAIN, TAG, 'Navigated to UserAgreementPage'))
+                    .catch((err: Error) => hilog.error(DOMAIN, TAG, 'Failed to navigate: %{public}s', err.message));
+                }
+              }
             }
           }),
           autoCancel: false,

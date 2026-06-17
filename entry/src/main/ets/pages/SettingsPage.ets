@@ -322,13 +322,6 @@ export struct SettingsPage {
             { title: '版本号', subtitle: '1.0.0' } as SettingsItem,
           ])
 
-          Text('ICP备案号：待备案')
-            .fontSize(11)
-            .fontColor($r('app.color.text_secondary'))
-            .textAlign(TextAlign.Center)
-            .width('100%')
-            .padding({ top: 12, bottom: 24 })
-
           Blank().height(68)
         }
       }

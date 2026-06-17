@@ -50,3 +50,4 @@ LearningDetailPage
 WebDavSyncPage
 SettingsPage
 StatsPage
+BackupPage
