@@ -136,14 +136,18 @@ export struct StatsPage {
   build() {
     Column() {
       // 顶部标题
-      Text('学习统计')
-        .fontSize(16)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.text_primary'))
-        .textAlign(TextAlign.Center)
-        .width('100%')
-        .padding({ top: 46, bottom: 12 })
-        .backgroundColor($r('app.color.surface'))
+      Row() {
+        Text('学习统计')
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.text_primary'))
+          .textAlign(TextAlign.Center)
+          .layoutWeight(1)
+      }
+      .width('100%')
+      .alignItems(VerticalAlign.Center)
+      .padding({ top: 46, bottom: 12 })
+      .backgroundColor($r('app.color.surface'))
 
       Scroll() {
         Column() {

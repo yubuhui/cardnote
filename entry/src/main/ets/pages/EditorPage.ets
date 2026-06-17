@@ -109,25 +109,17 @@ struct EditorPage {
   @Builder
   buildNavigationBar() {
     Row() {
-      // 圆形返回按钮
-      Row() {
-        Text('‹')
-          .fontSize(22)
-          .fontColor($r('app.color.text_primary'))
-          .textAlign(TextAlign.Center)
-      }
-      .width(36)
-      .height(36)
-      .borderRadius(18)
-      .backgroundColor($r('app.color.surface'))
-      .justifyContent(FlexAlign.Center)
-      .alignItems(VerticalAlign.Center)
-      .onClick(() => {
+      Text('‹')
+        .fontSize(16)
+        .fontColor($r('app.color.text_primary'))
+        .textAlign(TextAlign.Center)
+        .width(36)
+        .onClick(() => {
         this.getUIContext().getRouter().back();
       })
 
       Text(this.mode === '编辑' ? '编辑卡片' : '新增卡片')
-        .fontSize(17)
+        .fontSize(16)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('app.color.text_primary'))
         .layoutWeight(1)
@@ -136,9 +128,9 @@ struct EditorPage {
       // 右侧占位，与左侧按钮等宽，保证标题居中
       Row()
         .width(36)
-        .height(36)
     }
     .width('100%')
+    .alignItems(VerticalAlign.Center)
     .padding({ left: 18, right: 18, top: 46, bottom: 12 })
     .backgroundColor($r('app.color.surface'))
   }

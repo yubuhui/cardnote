@@ -70,19 +70,12 @@ struct LoginPage {
     Column() {
       // 标题栏
       Row() {
-        Row() {
-          Text('‹')
-            .fontSize(22)
-            .fontColor($r('app.color.text_primary'))
-            .textAlign(TextAlign.Center)
-        }
-        .width(36)
-        .height(36)
-        .borderRadius(18)
-        .backgroundColor($r('app.color.surface'))
-        .justifyContent(FlexAlign.Center)
-        .alignItems(VerticalAlign.Center)
-        .onClick(() => {
+        Text('‹')
+          .fontSize(16)
+          .fontColor($r('app.color.text_primary'))
+          .textAlign(TextAlign.Center)
+          .width(36)
+          .onClick(() => {
           this.getUIContext().getRouter().back();
         })
 
@@ -96,11 +89,10 @@ struct LoginPage {
         // 右侧占位，保证标题居中
         Row()
           .width(36)
-          .height(36)
       }
       .width('100%')
-      .height(56)
-      .padding({ left: 8, right: 8 })
+      .alignItems(VerticalAlign.Center)
+      .padding({ left: 8, right: 8, top: 46, bottom: 12 })
       .backgroundColor($r('app.color.surface'))
 
       Scroll() {

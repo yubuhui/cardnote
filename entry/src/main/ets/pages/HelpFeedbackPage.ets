@@ -6,23 +6,16 @@ struct HelpFeedbackPage {
     Column() {
       // 顶部导航栏
       Row() {
-        Row() {
-          Text('‹')
-            .fontSize(22)
-            .fontColor($r('app.color.text_primary'))
-            .textAlign(TextAlign.Center)
-        }
-        .width(36)
-        .height(36)
-        .borderRadius(18)
-        .backgroundColor($r('app.color.surface'))
-        .justifyContent(FlexAlign.Center)
-        .alignItems(VerticalAlign.Center)
-        .onClick(() => {
+        Text('‹')
+          .fontSize(16)
+          .fontColor($r('app.color.text_primary'))
+          .textAlign(TextAlign.Center)
+          .width(36)
+          .onClick(() => {
           this.getUIContext().getRouter().back();
         })
         Text('帮助与反馈')
-          .fontSize(17)
+          .fontSize(16)
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
@@ -30,10 +23,9 @@ struct HelpFeedbackPage {
         Row().width(36)
       }
       .width('100%')
-      .height(44)
-      .padding({ left: 16, right: 16 })
+      .alignItems(VerticalAlign.Center)
+      .padding({ left: 16, right: 16, top: 46, bottom: 12 })
       .backgroundColor($r('app.color.surface'))
-      .border({ width: { bottom: 0.5 }, color: $r('app.color.outline') })
 
       // 内容区域
       Column() {

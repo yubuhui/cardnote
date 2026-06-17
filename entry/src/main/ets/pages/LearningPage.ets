@@ -170,19 +170,12 @@ struct LearningPage {
   @Builder
   buildHeader() {
     Row() {
-      Row() {
-        Text('‹')
-          .fontSize(22)
-          .fontColor($r('app.color.text_primary'))
-          .textAlign(TextAlign.Center)
-      }
-      .width(36)
-      .height(36)
-      .borderRadius(18)
-      .backgroundColor($r('app.color.surface'))
-      .justifyContent(FlexAlign.Center)
-      .alignItems(VerticalAlign.Center)
-      .onClick(() => {
+      Text('‹')
+        .fontSize(16)
+        .fontColor($r('app.color.text_primary'))
+        .textAlign(TextAlign.Center)
+        .width(36)
+        .onClick(() => {
         this.getUIContext().getRouter().back();
       })
       if (this.currentDeck) {
@@ -195,7 +188,7 @@ struct LearningPage {
         Row().layoutWeight(1)
       }
       Text('⋮')
-        .fontSize(18)
+        .fontSize(16)
         .fontColor($r('app.color.text_secondary'))
         .padding({ left: 4, right: 4 })
         .onClick(() => {
@@ -217,7 +210,8 @@ struct LearningPage {
     }
     .width('100%')
     .justifyContent(FlexAlign.SpaceBetween)
-    .padding({ left: 18, right: 18, top: 46, bottom: 10 })
+    .alignItems(VerticalAlign.Center)
+    .padding({ left: 18, right: 18, top: 46, bottom: 12 })
     .backgroundColor($r('app.color.surface'))
   }
 

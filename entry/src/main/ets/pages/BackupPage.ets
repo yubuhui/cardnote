@@ -84,28 +84,22 @@ struct BackupPage {
   @Builder
   buildTopBar() {
     Row() {
-      Row() {
-        Text('‹')
-          .fontSize(22)
-          .fontColor($r('app.color.text_primary'))
-          .textAlign(TextAlign.Center)
-      }
-      .width(36)
-      .height(36)
-      .borderRadius(18)
-      .backgroundColor($r('app.color.surface'))
-      .justifyContent(FlexAlign.Center)
-      .alignItems(VerticalAlign.Center)
-      .onClick(() => this.getUIContext().getRouter().back())
+      Text('‹')
+        .fontSize(16)
+        .fontColor($r('app.color.text_primary'))
+        .textAlign(TextAlign.Center)
+        .width(36)
+        .onClick(() => this.getUIContext().getRouter().back())
       Text('备份')
-        .fontSize(17)
+        .fontSize(16)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('app.color.text_primary'))
         .layoutWeight(1)
         .textAlign(TextAlign.Center)
-      Row().width(36).height(36)
+      Row().width(36)
     }
     .width('100%')
+    .alignItems(VerticalAlign.Center)
     .padding({ left: 18, right: 18, top: 46, bottom: 12 })
     .backgroundColor($r('app.color.surface'))
   }
@@ -175,7 +169,7 @@ struct BackupPage {
     .backgroundColor($r('app.color.surface'))
     .borderRadius(12)
     .shadow({ radius: 6, color: $r('app.color.shadow'), offsetY: 2 })
-    .margin({ bottom: 12 })
+    .margin({ top: 12, bottom: 12 })
   }
 
   // ==================== 卡片2：自动备份 ====================

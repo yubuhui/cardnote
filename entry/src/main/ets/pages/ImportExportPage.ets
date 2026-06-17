@@ -481,19 +481,12 @@ struct ImportExportPage {
     Column() {
       // 顶部导航
       Row() {
-        Row() {
-          Text('‹')
-            .fontSize(22)
-            .fontColor($r('app.color.text_primary'))
-            .textAlign(TextAlign.Center)
-        }
-        .width(36)
-        .height(36)
-        .borderRadius(18)
-        .backgroundColor($r('app.color.surface'))
-        .justifyContent(FlexAlign.Center)
-        .alignItems(VerticalAlign.Center)
-        .onClick(() => {
+        Text('‹')
+          .fontSize(16)
+          .fontColor($r('app.color.text_primary'))
+          .textAlign(TextAlign.Center)
+          .width(36)
+          .onClick(() => {
           if (this.showPreview) {
             this.cancelPreview();
           } else {
@@ -501,16 +494,16 @@ struct ImportExportPage {
           }
         })
         Text(this.showPreview ? '预览导入' : '导入与导出')
-          .fontSize(17)
+          .fontSize(16)
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
           .textAlign(TextAlign.Center)
         // 右上角隐藏菜单按钮（原生下拉菜单）
         Text('⋯')
-          .fontSize(22)
+          .fontSize(16)
           .fontColor($r('app.color.text_secondary'))
-          .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+          .padding({ left: 8, right: 8 })
           .bindMenu([
             {
               value: '下载 TXT 模板',
@@ -529,6 +522,7 @@ struct ImportExportPage {
           })
       }
       .width('100%')
+      .alignItems(VerticalAlign.Center)
       .padding({ left: 18, right: 18, top: 46, bottom: 12 })
       .backgroundColor($r('app.color.surface'))
 

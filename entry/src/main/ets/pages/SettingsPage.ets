@@ -156,14 +156,18 @@ export struct SettingsPage {
 
   build() {
     Column() {
-      Text('设置')
-        .fontSize(16)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.text_primary'))
-        .textAlign(TextAlign.Center)
-        .width('100%')
-        .padding({ top: 46, bottom: 12 })
-        .backgroundColor($r('app.color.surface'))
+      Row() {
+        Text('设置')
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.text_primary'))
+          .textAlign(TextAlign.Center)
+          .layoutWeight(1)
+      }
+      .width('100%')
+      .alignItems(VerticalAlign.Center)
+      .padding({ top: 46, bottom: 12 })
+      .backgroundColor($r('app.color.surface'))
 
       Scroll() {
         Column() {
