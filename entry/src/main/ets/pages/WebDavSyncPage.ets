@@ -206,6 +206,7 @@ struct WebDavSyncPage {
           this.buildServerSection();
           this.buildActionSection();
           this.buildStatusSection();
+          this.buildDisclaimerSection();
         }
         .width('100%')
         .padding(16)
@@ -285,11 +286,12 @@ struct WebDavSyncPage {
             .fontSize(14)
             .fontColor($r('app.color.text_primary'))
             .width(72)
-          Text(this.syncPath || 'cardnote')
+          TextInput({ text: this.syncPath || 'cardnote' })
             .fontSize(14)
             .fontColor(this.syncEnabled ? $r('app.color.text_primary') : $r('app.color.disabled'))
-            .margin({ left: 4 })
             .layoutWeight(1)
+            .backgroundColor($r('app.color.transparent'))
+            .enabled(false)
           Text('选择')
             .fontSize(13)
             .fontColor(this.syncEnabled ? $r('app.color.primary') : $r('app.color.disabled'))
@@ -430,5 +432,39 @@ struct WebDavSyncPage {
       }
     }
     .width('100%')
+  }
+
+  /** 底部说明与免责声明 */
+  @Builder
+  buildDisclaimerSection() {
+    Column() {
+      Text('关于 WebDAV 同步')
+        .fontSize(14)
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.text_primary'))
+        .width('100%')
+        .margin({ top: 20, bottom: 8 })
+
+      Text('WebDAV（Web Distributed Authoring and Versioning）是一种基于 HTTP 协议的文件管理协议。配置后，卡片笔记可将您的牌组、卡片和学习记录数据上传至您指定的 WebDAV 服务器，实现跨设备数据备份与恢复。')
+        .fontSize(12)
+        .fontColor($r('app.color.text_secondary'))
+        .lineHeight(20)
+        .width('100%')
+
+      Text('免责声明')
+        .fontSize(14)
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.text_primary'))
+        .width('100%')
+        .margin({ top: 16, bottom: 8 })
+
+      Text('• 您所连接的 WebDAV 服务器由您自行提供或选择，服务器的安全性、可用性和数据隐私由该服务器运营方负责。\n\n• 我们不获取、不存储、不中转您的任何 WebDAV 凭证（地址、用户名、密码）及同步数据。建议您使用 HTTPS 加密连接，并妥善保管您的服务器访问信息。\n\n• 使用本同步功能即表示您已充分了解上述风险并自愿承担相关责任。')
+        .fontSize(12)
+        .fontColor($r('app.color.text_secondary'))
+        .lineHeight(20)
+        .width('100%')
+    }
+    .width('100%')
+    .padding({ top: 12, bottom: 24 })
   }
 }

@@ -43,8 +43,8 @@ LearningPage
 EditorPage
 ImportExportPage
 ReviewSettingsPage
-LoginPage
 PrivacyPolicyPage
+UserAgreementPage
 HelpFeedbackPage
 LearningDetailPage
 WebDavSyncPage

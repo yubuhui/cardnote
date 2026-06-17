@@ -58,12 +58,6 @@
           "when": "always"
         }
       }
-    ],
-    "metadata": [
-      {
-        "name": "client_id",
-        "value": "请替换为AGC应用的真实Client ID"
-      }
     ]
   }
 }

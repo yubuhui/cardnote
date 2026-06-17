@@ -6,8 +6,8 @@
     "pages/ImportExportPage",
     "pages/BackupPage",
     "pages/ReviewSettingsPage",
-    "pages/LoginPage",
     "pages/PrivacyPolicyPage",
+    "pages/UserAgreementPage",
     "pages/HelpFeedbackPage",
     "pages/LearningDetailPage",
     "pages/WebDavSyncPage"

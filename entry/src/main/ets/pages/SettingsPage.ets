@@ -2,6 +2,7 @@ import { ConfigurationConstant } from '@kit.AbilityKit';
 import { preferences } from '@kit.ArkData';
 import { CloudSyncService, SyncStatus } from '../service/CloudSyncService';
 import { WebDAVSyncService } from '../service/WebDAVSyncService';
+import { WebdavEnableDialog } from '../components/WebdavEnableDialog';
 import { formatDateTime } from '../utils/DateUtils';
 
 export interface SettingsItem {
@@ -25,6 +26,25 @@ export struct SettingsPage {
   private settingsPref: preferences.Preferences | null = null;
   private cloudSyncService: CloudSyncService = CloudSyncService.getInstance();
   private webdavService: WebDAVSyncService = WebDAVSyncService.getInstance();
+  private webdavDialogController: CustomDialogController = new CustomDialogController({
+    builder: WebdavEnableDialog({
+      onConfirm: () => {
+        this.syncEnabled = true;
+        this.webdavService.setSyncEnabled(true);
+      },
+      onCancel: () => {
+        this.syncEnabled = false;
+        this.webdavService.setSyncEnabled(false);
+      }
+    }),
+    autoCancel: true,
+    customStyle: true,
+    alignment: DialogAlignment.Center,
+    cornerRadius: $r('sys.float.padding_level10'),
+    onWillDismiss: (dismissDialogAction: DismissDialogAction) => {
+      dismissDialogAction.dismiss();
+    }
+  });
 
   aboutToAppear(): void {
     try {
@@ -110,6 +130,10 @@ export struct SettingsPage {
         action: () => {}
       }
     });
+  }
+
+  private showWebdavEnableDialog(): void {
+    this.webdavDialogController.open();
   }
 
   private getSyncStatusColor(): ResourceColor {
@@ -220,14 +244,19 @@ export struct SettingsPage {
                 .layoutWeight(1)
               Toggle({ type: ToggleType.Switch, isOn: this.syncEnabled })
                 .selectedColor($r('app.color.primary'))
-                .onChange((isOn: boolean) => {
-                  this.syncEnabled = isOn;
-                  this.webdavService.setSyncEnabled(isOn);
-                })
+                .hitTestBehavior(HitTestMode.None)
             }
             .width('100%')
             .padding({ top: 10, bottom: 10 })
             .border({ width: { bottom: 1 }, color: $r('app.color.outline') })
+            .onClick(() => {
+              if (this.syncEnabled) {
+                this.syncEnabled = false;
+                this.webdavService.setSyncEnabled(false);
+              } else {
+                this.showWebdavEnableDialog();
+              }
+            })
 
             Row() {
               Text('WebDAV设置')
@@ -288,6 +317,7 @@ export struct SettingsPage {
 
           this.buildSection('关于', [
             { title: '帮助与反馈', routeName: 'pages/HelpFeedbackPage' } as SettingsItem,
+            { title: '用户协议', routeName: 'pages/UserAgreementPage' } as SettingsItem,
             { title: '隐私政策', routeName: 'pages/PrivacyPolicyPage' } as SettingsItem,
             { title: '版本号', subtitle: '1.0.0' } as SettingsItem,
           ])
@@ -351,3 +381,5 @@ export struct SettingsPage {
     .margin({ top: 10 })
   }
 }
+
+

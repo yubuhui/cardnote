@@ -19,7 +19,7 @@ import relationalStore from '@ohos.data.relationalStore';
 const BACKUP_VERSION: number = 1;
 
 /** 需要备份的 Preferences 名称列表 */
-const PREF_NAMES: string[] = ['app_settings', 'webdav_sync', 'huawei_auth'];
+const PREF_NAMES: string[] = ['app_settings', 'webdav_sync'];
 
 /** 本地备份目录名（相对于应用的 filesDir） */
 const BACKUP_DIR: string = 'backups';

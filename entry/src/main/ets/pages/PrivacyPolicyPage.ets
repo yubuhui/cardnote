@@ -31,53 +31,69 @@ struct PrivacyPolicyPage {
       // 正文区域
       Scroll() {
         Column() {
-          Text(`更新日期：2026年6月13日
-
-生效日期：2026年6月13日
-
-CardNote（以下简称"我们"）深知个人信息对您的重要性，我们将按照法律法规的规定，保护您的个人信息及隐私安全。本隐私政策适用于CardNote应用程序（以下简称"本应用"）所提供的服务。
-
-1. 我们收集的信息
-为提供云端数据同步服务，我们会在您主动登录华为账号后收集以下信息：
-• 华为账号OpenID：用于标识您的账号身份，实现跨设备数据同步。
-• 应用数据（牌组、卡片、学习记录）：通过华为云空间进行端云同步，数据仅存储在您的个人华为云空间中，我们不会将数据上传至任何第三方服务器。
-
-2. 我们如何使用信息
-• 华为账号OpenID：仅用于华为账号认证与云同步账号关联。
-• 应用数据：仅用于实现您在多个华为设备间的牌组、卡片及学习记录同步功能。
-
-3. 信息的存储与安全
-• 应用数据通过HarmonyOS端云同步能力加密存储于您的华为云空间，我们不会在自有服务器上存储您的任何个人信息。
-• 我们采取了数据加密传输及存储等安全措施保护您的信息安全。
-
-4. 第三方服务
-本应用集成了华为账号服务（Account Kit）和华为云空间服务（CloudData），以提供登录认证与数据同步功能。上述服务的隐私政策请参阅华为官方隐私声明。
-
-5. 您的权利
-• 您可以在应用"设置"页面随时登录或退出华为账号，退出后云同步功能将停止。
-• 您可以通过系统设置管理本应用对云空间的访问权限。
-• 您可以通过应用"设置"中的"联系我们"获取数据删除等相关支持。
-
-6. 未成年人保护
-本应用面向所有年龄段用户。如您是未成年人，请在监护人的陪同下阅读本隐私政策并征得同意后使用本应用。
-
-7. 隐私政策的更新
-我们可能会适时更新本隐私政策。当政策发生重大变更时，我们会在应用内以显著的方式通知您。
-
-8. 联系我们
-如您对本隐私政策有任何疑问、意见或建议，请通过以下方式联系我们：
-• 邮箱：请在个人中心设置中查看联系邮箱（如有）
-• 应用内：设置页面 → 关于 → 联系我们
-
-本政策最终解释权归CardNote开发者所有。`)
-            .fontSize(13)
-            .fontColor($r('app.color.text_primary'))
-            .lineHeight(22)
-            .padding(16)
+          Text() {
+            Span('更新日期：2026年6月17日\n')
+            Span('生效日期：2026年6月17日\n\n')
+            Span('卡片笔记')
+              .fontWeight(FontWeight.Bold)
+            Span('（以下简称"我们"）深知个人信息对您的重要性，我们将按照法律法规的规定，保护您的个人信息及隐私安全。本隐私政策适用于卡片笔记应用程序（以下简称"本应用"）所提供的服务。\n\n')
+            Span('1. 我们收集的信息\n')
+              .fontWeight(FontWeight.Bold)
+              .decoration({ type: TextDecorationType.Underline })
+            Span('本应用是一款本地优先的卡片背诵工具，所有数据默认存储在您的设备本地。我们不会主动收集、上传或分享您的任何个人信息。\n\n')
+            Span('当您主动使用以下可选功能时，相关数据将遵循对应隐私规则：\n')
+            Span('• WebDAV 同步：')
+              .fontWeight(FontWeight.Bold)
+            Span('您通过自建或第三方 WebDAV 服务器进行数据备份与同步时，数据仅在您的设备与您指定的服务器之间传输，我们不会接触或存储这些数据。\n\n')
+            Span('2. 我们如何使用信息\n')
+              .fontWeight(FontWeight.Bold)
+              .decoration({ type: TextDecorationType.Underline })
+            Span('本应用无需联网即可完整使用，不依赖任何云端服务进行数据收集。您在使用 WebDAV 同步功能时产生的网络通信仅用于数据传输，不包含任何额外的数据采集行为。\n\n')
+            Span('3. 信息的存储与安全\n')
+              .fontWeight(FontWeight.Bold)
+              .decoration({ type: TextDecorationType.Underline })
+            Span('• 所有背诵数据（牌组、卡片、学习记录等）均存储于您的设备本地。\n')
+            Span('• 我们不运营任何自有服务器，不会在第三方服务器上存储您的个人信息。\n')
+            Span('• 设备本地数据受 HarmonyOS 系统安全机制保护。\n\n')
+            Span('4. 第三方服务\n')
+              .fontWeight(FontWeight.Bold)
+              .decoration({ type: TextDecorationType.Underline })
+            Span('本应用本身不集成任何第三方 SDK 或服务。WebDAV 同步功能依赖您自行提供的 WebDAV 服务器，该服务器由您或第三方运营，其隐私政策请参阅对应服务提供方的说明。\n\n')
+            Span('5. 您的权利\n')
+              .fontWeight(FontWeight.Bold)
+              .decoration({ type: TextDecorationType.Underline })
+            Span('• 您可以随时通过应用内的删除功能清理您的本地数据。\n')
+            Span('• 您可以通过系统设置管理本应用的存储权限。\n\n')
+            Span('6. 未成年人保护\n')
+              .fontWeight(FontWeight.Bold)
+              .decoration({ type: TextDecorationType.Underline })
+            Span('本应用面向所有年龄段用户。如您是未成年人，请在监护人的陪同下阅读')
+            Span('《隐私政策》')
+              .fontWeight(FontWeight.Bold)
+            Span('并征得同意后使用本应用。\n\n')
+            Span('7. 隐私政策的更新\n')
+              .fontWeight(FontWeight.Bold)
+              .decoration({ type: TextDecorationType.Underline })
+            Span('我们可能会适时更新本隐私政策。当政策发生重大变更时，我们会在应用内以显著的方式通知您。\n\n')
+            Span('8. 联系我们\n')
+              .fontWeight(FontWeight.Bold)
+              .decoration({ type: TextDecorationType.Underline })
+            Span('如您对本隐私政策有任何疑问、意见或建议，请通过以下方式联系我们：\n')
+            Span('• 应用内：设置页面 → 关于 → 联系我们\n\n')
+            Span('本政策最终解释权归')
+            Span('卡片笔记')
+              .fontWeight(FontWeight.Bold)
+            Span('开发者所有。')
+          }
+          .fontSize(13)
+          .fontColor($r('app.color.text_primary'))
+          .lineHeight(22)
+          .padding(16)
         }
         .alignItems(HorizontalAlign.Start)
       }
       .layoutWeight(1)
+      .align(Alignment.TopStart)
       .width('100%')
       .backgroundColor($r('app.color.background'))
     }
