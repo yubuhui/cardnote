@@ -7,47 +7,17 @@ export struct PrivacyDialog {
   controller: CustomDialogController = new CustomDialogController({ builder: PrivacyDialog() });
   onAgree?: () => void;
   onDisagree?: () => void;
-  onViewDetail?: () => void;
-  onViewUserAgreement?: () => void;
 
   build() {
     Column() {
-      // 标题
       Text('隐私政策提示')
         .fontSize(17)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('app.color.text_primary'))
         .margin({ top: 24, bottom: 16 })
 
-      // 概要说明
       Column() {
-        Text('欢迎使用卡片笔记！\n\n为了更好地保障您的权益，请阅读我们的')
-          .fontSize(14)
-          .fontColor($r('app.color.text_secondary'))
-          .lineHeight(22)
-        Text('《隐私政策》')
-          .fontSize(14)
-          .fontColor($r('app.color.primary'))
-          .decoration({ type: TextDecorationType.Underline })
-          .onClick(() => {
-            if (this.onViewDetail) {
-              this.onViewDetail();
-            }
-          })
-        Text(' 和 ')
-          .fontSize(14)
-          .fontColor($r('app.color.text_secondary'))
-          .lineHeight(22)
-        Text('《用户协议》')
-          .fontSize(14)
-          .fontColor($r('app.color.primary'))
-          .decoration({ type: TextDecorationType.Underline })
-          .onClick(() => {
-            if (this.onViewUserAgreement) {
-              this.onViewUserAgreement();
-            }
-          })
-        Text('了解我们如何收集、使用和保护您的个人信息。\n\n如您同意，请点击"同意"开始使用；如您不同意，我们将无法为您提供服务。')
+        Text('欢迎使用闪卡记忆！\n\n为了更好地保障您的权益，请阅读我们的《隐私政策》了解我们如何收集、使用和保护您的个人信息。\n\n如您同意，请点击"同意"开始使用；如您不同意，我们将无法为您提供服务。')
           .fontSize(14)
           .fontColor($r('app.color.text_secondary'))
           .lineHeight(22)

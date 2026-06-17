@@ -1,6 +1,6 @@
 {
   "modelVersion": "6.1.1",
-  "description": "卡片笔记 — 基于间隔重复算法的卡片背诵应用",
+  "description": "闪卡记忆 — 基于间隔重复算法的卡片背诵应用",
   "dependencies": {
   },
   "devDependencies": {

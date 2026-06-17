@@ -14,7 +14,7 @@ export struct WebdavEnableDialog {
         .width('100%')
         .padding({ top: 24, bottom: 16, left: 16, right: 16 })
 
-      Text('WebDAV 同步将把您的牌组、卡片和学习记录上传至您指定的 WebDAV 服务器，实现跨设备数据备份与恢复。\n\n请确保：\n• 您已拥有可用的 WebDAV 服务器\n• 服务器使用 HTTPS 加密连接\n• 您妥善保管服务器访问凭证\n\n卡片笔记不会获取或存储您的服务器凭证及同步数据。使用本功能即表示您自愿承担相关风险。')
+      Text('WebDAV 同步将把您的牌组、卡片和学习记录上传至您指定的 WebDAV 服务器，实现跨设备数据备份与恢复。\n\n请确保：\n• 您已拥有可用的 WebDAV 服务器\n• 服务器使用 HTTPS 加密连接\n• 您妥善保管服务器访问凭证\n\n闪卡记忆不会获取或存储您的服务器凭证及同步数据。使用本功能即表示您自愿承担相关风险。')
         .fontSize($r('sys.float.ohos_id_text_size_body2'))
         .fontColor($r('sys.color.ohos_id_color_text_secondary'))
         .lineHeight(22)

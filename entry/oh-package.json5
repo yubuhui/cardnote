@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "CardNote — 基于间隔重复算法的卡片背诵应用",
   "main": "",
-  "author": "卡片笔记",
+  "author": "闪卡记忆",
   "license": "Apache-2.0",
   "dependencies": {
     "@archermind/exceljs": "^1.0.0"

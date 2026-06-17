@@ -445,7 +445,7 @@ struct WebDavSyncPage {
         .width('100%')
         .margin({ top: 20, bottom: 8 })
 
-      Text('WebDAV（Web Distributed Authoring and Versioning）是一种基于 HTTP 协议的文件管理协议。配置后，卡片笔记可将您的牌组、卡片和学习记录数据上传至您指定的 WebDAV 服务器，实现跨设备数据备份与恢复。')
+      Text('WebDAV（Web Distributed Authoring and Versioning）是一种基于 HTTP 协议的文件管理协议。配置后，闪卡记忆可将您的牌组、卡片和学习记录数据上传至您指定的 WebDAV 服务器，实现跨设备数据备份与恢复。')
         .fontSize(12)
         .fontColor($r('app.color.text_secondary'))
         .lineHeight(20)

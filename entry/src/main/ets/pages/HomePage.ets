@@ -498,7 +498,7 @@ struct HomePage {
             } else {
             Column() {
               Row() {
-                Text('卡片笔记').fontSize(20).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_primary')).layoutWeight(1)
+                Text('闪卡记忆').fontSize(20).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_primary')).layoutWeight(1)
                 Text('搜索').fontSize(14).fontColor($r('app.color.primary'))
                   .onClick(() => { this.enterSearch(); })
               }.width('100%').margin({ top: 8, bottom: 14 })

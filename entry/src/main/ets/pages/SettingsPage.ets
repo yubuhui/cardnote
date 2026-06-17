@@ -14,6 +14,7 @@ export interface SettingsItem {
 @Component
 export struct SettingsPage {
   @State isDarkMode: boolean = false;
+  @State followSystem: boolean = true;
   @State syncStatus: SyncStatus = SyncStatus.IDLE;
   @State syncTimeText: string = '从未同步';
   @State isSyncing: boolean = false;
@@ -52,6 +53,7 @@ export struct SettingsPage {
         this.getUIContext().getHostContext(), { name: 'app_settings' }
       );
       this.isDarkMode = this.settingsPref.getSync('dark_mode', false) as boolean;
+      this.followSystem = this.settingsPref.getSync('follow_system', true) as boolean;
     } catch (err) {
       console.error('Failed to load dark mode preference:', err);
     }
@@ -162,16 +164,21 @@ export struct SettingsPage {
     try {
       const appCtx = this.getUIContext().getHostContext()?.getApplicationContext();
       if (appCtx) {
-        appCtx.setColorMode(
-          enabled ? ConfigurationConstant.ColorMode.COLOR_MODE_DARK
-            : ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT
-        );
+        if (this.followSystem) {
+          appCtx.setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
+        } else {
+          appCtx.setColorMode(
+            enabled ? ConfigurationConstant.ColorMode.COLOR_MODE_DARK
+              : ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT
+          );
+        }
       }
-      // 同步到 AppStorage，供其他页面感知颜色模式变化
-      AppStorage.setOrCreate('currentColorMode',
-        enabled ? ConfigurationConstant.ColorMode.COLOR_MODE_DARK
-          : ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT);
+      const currentColorMode = this.followSystem
+        ? ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET
+        : (enabled ? ConfigurationConstant.ColorMode.COLOR_MODE_DARK : ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT);
+      AppStorage.setOrCreate('currentColorMode', currentColorMode);
       this.settingsPref?.putSync('dark_mode', enabled);
+      this.settingsPref?.putSync('follow_system', this.followSystem);
       this.settingsPref?.flush();
     } catch (err) {
       console.error('Failed to apply dark mode:', err);
@@ -210,11 +217,28 @@ export struct SettingsPage {
               .margin({ bottom: 10 })
 
             Row() {
-              Text('深色模式')
+              Text('跟随系统')
                 .fontSize(14)
                 .fontColor($r('app.color.text_primary'))
                 .layoutWeight(1)
+              Toggle({ type: ToggleType.Switch, isOn: this.followSystem })
+                .onChange((isOn: boolean) => {
+                  this.followSystem = isOn;
+                  this.applyDarkMode(this.isDarkMode);
+                })
+            }
+            .width('100%')
+            .padding({ top: 10, bottom: 10 })
+            .border({ width: { bottom: 1 }, color: $r('app.color.outline') })
+
+            Row() {
+              Text('深色模式')
+                .fontSize(14)
+                .fontColor(this.followSystem ? $r('app.color.disabled') : $r('app.color.text_primary'))
+                .layoutWeight(1)
               Toggle({ type: ToggleType.Switch, isOn: this.isDarkMode })
+                .selectedColor($r('app.color.primary'))
+                .enabled(!this.followSystem)
                 .onChange((isOn: boolean) => {
                   this.isDarkMode = isOn;
                   this.applyDarkMode(isOn);
@@ -317,8 +341,6 @@ export struct SettingsPage {
 
           this.buildSection('关于', [
             { title: '帮助与反馈', routeName: 'pages/HelpFeedbackPage' } as SettingsItem,
-            { title: '用户协议', routeName: 'pages/UserAgreementPage' } as SettingsItem,
-            { title: '隐私政策', routeName: 'pages/PrivacyPolicyPage' } as SettingsItem,
             { title: '版本号', subtitle: '1.0.0' } as SettingsItem,
           ])
 

@@ -1,6 +1,6 @@
 # Git 上传指南
 
-> 项目：CardNote — 基于 HarmonyOS 的卡片笔记/间隔复习应用
+> 项目：CardNote — 基于 HarmonyOS 的闪卡记忆/间隔复习应用
 
 ## 快速上传
 
