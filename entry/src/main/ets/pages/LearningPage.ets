@@ -207,7 +207,7 @@ struct LearningPage {
         Text('★')
           .fontSize(14)
           .fontColor('#F5A623')
-          .margin({ right: 4 })
+          .margin({ right: 10 })
       }
       Text('⋮')
         .fontSize(16)
