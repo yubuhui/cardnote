@@ -20,4 +20,5 @@ export interface Card {
   nextReviewTime: number;   // 下次复习时间戳（ms）
   createdAt: number;        // 创建时间戳（ms）
   updatedAt: number;        // 更新时间戳（ms）
+  isBookmarked?: boolean;   // 是否收藏
 }

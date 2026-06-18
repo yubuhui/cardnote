@@ -170,6 +170,8 @@ export class DatabaseManager {
     await this.migrateTable('memory_record', 'card_uuid', 'TEXT');
     // deck: 添加 is_default 列（v6 - 标记系统默认牌组，不可删除）
     await this.migrateTable('deck', 'is_default', 'INTEGER DEFAULT 0');
+    // card: 添加 is_bookmarked 列（v7 - 收藏功能）
+    await this.migrateTable('card', 'is_bookmarked', 'INTEGER DEFAULT 0');
   }
 
   /**
@@ -182,7 +184,7 @@ export class DatabaseManager {
     const ALLOWED_TABLES: string[] = ['deck', 'card', 'memory_record'];
     const ALLOWED_COLUMNS: Record<string, string[]> = {
       'deck': ['uuid', 'daily_new_cards', 'daily_review_cards', 'is_default'],
-      'card': ['uuid', 'deck_uuid'],
+      'card': ['uuid', 'deck_uuid', 'is_bookmarked'],
       'memory_record': ['uuid', 'duration', 'card_uuid'],
     };
     if (ALLOWED_TABLES.indexOf(tableName) < 0) {

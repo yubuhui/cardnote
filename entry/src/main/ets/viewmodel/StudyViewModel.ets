@@ -110,7 +110,7 @@ function getRatingColor(rating: number): ResourceColor {
 
 /** 学习视图模型 */
 export class StudyViewModel {
-  private cardVm: CardViewModel;
+  cardVm: CardViewModel;
   private recordDao: MemoryRecordDao;
   private cardDao: CardDao;
 

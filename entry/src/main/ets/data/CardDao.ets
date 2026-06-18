@@ -20,6 +20,7 @@ function cardToValues(card: Card): relationalStore.ValuesBucket {
     next_review_time: card.nextReviewTime,
     created_at: card.createdAt,
     updated_at: card.updatedAt,
+    is_bookmarked: card.isBookmarked ? 1 : 0,
   };
   if (card.uuid) {
     values['uuid'] = card.uuid;
@@ -56,6 +57,10 @@ function rowToCard(resultSet: relationalStore.ResultSet): Card {
   const deckUuidIdx: number = resultSet.getColumnIndex('deck_uuid');
   if (deckUuidIdx >= 0) {
     card.deckUuid = resultSet.getString(deckUuidIdx);
+  }
+  const bookmarkIdx: number = resultSet.getColumnIndex('is_bookmarked');
+  if (bookmarkIdx >= 0) {
+    card.isBookmarked = resultSet.getLong(bookmarkIdx) !== 0;
   }
   return card;
 }

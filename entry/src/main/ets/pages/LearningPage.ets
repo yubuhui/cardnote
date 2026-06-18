@@ -7,6 +7,7 @@ import { CardType as CardTypeEnum } from '../model/CardTypeEnum';
 import { parseFillBlanks, TextSegment } from '../utils/FillBlankParser';
 import { shuffleFisherYates } from '../utils/ArrayUtils';
 import { TreeDiagramView } from '../components/TreeDiagramView';
+import { MemoryRecordDao } from '../data/MemoryRecordDao';
 
 @Entry
 @Component
@@ -22,6 +23,9 @@ struct LearningPage {
   @State showMenu: boolean = false;
   @State lastRatedCardSnapshot: Card | null = null;
   @State canUndo: boolean = false;
+  @State isBookmarked: boolean = false;
+  @State cardReviewCount: number = 0;
+  @State cardLastRatingText: string = '';
   @StorageLink('isForeground') isForeground: boolean = true;
   @StorageLink('dataVersion') @Watch('onDataVersionChange') dataVersion: number = 0;
   private timerId: number = -1;
@@ -62,6 +66,7 @@ struct LearningPage {
         this.currentIndex = 0;
         this.currentCard = this.dueCards[0];
         this.currentDeck = await this.studyViewModel.getDeckById(this.currentCard.deckId);
+        this.loadCardMeta();
         this.startCardTimer();
       }
     } catch (err) {
@@ -78,6 +83,7 @@ struct LearningPage {
       if (updated) {
         this.currentCard = updated;
         this.dueCards[this.currentIndex] = updated;
+        this.loadCardMeta();
       } else {
         // 卡片已被删除，从列表中移除
         this.dueCards.splice(this.currentIndex, 1);
@@ -87,6 +93,7 @@ struct LearningPage {
           }
           this.currentCard = this.dueCards[this.currentIndex];
           this.updateCurrentDeck();
+          this.loadCardMeta();
         } else {
           this.currentCard = null;
           this.currentDeck = null;
@@ -120,6 +127,15 @@ struct LearningPage {
 
       // 进度条
       this.buildProgressBar()
+
+      if (this.currentCard) {
+        Text(`第 ${this.currentIndex + 1} / ${this.dueCards.length} 张`)
+          .fontSize(12)
+          .fontColor($r('app.color.text_secondary'))
+          .textAlign(TextAlign.Center)
+          .width('100%')
+          .margin({ top: 8 })
+      }
 
       // 卡片区域
       if (this.currentCard) {
@@ -238,6 +254,23 @@ struct LearningPage {
       }
 
       Row() {
+        Text(this.isBookmarked ? '取消收藏' : '收藏')
+          .fontSize(13)
+          .fontColor($r('app.color.text_primary'))
+      }
+      .width('100%')
+      .padding({ left: 14, right: 14, top: 10, bottom: 10 })
+      .onClick(() => {
+        this.showMenu = false;
+        this.handleToggleBookmark();
+      })
+
+      Divider()
+        .height(1)
+        .color($r('app.color.outline'))
+        .margin({ left: 14, right: 14 })
+
+      Row() {
         Text('编辑卡片')
           .fontSize(13)
           .fontColor($r('app.color.text_primary'))
@@ -247,6 +280,23 @@ struct LearningPage {
       .onClick(() => {
         this.showMenu = false;
         this.goToEditCard();
+      })
+
+      Divider()
+        .height(1)
+        .color($r('app.color.outline'))
+        .margin({ left: 14, right: 14 })
+
+      Row() {
+        Text('删除卡片')
+          .fontSize(13)
+          .fontColor($r('app.color.danger'))
+      }
+      .width('100%')
+      .padding({ left: 14, right: 14, top: 10, bottom: 10 })
+      .onClick(() => {
+        this.showMenu = false;
+        this.handleDeleteCard();
       })
     }
     .width(140)
@@ -283,6 +333,21 @@ struct LearningPage {
       Column({ space: 12 }) {
         // 问题
         Column() {
+          if (this.cardReviewCount > 0) {
+            Row({ space: 8 }) {
+              Text(`已复习 ${this.cardReviewCount} 次`)
+                .fontSize(11)
+                .fontColor($r('app.color.text_secondary'))
+              Text('·')
+                .fontSize(11)
+                .fontColor($r('app.color.text_secondary'))
+              Text(`上次: ${this.cardLastRatingText}`)
+                .fontSize(11)
+                .fontColor($r('app.color.text_secondary'))
+            }
+            .width('100%')
+            .margin({ bottom: 8 })
+          }
           Text('问题')
             .fontSize(11)
             .fontColor($r('app.color.text_secondary'))
@@ -376,6 +441,21 @@ struct LearningPage {
     Column({ space: 12 }) {
       // 题干（含挖空）
       Column() {
+        if (this.cardReviewCount > 0) {
+          Row({ space: 8 }) {
+            Text(`已复习 ${this.cardReviewCount} 次`)
+              .fontSize(11)
+              .fontColor($r('app.color.text_secondary'))
+            Text('·')
+              .fontSize(11)
+              .fontColor($r('app.color.text_secondary'))
+            Text(`上次: ${this.cardLastRatingText}`)
+              .fontSize(11)
+              .fontColor($r('app.color.text_secondary'))
+          }
+          .width('100%')
+          .margin({ bottom: 8 })
+        }
         Text('填空题')
           .fontSize(11)
           .fontColor($r('app.color.text_secondary'))
@@ -480,6 +560,21 @@ struct LearningPage {
     Column({ space: 12 }) {
       // 题干
       Column() {
+        if (this.cardReviewCount > 0) {
+          Row({ space: 8 }) {
+            Text(`已复习 ${this.cardReviewCount} 次`)
+              .fontSize(11)
+              .fontColor($r('app.color.text_secondary'))
+            Text('·')
+              .fontSize(11)
+              .fontColor($r('app.color.text_secondary'))
+            Text(`上次: ${this.cardLastRatingText}`)
+              .fontSize(11)
+              .fontColor($r('app.color.text_secondary'))
+          }
+          .width('100%')
+          .margin({ bottom: 8 })
+        }
         Text('选择题')
           .fontSize(11)
           .fontColor($r('app.color.text_secondary'))
@@ -848,6 +943,7 @@ struct LearningPage {
     if (this.currentIndex < this.dueCards.length) {
       this.currentCard = this.dueCards[this.currentIndex];
       this.updateCurrentDeck();
+      this.loadCardMeta();
       this.showAnswer = false;
       this.showRating = false;
       this.selectedChoiceIndex = -1;
@@ -865,6 +961,105 @@ struct LearningPage {
   async updateCurrentDeck() {
     if (this.currentCard) {
       this.currentDeck = await this.studyViewModel.getDeckById(this.currentCard.deckId);
+    }
+  }
+
+  private ratingToText(rating: number): string {
+    if (rating === 0) return '忘记';
+    if (rating === 1) return '困难';
+    if (rating === 2) return '良好';
+    if (rating === 3) return '容易';
+    return '未知';
+  }
+
+  private async loadCardMeta(): Promise<void> {
+    if (!this.currentCard) {
+      return;
+    }
+    this.isBookmarked = this.currentCard.isBookmarked === true;
+    try {
+      const recordDao: MemoryRecordDao = new MemoryRecordDao();
+      const records = await recordDao.getByCardId(this.currentCard.id);
+      this.cardReviewCount = records.length;
+      if (records.length > 0) {
+        this.cardLastRatingText = this.ratingToText(records[0].result);
+      } else {
+        this.cardLastRatingText = '';
+      }
+    } catch (err) {
+      this.cardReviewCount = 0;
+      this.cardLastRatingText = '';
+    }
+  }
+
+  private showConfirmDialog(title: string, message: string, confirmText: string,
+    confirmColor: ResourceColor, onConfirm: () => void): void {
+    this.getUIContext().showAlertDialog({
+      title: title,
+      message: message,
+      autoCancel: true,
+      alignment: DialogAlignment.Center,
+      primaryButton: { value: confirmText, fontColor: confirmColor, action: onConfirm },
+      secondaryButton: { value: '取消', fontColor: $r('app.color.text_secondary'), action: () => {} },
+    });
+  }
+
+  private async handleToggleBookmark(): Promise<void> {
+    if (!this.currentCard) {
+      return;
+    }
+    try {
+      const newState: boolean = await this.studyViewModel.cardVm.toggleBookmark(this.currentCard.id);
+      this.isBookmarked = newState;
+      if (this.currentCard) {
+        this.currentCard.isBookmarked = newState;
+      }
+    } catch (err) {
+      console.error('Toggle bookmark failed:', JSON.stringify(err));
+    }
+  }
+
+  private async handleDeleteCard(): Promise<void> {
+    if (!this.currentCard) {
+      return;
+    }
+    const cardFront: string = this.currentCard.front;
+    this.showConfirmDialog(
+      '删除卡片',
+      `确定要删除「${cardFront}」吗？此操作不可撤销。`,
+      '删除',
+      $r('app.color.danger'),
+      (): void => {
+        this.doDeleteCard();
+      }
+    );
+  }
+
+  private async doDeleteCard(): Promise<void> {
+    if (!this.currentCard) {
+      return;
+    }
+    await this.studyViewModel.cardVm.deleteCard(this.currentCard.id);
+    this.dueCards.splice(this.currentIndex, 1);
+    if (this.dueCards.length > 0) {
+      if (this.currentIndex >= this.dueCards.length) {
+        this.currentIndex = this.dueCards.length - 1;
+      }
+      this.currentCard = this.dueCards[this.currentIndex];
+      this.updateCurrentDeck();
+      this.loadCardMeta();
+      this.showAnswer = false;
+      this.showRating = false;
+      this.selectedChoiceIndex = -1;
+      this.canUndo = false;
+      this.lastRatedCardSnapshot = null;
+      this.startCardTimer();
+    } else {
+      this.currentCard = null;
+      this.currentDeck = null;
+      this.showAnswer = false;
+      this.showRating = false;
+      this.stopCardTimer();
     }
   }
 }

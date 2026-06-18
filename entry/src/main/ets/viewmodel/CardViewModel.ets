@@ -131,6 +131,17 @@ export class CardViewModel {
     DataRefreshHelper.notify();
   }
 
+  async toggleBookmark(cardId: number): Promise<boolean> {
+    const card: Card | null = await this.getById(cardId);
+    if (!card) {
+      return false;
+    }
+    card.isBookmarked = !card.isBookmarked;
+    card.updatedAt = Date.now();
+    await this.updateCard(card);
+    return card.isBookmarked;
+  }
+
   // ===== 学习流程 =====
   /** 处理用户评分 */
   async handleRating(card: Card, rating: Rating): Promise<void> {
