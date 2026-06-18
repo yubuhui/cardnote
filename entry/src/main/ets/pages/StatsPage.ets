@@ -778,16 +778,16 @@ export struct StatsPage {
       .backgroundColor($r('app.color.outline'))
 
       Row() {
-        Text('忘记 ' + this.ratingDist!.forget.toString())
+        Text('忘记 ' + Math.round(this.ratingDist!.forget / this.ratingDist!.total * 100).toString() + '%')
           .fontSize(10)
           .fontColor($r('app.color.danger'))
-        Text('困难 ' + this.ratingDist!.hard.toString())
+        Text('困难 ' + Math.round(this.ratingDist!.hard / this.ratingDist!.total * 100).toString() + '%')
           .fontSize(10)
           .fontColor($r('app.color.warning'))
-        Text('良好 ' + this.ratingDist!.good.toString())
+        Text('良好 ' + Math.round(this.ratingDist!.good / this.ratingDist!.total * 100).toString() + '%')
           .fontSize(10)
           .fontColor($r('app.color.success'))
-        Text('容易 ' + this.ratingDist!.easy.toString())
+        Text('容易 ' + Math.round(this.ratingDist!.easy / this.ratingDist!.total * 100).toString() + '%')
           .fontSize(10)
           .fontColor($r('app.color.primary'))
       }
