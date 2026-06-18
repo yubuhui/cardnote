@@ -63,12 +63,11 @@ struct LearningDetailPage {
           .layoutWeight(1)
           .textAlign(TextAlign.Center)
 
-        if (this.isBookmarked) {
-          Text('★')
-            .fontSize(14)
-            .fontColor('#F5A623')
-            .margin({ right: 12 })
-        }
+        Text('★')
+          .fontSize(14)
+          .fontColor('#F5A623')
+          .margin({ right: 12 })
+          .visibility(this.isBookmarked ? Visibility.Visible : Visibility.Hidden)
 
         Text('⋮')
           .fontSize(16)

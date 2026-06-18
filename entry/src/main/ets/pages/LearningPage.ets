@@ -207,12 +207,11 @@ struct LearningPage {
       } else {
         Row().layoutWeight(1)
       }
-      if (this.currentCard && this.isBookmarked) {
-        Text('★')
-          .fontSize(14)
-          .fontColor('#F5A623')
-          .margin({ right: 12 })
-      }
+      Text('★')
+        .fontSize(14)
+        .fontColor('#F5A623')
+        .margin({ right: 12 })
+        .visibility(this.currentCard && this.isBookmarked ? Visibility.Visible : Visibility.Hidden)
       Text('⋮')
         .fontSize(16)
         .fontColor($r('app.color.text_secondary'))
