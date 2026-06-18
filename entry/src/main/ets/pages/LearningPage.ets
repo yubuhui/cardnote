@@ -31,12 +31,13 @@ struct LearningPage {
   private timerId: number = -1;
   private cardActiveSeconds: number = 0;
   private lastInteractionTime: number = 0;
+  private bookmarkedOnly: boolean = false;
 
   aboutToAppear() {
     const params = this.getUIContext().getRouter().getParams() as Record<string, Object>;
     const deckId: number = (params && params['selectedDeckId'] !== undefined)
       ? (params['selectedDeckId'] as number) : 0;
-    // selectedDeckId === 0 表示"全部牌组"，传 undefined 给后端
+    this.bookmarkedOnly = (params && params['bookmarkedOnly'] === true);
     const deckIds: number[] | undefined = (deckId > 0) ? [deckId] : undefined;
     this.loadDueCards(deckIds);
   }
@@ -56,6 +57,9 @@ struct LearningPage {
   async loadDueCards(deckIds?: number[]) {
     try {
       this.dueCards = await this.studyViewModel.getDueCards(deckIds);
+      if (this.bookmarkedOnly) {
+        this.dueCards = this.dueCards.filter(c => c.isBookmarked === true);
+      }
       // 选择题 → 生成乱序 displayOrder
       for (let i = 0; i < this.dueCards.length; i++) {
         if (this.dueCards[i].type === CardTypeEnum.choice) {

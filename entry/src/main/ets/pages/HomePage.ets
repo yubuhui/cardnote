@@ -640,7 +640,7 @@ struct HomePage {
       if (this.cards.length > 0) {
         Button('开始学习').layoutWeight(1).height(46).fontSize(15).fontWeight(FontWeight.Medium).fontColor($r('app.color.on_primary'))
           .backgroundColor($r('app.color.primary')).borderRadius(23).shadow({ radius: 8, color: $r('app.color.shadow'), offsetY: 3 })
-          .onClick(() => { this.getUIContext().getRouter().pushUrl({ url: 'pages/LearningPage', params: { selectedDeckId: this.selectedDeckId } }); })
+          .onClick(() => { this.getUIContext().getRouter().pushUrl({ url: 'pages/LearningPage', params: { selectedDeckId: this.selectedDeckId, bookmarkedOnly: this.showBookmarkedOnly } }); })
         Blank().width(12)
       }
       Button('新建卡片').layoutWeight(1).height(46).fontSize(14).fontWeight(FontWeight.Medium)
