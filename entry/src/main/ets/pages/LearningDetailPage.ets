@@ -11,6 +11,7 @@ struct LearningDetailPage {
   @State card: Card | null = null;
   @State reviewHistory: CardReviewRecord[] = [];
   @State showMenu: boolean = false;
+  @State isBookmarked: boolean = false;
   @StorageLink('dataVersion') @Watch('onDataVersionChange') dataVersion: number = 0;
   private cardId: number = 0;
   private cardVm: CardViewModel = new CardViewModel();
@@ -35,6 +36,7 @@ struct LearningDetailPage {
   async loadCard() {
     try {
       this.card = await this.cardVm.getById(this.cardId);
+      this.isBookmarked = this.card?.isBookmarked === true;
       this.reviewHistory = await this.studyVm.getCardReviewHistory(this.cardId);
     } catch (err) {
       console.error('Load card failed:' + JSON.stringify(err));
@@ -113,6 +115,23 @@ struct LearningDetailPage {
   buildDropdownMenu() {
     Column() {
       Row() {
+        Text(this.isBookmarked ? '取消收藏' : '收藏')
+          .fontSize(13)
+          .fontColor($r('app.color.text_primary'))
+      }
+      .width('100%')
+      .padding({ left: 14, right: 14, top: 10, bottom: 10 })
+      .onClick(() => {
+        this.showMenu = false;
+        this.handleToggleBookmark();
+      })
+
+      Divider()
+        .height(1)
+        .color($r('app.color.outline'))
+        .margin({ left: 14, right: 14 })
+
+      Row() {
         Text('编辑卡片')
           .fontSize(13)
           .fontColor($r('app.color.text_primary'))
@@ -143,6 +162,18 @@ struct LearningDetailPage {
     }
     .width(140)
     .padding({ top: 4, bottom: 4 })
+  }
+
+  private async handleToggleBookmark(): Promise<void> {
+    try {
+      const newState: boolean = await this.cardVm.toggleBookmark(this.cardId);
+      this.isBookmarked = newState;
+      if (this.card) {
+        this.card.isBookmarked = newState;
+      }
+    } catch (err) {
+      console.error('Toggle bookmark failed:', JSON.stringify(err));
+    }
   }
 
   goToEditCard() {
