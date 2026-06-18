@@ -8,6 +8,8 @@
     "pages/ReviewSettingsPage",
     "pages/HelpFeedbackPage",
     "pages/LearningDetailPage",
-    "pages/WebDavSyncPage"
+    "pages/WebDavSyncPage",
+    "pages/CardDifficultyPage",
+    "pages/TodayCardsPage"
   ]
 }

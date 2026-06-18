@@ -1,4 +1,4 @@
-import { StudyViewModel, TodayStats, DayDetail, DayDetailRecord, OverviewStats, RatingDistribution, StreakInfo, MasteryProgress, DailyAccuracy, DifficultCard, DueForecast, DurationStats } from '../viewmodel/StudyViewModel';
+import { StudyViewModel, TodayStats, DayDetail, DayDetailRecord, OverviewStats, RatingDistribution, StreakInfo, MasteryProgress, DailyAccuracy, DifficultCard } from '../viewmodel/StudyViewModel';
 import { DailyDuration } from '../data/MemoryRecordDao';
 import { Deck } from '../model/Deck';
 
@@ -27,10 +27,8 @@ export struct StatsPage {
   @State mastery: MasteryProgress | null = null;
   @State accuracyTrend: DailyAccuracy[] = [];
   @State difficultCards: DifficultCard[] = [];
-  @State dueForecast: DueForecast | null = null;
   @State selectedDeckId: number = 0;
   @State decks: Deck[] = [];
-  @State durationStats: DurationStats | null = null;
   private studyVm: StudyViewModel = new StudyViewModel();
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true);
   private canvasCtx: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings);
@@ -51,23 +49,34 @@ export struct StatsPage {
 
   async loadData() {
     try {
-      this.reviewDates = await this.studyVm.getReviewDatesForMonth(this.currentYear, this.currentMonth);
-      const stats: TodayStats = await this.studyVm.getTodayStats();
-      this.todayForget = stats.forget;
-      this.todayHard = stats.hard;
-      this.todayGood = stats.good;
-      this.todayEasy = stats.easy;
-
       const today: Date = new Date();
-      const dayDetail: DayDetail = await this.studyVm.getDayDetail(
-        today.getFullYear(), today.getMonth() + 1, today.getDate()
-      );
-      this.todayCards = dayDetail.records;
 
       if (this.selectedDeckId === 0) {
+        this.reviewDates = await this.studyVm.getReviewDatesForMonth(this.currentYear, this.currentMonth);
+        const stats: TodayStats = await this.studyVm.getTodayStats();
+        this.todayForget = stats.forget;
+        this.todayHard = stats.hard;
+        this.todayGood = stats.good;
+        this.todayEasy = stats.easy;
+
+        const dayDetail: DayDetail = await this.studyVm.getDayDetail(
+          today.getFullYear(), today.getMonth() + 1, today.getDate()
+        );
+        this.todayCards = dayDetail.records;
         this.dailyDurations = await this.studyVm.getDailyDurations(7);
         this.overview = await this.studyVm.getOverviewStats();
       } else {
+        this.reviewDates = await this.studyVm.getReviewDatesForMonthByDeck(this.currentYear, this.currentMonth, this.selectedDeckId);
+        const stats: TodayStats = await this.studyVm.getTodayStatsByDeck(this.selectedDeckId);
+        this.todayForget = stats.forget;
+        this.todayHard = stats.hard;
+        this.todayGood = stats.good;
+        this.todayEasy = stats.easy;
+
+        const dayDetail: DayDetail = await this.studyVm.getDayDetailByDeck(
+          today.getFullYear(), today.getMonth() + 1, today.getDate(), this.selectedDeckId
+        );
+        this.todayCards = dayDetail.records;
         this.dailyDurations = await this.studyVm.getDailyDurationsByDeck(7, this.selectedDeckId);
         this.overview = await this.studyVm.getOverviewStatsByDeck(this.selectedDeckId);
       }
@@ -84,16 +93,12 @@ export struct StatsPage {
         this.mastery = await this.studyVm.getMasteryProgress();
         this.accuracyTrend = await this.studyVm.getDailyAccuracyTrend(7);
         this.difficultCards = await this.studyVm.getDifficultCards(10);
-        this.dueForecast = await this.studyVm.getDueForecast();
-        this.durationStats = await this.studyVm.getDurationStats();
       } else {
         this.ratingDist = await this.studyVm.getRatingDistributionByDeck(this.selectedDeckId);
         this.streak = await this.studyVm.getStreakInfo();
         this.mastery = await this.studyVm.getMasteryProgressByDeck(this.selectedDeckId);
         this.accuracyTrend = await this.studyVm.getDailyAccuracyTrendByDeck(7, this.selectedDeckId);
         this.difficultCards = await this.studyVm.getDifficultCardsByDeck(this.selectedDeckId, 10);
-        this.dueForecast = await this.studyVm.getDueForecastByDeck(this.selectedDeckId);
-        this.durationStats = await this.studyVm.getDurationStatsByDeck(this.selectedDeckId);
       }
     } catch (err) {
       console.error('Load extra stats failed:', err);
@@ -163,10 +168,17 @@ export struct StatsPage {
   private async loadTodayCards(): Promise<void> {
     try {
       const today: Date = new Date();
-      const dayDetail: DayDetail = await this.studyVm.getDayDetail(
-        today.getFullYear(), today.getMonth() + 1, today.getDate()
-      );
-      this.todayCards = dayDetail.records;
+      if (this.selectedDeckId === 0) {
+        const dayDetail: DayDetail = await this.studyVm.getDayDetail(
+          today.getFullYear(), today.getMonth() + 1, today.getDate()
+        );
+        this.todayCards = dayDetail.records;
+      } else {
+        const dayDetail: DayDetail = await this.studyVm.getDayDetailByDeck(
+          today.getFullYear(), today.getMonth() + 1, today.getDate(), this.selectedDeckId
+        );
+        this.todayCards = dayDetail.records;
+      }
     } catch (err) {
       console.error('Load today cards failed:', JSON.stringify(err));
     }
@@ -195,7 +207,11 @@ export struct StatsPage {
     this.selectedDay = day;
     this.dayDetail = null;
     try {
-      this.dayDetail = await this.studyVm.getDayDetail(this.currentYear, this.currentMonth, day);
+      if (this.selectedDeckId === 0) {
+        this.dayDetail = await this.studyVm.getDayDetail(this.currentYear, this.currentMonth, day);
+      } else {
+        this.dayDetail = await this.studyVm.getDayDetailByDeck(this.currentYear, this.currentMonth, day, this.selectedDeckId);
+      }
       this.todayCards = this.dayDetail.records;
     } catch (err) {
       console.error('Load day detail failed:', JSON.stringify(err));
@@ -229,12 +245,9 @@ export struct StatsPage {
           if (this.overview) {
             this.buildOverviewCards()
           }
-          // ===== 进度与连续 =====
+          // ===== 进度 =====
           if (this.mastery) {
             this.buildMasteryBar()
-          }
-          if (this.streak) {
-            this.buildStreakInfo()
           }
 
           // 月份导航
@@ -321,74 +334,88 @@ export struct StatsPage {
             this.buildDayDetail()
           }
 
+          // ===== 连续学习 =====
+          if (this.streak) {
+            this.buildStreakInfo()
+          }
+
           // 今日评分统计
-          Row() {
-            Column() {
-              Text(`${this.todayForget}`)
-                .fontSize(22)
-                .fontWeight(FontWeight.Bold)
-                .fontColor($r('app.color.danger'))
-              Text('忘记')
-                .fontSize(11)
-                .fontColor($r('app.color.text_secondary'))
-                .margin({ top: 2 })
-            }
-            .width('25%')
-            .alignItems(HorizontalAlign.Center)
+          Column() {
+            Text('今日评分')
+              .fontSize(13)
+              .fontWeight(FontWeight.Medium)
+              .fontColor($r('app.color.text_primary'))
+              .width('100%')
+              .textAlign(TextAlign.Start)
+              .margin({ bottom: 10 })
 
-            Column() {
-              Text(`${this.todayHard}`)
-                .fontSize(22)
-                .fontWeight(FontWeight.Bold)
-                .fontColor($r('app.color.warning'))
-              Text('困难')
-                .fontSize(11)
-                .fontColor($r('app.color.text_secondary'))
-                .margin({ top: 2 })
-            }
-            .width('25%')
-            .alignItems(HorizontalAlign.Center)
+            Row() {
+              Column() {
+                Text(`${this.todayForget}`)
+                  .fontSize(22)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor($r('app.color.danger'))
+                Text('忘记')
+                  .fontSize(11)
+                  .fontColor($r('app.color.text_secondary'))
+                  .margin({ top: 2 })
+              }
+              .width('25%')
+              .alignItems(HorizontalAlign.Center)
 
-            Column() {
-              Text(`${this.todayGood}`)
-                .fontSize(22)
-                .fontWeight(FontWeight.Bold)
-                .fontColor($r('app.color.success'))
-              Text('良好')
-                .fontSize(11)
-                .fontColor($r('app.color.text_secondary'))
-                .margin({ top: 2 })
-            }
-            .width('25%')
-            .alignItems(HorizontalAlign.Center)
+              Column() {
+                Text(`${this.todayHard}`)
+                  .fontSize(22)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor($r('app.color.warning'))
+                Text('困难')
+                  .fontSize(11)
+                  .fontColor($r('app.color.text_secondary'))
+                  .margin({ top: 2 })
+              }
+              .width('25%')
+              .alignItems(HorizontalAlign.Center)
 
-            Column() {
-              Text(`${this.todayEasy}`)
-                .fontSize(22)
-                .fontWeight(FontWeight.Bold)
-                .fontColor($r('app.color.success'))
-              Text('容易')
-                .fontSize(11)
-                .fontColor($r('app.color.text_secondary'))
-                .margin({ top: 2 })
+              Column() {
+                Text(`${this.todayGood}`)
+                  .fontSize(22)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor($r('app.color.success'))
+                Text('良好')
+                  .fontSize(11)
+                  .fontColor($r('app.color.text_secondary'))
+                  .margin({ top: 2 })
+              }
+              .width('25%')
+              .alignItems(HorizontalAlign.Center)
+
+              Column() {
+                Text(`${this.todayEasy}`)
+                  .fontSize(22)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor($r('app.color.success'))
+                Text('容易')
+                  .fontSize(11)
+                  .fontColor($r('app.color.text_secondary'))
+                  .margin({ top: 2 })
+              }
+              .width('25%')
+              .alignItems(HorizontalAlign.Center)
             }
-            .width('25%')
-            .alignItems(HorizontalAlign.Center)
+            .width('100%')
           }
           .width('100%')
-          .padding({ top: 18, bottom: 18 })
+          .padding({ top: 14, bottom: 14, left: 14, right: 14 })
           .backgroundColor($r('app.color.surface'))
           .borderRadius(12)
           .margin({ left: 14, right: 14, top: 12 })
 
+          // 今日学习卡片列表
+          this.buildTodayCardList()
+
           // ===== 评分分布圆环图 =====
           if (this.ratingDist && this.ratingDist.total > 0) {
             this.buildRatingDonut()
-          }
-
-          // ===== 待复习预报 =====
-          if (this.dueForecast) {
-            this.buildDueForecast()
           }
 
           // ===== 正确率趋势 =====
@@ -399,18 +426,8 @@ export struct StatsPage {
           // 学习时长柱状图
           this.buildDurationChart()
 
-          // ===== 学习时长累计 =====
-          if (this.durationStats) {
-            this.buildDurationSummary()
-          }
-
           // ===== 高难度卡片 =====
-          if (this.difficultCards.length > 0) {
-            this.buildDifficultCards()
-          }
-
-          // 今日学习卡片列表
-          this.buildTodayCardList()
+          this.buildDifficultCards()
 
           // 底部留白，避免被悬浮Tab遮挡
           Blank().height(72)
@@ -457,60 +474,7 @@ export struct StatsPage {
     .scrollable(ScrollDirection.Horizontal)
     .scrollBar(BarState.Off)
     .width('100%')
-    .margin({ top: 8, bottom: 4 })
-  }
-
-  @Builder
-  buildDurationSummary() {
-    Row() {
-      Column() {
-        Text(this.formatHours(this.durationStats!.totalHours))
-          .fontSize(20)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.primary'))
-        Text('总学习')
-          .fontSize(11)
-          .fontColor($r('app.color.text_secondary'))
-          .margin({ top: 2 })
-      }
-      .width('33%')
-      .alignItems(HorizontalAlign.Center)
-
-      Column() {
-        Text(this.formatHours(this.durationStats!.weekHours))
-          .fontSize(20)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.warning'))
-        Text('本周')
-          .fontSize(11)
-          .fontColor($r('app.color.text_secondary'))
-          .margin({ top: 2 })
-      }
-      .width('33%')
-      .alignItems(HorizontalAlign.Center)
-
-      Column() {
-        Text(this.formatHours(this.durationStats!.monthHours))
-          .fontSize(20)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.success'))
-        Text('本月')
-          .fontSize(11)
-          .fontColor($r('app.color.text_secondary'))
-          .margin({ top: 2 })
-      }
-      .width('33%')
-      .alignItems(HorizontalAlign.Center)
-    }
-    .width('100%')
-    .padding(14)
-    .backgroundColor($r('app.color.surface'))
-    .borderRadius(12)
-    .margin({ left: 14, right: 14, top: 4 })
-  }
-
-  private formatHours(hours: number): string {
-    return (Math.round(hours * 10) / 10).toString() + 'h';
+    .margin({ top: 12, bottom: 4 })
   }
 
   @Builder
@@ -650,7 +614,7 @@ export struct StatsPage {
     .padding(14)
     .backgroundColor($r('app.color.surface'))
     .borderRadius(12)
-    .margin({ left: 14, right: 14, top: 4 })
+    .margin({ left: 14, right: 14, top: 12 })
   }
 
   private calcPct(count: number): string {
@@ -680,7 +644,7 @@ export struct StatsPage {
     .padding(14)
     .backgroundColor($r('app.color.surface'))
     .borderRadius(12)
-    .margin({ left: 14, right: 14, top: 4 })
+    .margin({ left: 14, right: 14, top: 12 })
   }
 
   @Builder
@@ -718,67 +682,7 @@ export struct StatsPage {
     .padding(14)
     .backgroundColor($r('app.color.surface'))
     .borderRadius(12)
-    .margin({ left: 14, right: 14, top: 4 })
-  }
-
-  @Builder
-  buildDueForecast() {
-    Column() {
-      Text('待复习预报')
-        .fontSize(13)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.text_primary'))
-        .width('100%')
-        .textAlign(TextAlign.Start)
-        .margin({ bottom: 10 })
-
-      Row() {
-        Column() {
-          Text(this.dueForecast!.day1.toString())
-            .fontSize(22)
-            .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.warning'))
-          Text('今天')
-            .fontSize(11)
-            .fontColor($r('app.color.text_secondary'))
-            .margin({ top: 2 })
-        }
-        .width('33%')
-        .alignItems(HorizontalAlign.Center)
-
-        Column() {
-          Text(this.dueForecast!.day3.toString())
-            .fontSize(22)
-            .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.primary'))
-          Text('3 天内')
-            .fontSize(11)
-            .fontColor($r('app.color.text_secondary'))
-            .margin({ top: 2 })
-        }
-        .width('33%')
-        .alignItems(HorizontalAlign.Center)
-
-        Column() {
-          Text(this.dueForecast!.day7.toString())
-            .fontSize(22)
-            .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.success'))
-          Text('7 天内')
-            .fontSize(11)
-            .fontColor($r('app.color.text_secondary'))
-            .margin({ top: 2 })
-        }
-        .width('33%')
-        .alignItems(HorizontalAlign.Center)
-      }
-      .width('100%')
-    }
-    .width('100%')
-    .padding(14)
-    .backgroundColor($r('app.color.surface'))
-    .borderRadius(12)
-    .margin({ left: 14, right: 14, top: 4 })
+    .margin({ left: 14, right: 14, top: 12 })
   }
 
   @Builder
@@ -833,19 +737,28 @@ export struct StatsPage {
     .padding(14)
     .backgroundColor($r('app.color.surface'))
     .borderRadius(12)
-    .margin({ left: 14, right: 14, top: 4 })
+    .margin({ left: 14, right: 14, top: 12 })
   }
 
   @Builder
   buildDifficultCards() {
     Column() {
-      Text('高难度卡片 Top 10')
+      Text('高难度卡片排行')
         .fontSize(13)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('app.color.text_primary'))
         .width('100%')
         .textAlign(TextAlign.Start)
         .margin({ bottom: 10 })
+
+      if (this.difficultCards.length === 0) {
+        Text('根据过往数据，还未出现高难度卡片')
+          .fontSize(12)
+          .fontColor($r('app.color.text_secondary'))
+          .width('100%')
+          .textAlign(TextAlign.Center)
+          .padding({ top: 8, bottom: 8 })
+      }
 
       ForEach(this.difficultCards, (item: DifficultCard, index: number) => {
         Row() {
@@ -901,6 +814,29 @@ export struct StatsPage {
             .color($r('app.color.outline'))
         }
       }, (item: DifficultCard) => 'diff_' + item.cardId.toString())
+
+      Divider()
+        .height(1)
+        .color($r('app.color.outline'))
+        .margin({ top: 10, bottom: 10 })
+
+      Row() {
+        Text('查看全部')
+          .fontSize(13)
+          .fontColor($r('app.color.primary'))
+        Text(' ›')
+          .fontSize(13)
+          .fontColor($r('app.color.primary'))
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.Center)
+      .padding({ top: 4, bottom: 4 })
+      .onClick(() => {
+        this.getUIContext().getRouter().pushUrl({
+          url: 'pages/CardDifficultyPage',
+          params: { deckId: this.selectedDeckId }
+        });
+      })
     }
     .width('100%')
     .padding(14)
@@ -1049,7 +985,7 @@ export struct StatsPage {
           .textAlign(TextAlign.Center)
           .padding({ top: 8, bottom: 8 })
       } else {
-        ForEach(this.todayCards, (item: DayDetailRecord, index: number) => {
+        ForEach(this.todayCards.slice(0, 10), (item: DayDetailRecord, index: number) => {
           Row() {
             Column() {
               Text(item.cardFront)
@@ -1087,13 +1023,36 @@ export struct StatsPage {
             });
           })
 
-          if (index < this.todayCards.length - 1) {
+          if (index < Math.min(9, this.todayCards.length - 1)) {
             Divider()
               .height(1)
               .color($r('app.color.outline'))
           }
         }, (item: DayDetailRecord) => `today_${item.cardId}_${item.durationSeconds}`)
       }
+
+      Divider()
+        .height(1)
+        .color($r('app.color.outline'))
+        .margin({ top: 10, bottom: 10 })
+
+      Row() {
+        Text('查看全部')
+          .fontSize(13)
+          .fontColor($r('app.color.primary'))
+        Text(' ›')
+          .fontSize(13)
+          .fontColor($r('app.color.primary'))
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.Center)
+      .padding({ top: 4, bottom: 4 })
+      .onClick(() => {
+        this.getUIContext().getRouter().pushUrl({
+          url: 'pages/TodayCardsPage',
+          params: { deckId: this.selectedDeckId }
+        });
+      })
     }
     .width('100%')
     .padding(14)

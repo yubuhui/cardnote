@@ -646,6 +646,71 @@ export class MemoryRecordDao {
     resultSet.close();
     return total;
   }
+
+  /** 查询指定牌组某一天的记录 */
+  async getRecordsByDateAndDeck(year: number, month: number, day: number, deckId: number): Promise<MemoryRecord[]> {
+    const startOfDay: number = new Date(year, month - 1, day).getTime();
+    const endOfDay: number = startOfDay + 86400000;
+
+    const sql: string =
+      `SELECT mr.id, mr.card_id, mr.result, mr.date, mr.duration FROM memory_record mr INNER JOIN card c ON mr.card_id = c.id WHERE mr.date >= ? AND mr.date < ? AND c.deck_id = ? ORDER BY mr.date DESC`;
+    const bindArgs: relationalStore.ValueType[] = [startOfDay, endOfDay, deckId];
+    const resultSet: relationalStore.ResultSet = await this.db.querySql(sql, bindArgs);
+    const records: MemoryRecord[] = [];
+    if (resultSet.rowCount > 0) {
+      resultSet.goToFirstRow();
+      do {
+        records.push(rowToRecord(resultSet));
+      } while (resultSet.goToNextRow());
+    }
+    resultSet.close();
+    return records;
+  }
+
+  /** 查询指定牌组的今日记录 */
+  async getTodayRecordsByDeck(deckId: number): Promise<MemoryRecord[]> {
+    const now: Date = new Date();
+    const startOfDay: number = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const endOfDay: number = startOfDay + 86400000;
+
+    const sql: string =
+      `SELECT mr.id, mr.card_id, mr.result, mr.date, mr.duration FROM memory_record mr INNER JOIN card c ON mr.card_id = c.id WHERE mr.date >= ? AND mr.date < ? AND c.deck_id = ?`;
+    const bindArgs: relationalStore.ValueType[] = [startOfDay, endOfDay, deckId];
+    const resultSet: relationalStore.ResultSet = await this.db.querySql(sql, bindArgs);
+    const records: MemoryRecord[] = [];
+    if (resultSet.rowCount > 0) {
+      resultSet.goToFirstRow();
+      do {
+        records.push(rowToRecord(resultSet));
+      } while (resultSet.goToNextRow());
+    }
+    resultSet.close();
+    return records;
+  }
+
+  /** 查询指定牌组某月的复习日期集合 */
+  async getReviewDatesByMonthByDeck(year: number, month: number, deckId: number): Promise<Set<number>> {
+    const startDate: Date = new Date(year, month - 1, 1);
+    const endDate: Date = new Date(year, month, 1);
+    const startMs: number = startDate.getTime();
+    const endMs: number = endDate.getTime();
+
+    const sql: string =
+      `SELECT mr.date FROM memory_record mr INNER JOIN card c ON mr.card_id = c.id WHERE mr.date >= ? AND mr.date < ? AND c.deck_id = ?`;
+    const bindArgs: relationalStore.ValueType[] = [startMs, endMs, deckId];
+    const resultSet: relationalStore.ResultSet = await this.db.querySql(sql, bindArgs);
+    const dates: Set<number> = new Set();
+    if (resultSet.rowCount > 0) {
+      resultSet.goToFirstRow();
+      do {
+        const timestamp: number = resultSet.getLong(resultSet.getColumnIndex('date'));
+        const recordDate: Date = new Date(timestamp);
+        dates.add(recordDate.getDate());
+      } while (resultSet.goToNextRow());
+    }
+    resultSet.close();
+    return dates;
+  }
 }
 
 interface DayAccuracy {

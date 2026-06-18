@@ -548,4 +548,114 @@ export class StudyViewModel {
     const forecast: DueForecast = { day1: day1, day3: day3, day7: day7 };
     return forecast;
   }
+
+  async getAllDifficultCards(): Promise<DifficultCard[]> {
+    const rows: CardDifficultyRow[] = await this.recordDao.getCardsWithDifficulty();
+    const result: DifficultCard[] = [];
+    for (let i: number = 0; i < rows.length; i++) {
+      const row: CardDifficultyRow = rows[i];
+      const card: DifficultCard = {
+        cardId: row.cardId,
+        cardFront: row.cardFront,
+        forgetCount: row.forgetCount,
+        totalReviews: row.totalReviews,
+        forgetRate: row.totalReviews > 0 ? row.forgetCount / row.totalReviews : 0,
+      };
+      result.push(card);
+    }
+    return result;
+  }
+
+  async getAllDifficultCardsByDeck(deckId: number): Promise<DifficultCard[]> {
+    const rows: CardDifficultyRow[] = await this.recordDao.getCardsWithDifficultyByDeck(deckId);
+    const result: DifficultCard[] = [];
+    for (let i: number = 0; i < rows.length; i++) {
+      const row: CardDifficultyRow = rows[i];
+      const card: DifficultCard = {
+        cardId: row.cardId,
+        cardFront: row.cardFront,
+        forgetCount: row.forgetCount,
+        totalReviews: row.totalReviews,
+        forgetRate: row.totalReviews > 0 ? row.forgetCount / row.totalReviews : 0,
+      };
+      result.push(card);
+    }
+    return result;
+  }
+
+  async getDayDetailByDeck(year: number, month: number, day: number, deckId: number): Promise<DayDetail> {
+    const records: MemoryRecord[] = await this.recordDao.getRecordsByDateAndDeck(year, month, day, deckId);
+    const detailRecords: DayDetailRecord[] = [];
+    let forgetCount: number = 0;
+    let hardCount: number = 0;
+    let goodCount: number = 0;
+    let easyCount: number = 0;
+    let totalDuration: number = 0;
+
+    for (const r of records) {
+      const card: Card | null = await this.cardVm.getById(r.cardId);
+      if (!card) {
+        continue;
+      }
+      totalDuration += r.duration;
+      if (r.result === Rating.forget) forgetCount++;
+      else if (r.result === Rating.hard) hardCount++;
+      else if (r.result === Rating.good) goodCount++;
+      else if (r.result === Rating.easy) easyCount++;
+      detailRecords.push({
+        cardId: r.cardId,
+        cardFront: card.front,
+        result: r.result,
+        resultLabel: RATING_LABELS[r.result] ?? '未知',
+        resultColor: getRatingColor(r.result),
+        durationSeconds: r.duration,
+      });
+    }
+
+    return {
+      dateLabel: year + '/' + month + '/' + day,
+      totalReviews: detailRecords.length,
+      forgetCount,
+      hardCount,
+      goodCount,
+      easyCount,
+      totalDurationSeconds: totalDuration,
+      records: detailRecords,
+    };
+  }
+
+  async getAllTodayCards(): Promise<DayDetailRecord[]> {
+    const today: Date = new Date();
+    const detail: DayDetail = await this.getDayDetail(
+      today.getFullYear(), today.getMonth() + 1, today.getDate()
+    );
+    return detail.records;
+  }
+
+  async getAllTodayCardsByDeck(deckId: number): Promise<DayDetailRecord[]> {
+    const today: Date = new Date();
+    const detail: DayDetail = await this.getDayDetailByDeck(
+      today.getFullYear(), today.getMonth() + 1, today.getDate(), deckId
+    );
+    return detail.records;
+  }
+
+  async getTodayStatsByDeck(deckId: number): Promise<TodayStats> {
+    const records: MemoryRecord[] = await this.recordDao.getTodayRecordsByDeck(deckId);
+    let forget: number = 0;
+    let hard: number = 0;
+    let good: number = 0;
+    let easy: number = 0;
+    for (const r of records) {
+      if (r.result === Rating.forget) forget++;
+      else if (r.result === Rating.hard) hard++;
+      else if (r.result === Rating.good) good++;
+      else if (r.result === Rating.easy) easy++;
+    }
+    return { forget, hard, good, easy };
+  }
+
+  async getReviewDatesForMonthByDeck(year: number, month: number, deckId: number): Promise<Set<number>> {
+    return await this.recordDao.getReviewDatesByMonthByDeck(year, month, deckId);
+  }
 }
