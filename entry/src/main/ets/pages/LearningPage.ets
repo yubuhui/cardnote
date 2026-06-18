@@ -32,7 +32,7 @@ struct LearningPage {
   private cardActiveSeconds: number = 0;
   private lastInteractionTime: number = 0;
   private bookmarkedOnly: boolean = false;
-  private ratingInProgress: boolean = false;
+  private suppressRefresh: boolean = false;
 
   aboutToAppear() {
     const params = this.getUIContext().getRouter().getParams() as Record<string, Object>;
@@ -80,7 +80,7 @@ struct LearningPage {
   }
 
   async refreshCurrentCard() {
-    if (this.ratingInProgress) {
+    if (this.suppressRefresh) {
       return;
     }
     if (!this.currentCard) {
@@ -894,7 +894,7 @@ struct LearningPage {
     if (!this.currentCard) {
       return;
     }
-    this.ratingInProgress = true;
+    this.suppressRefresh = true;
     this.onUserInteraction();
     const duration: number = this.stopCardTimer();
     // 保存评分前卡片快照（用于撤销）
@@ -908,7 +908,7 @@ struct LearningPage {
       // 恢复计时器（让用户可以重试）
       this.startCardTimer();
     } finally {
-      this.ratingInProgress = false;
+      this.suppressRefresh = false;
     }
   }
 
@@ -938,23 +938,28 @@ struct LearningPage {
     if (!this.lastRatedCardSnapshot || this.currentIndex <= 0) {
       return;
     }
-    // 恢复卡片到评分前状态
-    await this.studyViewModel.undoRating(
-      this.lastRatedCardSnapshot.id,
-      this.lastRatedCardSnapshot
-    );
-    // 回到上一张卡片
-    this.currentIndex -= 1;
-    this.currentCard = this.dueCards[this.currentIndex];
-    await this.updateCurrentDeck();
-    this.loadCardMeta();
-    this.stopCardTimer();
-    this.startCardTimer();
-    this.showAnswer = false;
-    this.showRating = false;
-    this.selectedChoiceIndex = -1;
-    this.canUndo = false;
-    this.lastRatedCardSnapshot = null;
+    this.suppressRefresh = true;
+    try {
+      // 恢复卡片到评分前状态
+      await this.studyViewModel.undoRating(
+        this.lastRatedCardSnapshot.id,
+        this.lastRatedCardSnapshot
+      );
+      // 回到上一张卡片
+      this.currentIndex -= 1;
+      this.currentCard = this.dueCards[this.currentIndex];
+      await this.updateCurrentDeck();
+      this.loadCardMeta();
+      this.stopCardTimer();
+      this.startCardTimer();
+      this.showAnswer = false;
+      this.showRating = false;
+      this.selectedChoiceIndex = -1;
+      this.canUndo = false;
+      this.lastRatedCardSnapshot = null;
+    } finally {
+      this.suppressRefresh = false;
+    }
   }
 
   nextCard() {
