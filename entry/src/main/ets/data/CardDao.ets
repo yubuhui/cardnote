@@ -240,4 +240,54 @@ export class CardDao {
     resultSet.close();
     return count;
   }
+
+  /** 统计未来 N 天内到期的卡片数（包含已到期未复习的卡片） */
+  async countDueWithinDays(days: number): Promise<number> {
+    const future: number = Date.now() + days * 86400000;
+    const sql: string = `SELECT COUNT(*) as cnt FROM card WHERE next_review_time <= ?`;
+    const bindArgs: relationalStore.ValueType[] = [future];
+    const resultSet: relationalStore.ResultSet = await this.db.querySql(sql, bindArgs);
+    let count: number = 0;
+    if (resultSet.rowCount > 0) {
+      resultSet.goToFirstRow();
+      count = resultSet.getLong(resultSet.getColumnIndex('cnt'));
+    }
+    resultSet.close();
+    return count;
+  }
+
+  /** 统计指定牌组的卡片总数 */
+  async countByDeckId(deckId: number): Promise<number> {
+    const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('card');
+    predicates.equalTo('deck_id', deckId);
+    const resultSet: relationalStore.ResultSet = await this.db.query(predicates);
+    const count: number = resultSet.rowCount;
+    resultSet.close();
+    return count;
+  }
+
+  /** 统计指定牌组中指定状态的卡片数 */
+  async countByStatusAndDeck(status: CardStatus, deckId: number): Promise<number> {
+    const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('card');
+    predicates.equalTo('status', status).equalTo('deck_id', deckId);
+    const resultSet: relationalStore.ResultSet = await this.db.query(predicates);
+    const count: number = resultSet.rowCount;
+    resultSet.close();
+    return count;
+  }
+
+  /** 统计指定牌组中未来 N 天内到期的卡片数（包含已到期） */
+  async countDueWithinDaysByDeck(days: number, deckId: number): Promise<number> {
+    const future: number = Date.now() + days * 86400000;
+    const sql: string = `SELECT COUNT(*) as cnt FROM card WHERE next_review_time <= ? AND deck_id = ?`;
+    const bindArgs: relationalStore.ValueType[] = [future, deckId];
+    const resultSet: relationalStore.ResultSet = await this.db.querySql(sql, bindArgs);
+    let count: number = 0;
+    if (resultSet.rowCount > 0) {
+      resultSet.goToFirstRow();
+      count = resultSet.getLong(resultSet.getColumnIndex('cnt'));
+    }
+    resultSet.close();
+    return count;
+  }
 }

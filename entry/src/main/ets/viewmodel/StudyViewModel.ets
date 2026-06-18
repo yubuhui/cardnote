@@ -3,7 +3,8 @@ import { Deck } from '../model/Deck';
 import { MemoryRecord } from '../model/MemoryRecord';
 import { CardViewModel } from './CardViewModel';
 import { DeckDao } from '../data/DeckDao';
-import { MemoryRecordDao, DailyDuration } from '../data/MemoryRecordDao';
+import { CardDao } from '../data/CardDao';
+import { MemoryRecordDao, DailyDuration, RatingDistribution, CardDifficultyRow, DailyAccuracyRow } from '../data/MemoryRecordDao';
 import { Rating } from '../data/SM2Algorithm';
 import { ReviewSettingsManager, ReviewSettings } from '../data/ReviewSettingsManager';
 import { CardStatus } from '../model/CardTypeEnum';
@@ -47,6 +48,53 @@ export interface DayDetail {
   records: DayDetailRecord[];
 }
 
+export interface OverviewStats {
+  totalCards: number;
+  masteredCards: number;
+  dueToday: number;
+  totalReviews: number;
+}
+
+export { RatingDistribution };
+
+export interface StreakInfo {
+  currentStreak: number;
+  longestStreak: number;
+}
+
+export interface MasteryProgress {
+  unlearned: number;
+  reviewing: number;
+  mastered: number;
+  total: number;
+}
+
+export interface DailyAccuracy {
+  dateLabel: string;
+  accuracy: number;
+  totalReviews: number;
+}
+
+export interface DifficultCard {
+  cardId: number;
+  cardFront: string;
+  forgetCount: number;
+  totalReviews: number;
+  forgetRate: number;
+}
+
+export interface DueForecast {
+  day1: number;
+  day3: number;
+  day7: number;
+}
+
+export interface DurationStats {
+  totalHours: number;
+  weekHours: number;
+  monthHours: number;
+}
+
 const RATING_LABELS: string[] = ['忘记', '困难', '良好', '容易'];
 
 /** 根据评分获取对应的颜色资源引用（适配深色模式） */
@@ -64,10 +112,12 @@ function getRatingColor(rating: number): ResourceColor {
 export class StudyViewModel {
   private cardVm: CardViewModel;
   private recordDao: MemoryRecordDao;
+  private cardDao: CardDao;
 
   constructor() {
     this.cardVm = new CardViewModel();
     this.recordDao = new MemoryRecordDao();
+    this.cardDao = new CardDao();
   }
 
   // 获取待复习卡片（按牌组独立限额）
@@ -266,5 +316,236 @@ export class StudyViewModel {
       await this.cardVm.updateCard(card);
     }
     return card;
+  }
+
+  async getOverviewStats(): Promise<OverviewStats> {
+    const totalCards: number = await this.cardDao.count();
+    const masteredCards: number = await this.cardDao.countByStatus(CardStatus.mastered);
+    const dueCards: Card[] = await this.cardDao.getDueCards();
+    const totalReviews: number = await this.recordDao.getTotalCount();
+    const stats: OverviewStats = {
+      totalCards: totalCards,
+      masteredCards: masteredCards,
+      dueToday: dueCards.length,
+      totalReviews: totalReviews,
+    };
+    return stats;
+  }
+
+  async getRatingDistribution(): Promise<RatingDistribution> {
+    return await this.recordDao.getRatingDistribution();
+  }
+
+  async getStreakInfo(): Promise<StreakInfo> {
+    const dates: number[] = await this.recordDao.getAllReviewDates();
+    const daySet: Set<string> = new Set<string>();
+    for (let i: number = 0; i < dates.length; i++) {
+      const d: Date = new Date(dates[i]);
+      const key: string = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+      daySet.add(key);
+    }
+
+    let currentStreak: number = 0;
+    const today: Date = new Date();
+    for (let i: number = 0; true; i++) {
+      const check: Date = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
+      const key: string = check.getFullYear() + '-' + (check.getMonth() + 1) + '-' + check.getDate();
+      if (daySet.has(key)) {
+        currentStreak++;
+      } else {
+        break;
+      }
+    }
+
+    let longestStreak: number = 0;
+    if (dates.length > 0) {
+      let run: number = 1;
+      const firstD: Date = new Date(dates[0]);
+      let prevDay: Date = new Date(firstD.getFullYear(), firstD.getMonth(), firstD.getDate());
+      for (let i: number = 1; i < dates.length; i++) {
+        const d: Date = new Date(dates[i]);
+        const curDay: Date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        const diffMs: number = curDay.getTime() - prevDay.getTime();
+        const diffDays: number = Math.floor(diffMs / 86400000);
+        if (diffDays === 1) {
+          run++;
+        } else if (diffDays > 1) {
+          if (run > longestStreak) {
+            longestStreak = run;
+          }
+          run = 1;
+        }
+        prevDay = curDay;
+      }
+      if (run > longestStreak) {
+        longestStreak = run;
+      }
+    }
+
+    const info: StreakInfo = { currentStreak: currentStreak, longestStreak: longestStreak };
+    return info;
+  }
+
+  async getMasteryProgress(): Promise<MasteryProgress> {
+    const unlearned: number = await this.cardDao.countByStatus(CardStatus.unlearned);
+    const reviewing: number = await this.cardDao.countByStatus(CardStatus.reviewing);
+    const mastered: number = await this.cardDao.countByStatus(CardStatus.mastered);
+    const total: number = unlearned + reviewing + mastered;
+    const progress: MasteryProgress = {
+      unlearned: unlearned,
+      reviewing: reviewing,
+      mastered: mastered,
+      total: total,
+    };
+    return progress;
+  }
+
+  async getDifficultCards(limit: number): Promise<DifficultCard[]> {
+    const rows: CardDifficultyRow[] = await this.recordDao.getCardsWithDifficulty();
+    const result: DifficultCard[] = [];
+    const count: number = Math.min(limit, rows.length);
+    for (let i: number = 0; i < count; i++) {
+      const row: CardDifficultyRow = rows[i];
+      const card: DifficultCard = {
+        cardId: row.cardId,
+        cardFront: row.cardFront,
+        forgetCount: row.forgetCount,
+        totalReviews: row.totalReviews,
+        forgetRate: row.totalReviews > 0 ? row.forgetCount / row.totalReviews : 0,
+      };
+      result.push(card);
+    }
+    return result;
+  }
+
+  async getDailyAccuracyTrend(days: number): Promise<DailyAccuracy[]> {
+    const rows: DailyAccuracyRow[] = await this.recordDao.getDailyAccuracyStats(days);
+    const result: DailyAccuracy[] = [];
+    for (let i: number = 0; i < rows.length; i++) {
+      const row: DailyAccuracyRow = rows[i];
+      const accuracy: number = row.totalCount > 0 ? Math.round((row.goodCount / row.totalCount) * 100) : 0;
+      const acc: DailyAccuracy = {
+        dateLabel: row.dateLabel,
+        accuracy: accuracy,
+        totalReviews: row.totalCount,
+      };
+      result.push(acc);
+    }
+    return result;
+  }
+
+  async getDueForecast(): Promise<DueForecast> {
+    const day1: number = await this.cardDao.countDueWithinDays(1);
+    const day3: number = await this.cardDao.countDueWithinDays(3);
+    const day7: number = await this.cardDao.countDueWithinDays(7);
+    const forecast: DueForecast = { day1: day1, day3: day3, day7: day7 };
+    return forecast;
+  }
+
+  // ===== 牌组操作 =====
+  async getAllDecks(): Promise<Deck[]> {
+    return this.cardVm.getAllDecks();
+  }
+
+  async getDurationStats(): Promise<DurationStats> {
+    const totalSeconds: number = await this.recordDao.getTotalDuration();
+    const weekSeconds: number = await this.recordDao.getWeekDuration();
+    const monthSeconds: number = await this.recordDao.getMonthDuration();
+    const stats: DurationStats = {
+      totalHours: Math.round(totalSeconds / 360 * 10) / 100,
+      weekHours: Math.round(weekSeconds / 360 * 10) / 100,
+      monthHours: Math.round(monthSeconds / 360 * 10) / 100,
+    };
+    return stats;
+  }
+
+  async getDurationStatsByDeck(deckId: number): Promise<DurationStats> {
+    const totalSeconds: number = await this.recordDao.getTotalDurationByDeck(deckId);
+    const weekSeconds: number = await this.recordDao.getWeekDurationByDeck(deckId);
+    const monthSeconds: number = await this.recordDao.getMonthDurationByDeck(deckId);
+    const stats: DurationStats = {
+      totalHours: Math.round(totalSeconds / 360 * 10) / 100,
+      weekHours: Math.round(weekSeconds / 360 * 10) / 100,
+      monthHours: Math.round(monthSeconds / 360 * 10) / 100,
+    };
+    return stats;
+  }
+
+  async getOverviewStatsByDeck(deckId: number): Promise<OverviewStats> {
+    const totalCards: number = await this.cardDao.countByDeckId(deckId);
+    const masteredCards: number = await this.cardDao.countByStatusAndDeck(CardStatus.mastered, deckId);
+    const dueCards: Card[] = await this.cardDao.getDueCards([deckId]);
+    const totalReviews: number = await this.recordDao.getTotalCountByDeck(deckId);
+    const stats: OverviewStats = {
+      totalCards: totalCards,
+      masteredCards: masteredCards,
+      dueToday: dueCards.length,
+      totalReviews: totalReviews,
+    };
+    return stats;
+  }
+
+  async getRatingDistributionByDeck(deckId: number): Promise<RatingDistribution> {
+    return await this.recordDao.getRatingDistributionByDeck(deckId);
+  }
+
+  async getMasteryProgressByDeck(deckId: number): Promise<MasteryProgress> {
+    const unlearned: number = await this.cardDao.countByStatusAndDeck(CardStatus.unlearned, deckId);
+    const reviewing: number = await this.cardDao.countByStatusAndDeck(CardStatus.reviewing, deckId);
+    const mastered: number = await this.cardDao.countByStatusAndDeck(CardStatus.mastered, deckId);
+    const total: number = unlearned + reviewing + mastered;
+    const progress: MasteryProgress = {
+      unlearned: unlearned,
+      reviewing: reviewing,
+      mastered: mastered,
+      total: total,
+    };
+    return progress;
+  }
+
+  async getDifficultCardsByDeck(deckId: number, limit: number): Promise<DifficultCard[]> {
+    const rows: CardDifficultyRow[] = await this.recordDao.getCardsWithDifficultyByDeck(deckId);
+    const result: DifficultCard[] = [];
+    const count: number = Math.min(limit, rows.length);
+    for (let i: number = 0; i < count; i++) {
+      const row: CardDifficultyRow = rows[i];
+      const card: DifficultCard = {
+        cardId: row.cardId,
+        cardFront: row.cardFront,
+        forgetCount: row.forgetCount,
+        totalReviews: row.totalReviews,
+        forgetRate: row.totalReviews > 0 ? row.forgetCount / row.totalReviews : 0,
+      };
+      result.push(card);
+    }
+    return result;
+  }
+
+  async getDailyAccuracyTrendByDeck(days: number, deckId: number): Promise<DailyAccuracy[]> {
+    const rows: DailyAccuracyRow[] = await this.recordDao.getDailyAccuracyStatsByDeck(days, deckId);
+    const result: DailyAccuracy[] = [];
+    for (let i: number = 0; i < rows.length; i++) {
+      const row: DailyAccuracyRow = rows[i];
+      const accuracy: number = row.totalCount > 0 ? Math.round((row.goodCount / row.totalCount) * 100) : 0;
+      const acc: DailyAccuracy = {
+        dateLabel: row.dateLabel,
+        accuracy: accuracy,
+        totalReviews: row.totalCount,
+      };
+      result.push(acc);
+    }
+    return result;
+  }
+
+  async getDailyDurationsByDeck(days: number, deckId: number): Promise<DailyDuration[]> {
+    return await this.recordDao.getDailyDurationsByDeck(days, deckId);
+  }
+
+  async getDueForecastByDeck(deckId: number): Promise<DueForecast> {
+    const day1: number = await this.cardDao.countDueWithinDaysByDeck(1, deckId);
+    const day3: number = await this.cardDao.countDueWithinDaysByDeck(3, deckId);
+    const day7: number = await this.cardDao.countDueWithinDaysByDeck(7, deckId);
+    const forecast: DueForecast = { day1: day1, day3: day3, day7: day7 };
+    return forecast;
   }
 }
