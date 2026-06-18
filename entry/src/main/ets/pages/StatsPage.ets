@@ -1,4 +1,4 @@
-import { StudyViewModel, DayDetail, DayDetailRecord, OverviewStats, RatingDistribution, StreakInfo, MasteryProgress, DailyAccuracy, DifficultCard } from '../viewmodel/StudyViewModel';
+import { StudyViewModel, DayDetail, DayDetailRecord, OverviewStats, RatingDistribution, StreakInfo, MasteryProgress, DifficultCard } from '../viewmodel/StudyViewModel';
 import { DailyDuration } from '../data/MemoryRecordDao';
 import { Deck } from '../model/Deck';
 import { QuickMonthPicker } from '../components/QuickMonthPicker';
@@ -31,7 +31,6 @@ export struct StatsPage {
   @State ratingDist: RatingDistribution | null = null;
   @State streak: StreakInfo | null = null;
   @State mastery: MasteryProgress | null = null;
-  @State accuracyTrend: DailyAccuracy[] = [];
   @State difficultCards: DifficultCard[] = [];
   @State selectedDeckId: number = 0;
   @State decks: Deck[] = [];
@@ -89,13 +88,11 @@ export struct StatsPage {
         this.ratingDist = await this.studyVm.getRatingDistribution();
         this.streak = await this.studyVm.getStreakInfo();
         this.mastery = await this.studyVm.getMasteryProgress();
-        this.accuracyTrend = await this.studyVm.getDailyAccuracyTrend(7);
         this.difficultCards = await this.studyVm.getDifficultCards(10);
       } else {
         this.ratingDist = await this.studyVm.getRatingDistributionByDeck(this.selectedDeckId);
         this.streak = await this.studyVm.getStreakInfo();
         this.mastery = await this.studyVm.getMasteryProgressByDeck(this.selectedDeckId);
-        this.accuracyTrend = await this.studyVm.getDailyAccuracyTrendByDeck(7, this.selectedDeckId);
         this.difficultCards = await this.studyVm.getDifficultCardsByDeck(this.selectedDeckId, 10);
       }
     } catch (err) {
@@ -302,11 +299,6 @@ export struct StatsPage {
           // ===== 评分分布圆环图 =====
           if (this.ratingDist && this.ratingDist.total > 0) {
             this.buildRatingDonut()
-          }
-
-          // ===== 正确率趋势 =====
-          if (this.accuracyTrend.length > 0) {
-            this.buildAccuracyTrend()
           }
 
           // 学习时长柱状图
@@ -776,61 +768,6 @@ export struct StatsPage {
       }
       .width('100%')
       .justifyContent(FlexAlign.Center)
-    }
-    .width('100%')
-    .padding(14)
-    .backgroundColor($r('app.color.surface'))
-    .borderRadius(12)
-    .margin({ left: 14, right: 14, top: 12 })
-  }
-
-  @Builder
-  buildAccuracyTrend() {
-    Column() {
-      Text('近 7 天正确率趋势（%）')
-        .fontSize(13)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.text_primary'))
-        .width('100%')
-        .textAlign(TextAlign.Start)
-        .margin({ bottom: 10 })
-
-      Row() {
-        ForEach(this.accuracyTrend, (item: DailyAccuracy, index: number) => {
-          Column() {
-            Text(item.accuracy.toString())
-              .fontSize(9)
-              .fontColor($r('app.color.text_secondary'))
-              .margin({ bottom: 4 })
-
-            Row()
-              .width(22)
-              .height(
-                item.totalReviews > 0
-                  ? Math.max(4, Math.min(100, item.accuracy))
-                  : 4
-              )
-              .backgroundColor(
-                item.totalReviews > 0
-                  ? (item.accuracy >= 60 ? $r('app.color.success') : (item.accuracy >= 30 ? $r('app.color.warning') : $r('app.color.danger')))
-                  : $r('app.color.outline')
-              )
-              .borderRadius(4)
-
-            Text(item.dateLabel)
-              .fontSize(9)
-              .fontColor($r('app.color.text_secondary'))
-              .margin({ top: 6 })
-              .maxLines(1)
-          }
-          .width('14.28%')
-          .height(130)
-          .justifyContent(FlexAlign.End)
-          .alignItems(HorizontalAlign.Center)
-        }, (item: DailyAccuracy, index: number) => item.dateLabel + '_acc_' + index.toString())
-      }
-      .width('100%')
-      .height(130)
     }
     .width('100%')
     .padding(14)
