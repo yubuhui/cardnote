@@ -26,6 +26,7 @@ struct CardItem {
   @Prop nextReviewTime: number = 0;
   @Prop isMultiSelect: boolean = false;
   @Prop isSelected: boolean = false;
+  @Prop isBookmarked: boolean = false;
   onTap: () => void = () => {};
   onLongPress: () => void = () => {};
 
@@ -50,6 +51,12 @@ struct CardItem {
           .hitTestBehavior(HitTestMode.None)
       }
       Row() {
+        if (this.isBookmarked) {
+          Text('★')
+            .fontSize(14)
+            .fontColor('#F5A623')
+            .margin({ right: 4 })
+        }
         Text(this.cardFront)
           .fontSize(14)
           .maxLines(1)
@@ -614,6 +621,7 @@ struct HomePage {
           CardItem({
             cardId: card.id, cardFront: card.front, nextReviewTime: card.nextReviewTime,
             isMultiSelect: this.isMultiSelectMode, isSelected: this.isCardSelected(card.id),
+            isBookmarked: card.isBookmarked === true,
             onTap: () => {
               this.deletingDeckId = -1;
               if (this.isMultiSelectMode) { this.toggleCardSelection(card.id); }

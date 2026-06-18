@@ -63,6 +63,13 @@ struct LearningDetailPage {
           .layoutWeight(1)
           .textAlign(TextAlign.Center)
 
+        if (this.isBookmarked) {
+          Text('★')
+            .fontSize(14)
+            .fontColor('#F5A623')
+            .margin({ right: 4 })
+        }
+
         Text('⋮')
           .fontSize(16)
           .fontColor($r('app.color.text_secondary'))
