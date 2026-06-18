@@ -479,6 +479,12 @@ struct HomePage {
                   .margin({ left: 8 })
                   .onClick(() => { this.exitSearch(); })
               }.width('100%').padding({ left: 12, right: 12, top: 12, bottom: 8 }).backgroundColor($r('app.color.surface'))
+              .transition(TransitionEffect.asymmetric(
+                TransitionEffect.OPACITY.animation({ duration: 250, curve: Curve.EaseInOut })
+                  .combine(TransitionEffect.translate({ y: -24 }).animation({ duration: 250, curve: Curve.EaseInOut })),
+                TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.EaseIn })
+                  .combine(TransitionEffect.translate({ y: 0 }).animation({ duration: 200, curve: Curve.EaseIn }))
+              ))
 
               if (this.searchQuery.trim().length > 0) {
                 Scroll() {
@@ -507,12 +513,14 @@ struct HomePage {
                     }, (card: Card) => card.id.toString())
                   }.width('100%').justifyContent(FlexAlign.Start).padding({ top: 10, bottom: 68 })
                 }.width('100%').layoutWeight(1).scrollBar(BarState.Off).align(Alignment.TopStart)
+                .transition(TransitionEffect.OPACITY.animation({ duration: 250, curve: Curve.EaseInOut }))
               } else {
                 Column() {
                   Text('输入关键词搜索卡片')
                     .fontSize(14)
                     .fontColor($r('app.color.text_secondary'))
                 }.width('100%').layoutWeight(1).justifyContent(FlexAlign.Center)
+                .transition(TransitionEffect.OPACITY.animation({ duration: 250, curve: Curve.EaseInOut }))
               }
             } else {
             Column() {
@@ -536,7 +544,9 @@ struct HomePage {
                 }.layoutWeight(1).padding({ top: 12, bottom: 12 }).backgroundColor($r('app.color.surface')).borderRadius(12).shadow({ radius: 6, color: $r('app.color.shadow'), offsetY: 2 })
               }.width('100%')
             }.width('100%').padding({ left: 16, right: 16, top: 12, bottom: 14 }).backgroundColor($r('app.color.surface'))
+            .transition(TransitionEffect.OPACITY.animation({ duration: 250, curve: Curve.EaseInOut }))
 
+            Column() {
             if (this.decks.length > 0) { this.buildDeckFilter() }
             if (this.isMultiSelectMode) { this.buildMultiSelectBar() }
 
@@ -549,6 +559,8 @@ struct HomePage {
             }.width('100%').layoutWeight(1).scrollBar(BarState.Off).align(Alignment.TopStart)
 
             if (this.isMultiSelectMode) { this.buildBatchActionBar() } else { this.buildBottomBar() }
+            }.width('100%').layoutWeight(1)
+            .transition(TransitionEffect.OPACITY.animation({ duration: 250, curve: Curve.EaseInOut }))
             }
           }.width('100%').height('100%').backgroundColor($r('app.color.background'))
         }.tabBar(this.buildTab('首页', 0))
@@ -791,13 +803,17 @@ struct HomePage {
   }
 
   private enterSearch(): void {
-    this.isSearching = true;
-    this.searchQuery = '';
+    this.getUIContext().animateTo({ duration: 250, curve: Curve.EaseInOut }, () => {
+      this.isSearching = true;
+      this.searchQuery = '';
+    });
   }
 
   private exitSearch(): void {
-    this.isSearching = false;
-    this.searchQuery = '';
+    this.getUIContext().animateTo({ duration: 250, curve: Curve.EaseInOut }, () => {
+      this.isSearching = false;
+      this.searchQuery = '';
+    });
   }
 
   private getSearchResults(): Card[] {
