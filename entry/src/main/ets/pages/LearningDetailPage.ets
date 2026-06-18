@@ -37,7 +37,7 @@ struct LearningDetailPage {
       this.card = await this.cardVm.getById(this.cardId);
       this.reviewHistory = await this.studyVm.getCardReviewHistory(this.cardId);
     } catch (err) {
-      console.error('Load card failed:', err);
+      console.error('Load card failed:' + JSON.stringify(err));
     }
   }
 

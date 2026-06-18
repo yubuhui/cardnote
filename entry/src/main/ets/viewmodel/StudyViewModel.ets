@@ -247,9 +247,15 @@ export class StudyViewModel {
     let easyCount: number = 0;
     let totalDuration: number = 0;
 
+    const cardIds: number[] = records.map(r => r.cardId);
+    const cards: Card[] = await this.cardDao.getByIds(cardIds);
+    const cardMap: Map<number, Card> = new Map();
+    for (const c of cards) {
+      cardMap.set(c.id, c);
+    }
+
     for (const r of records) {
-      const card: Card | null = await this.cardVm.getById(r.cardId);
-      // 跳过已删除的卡片，不显示其学习数据
+      const card: Card | undefined = cardMap.get(r.cardId);
       if (!card) {
         continue;
       }
@@ -592,8 +598,15 @@ export class StudyViewModel {
     let easyCount: number = 0;
     let totalDuration: number = 0;
 
+    const cardIds: number[] = records.map(r => r.cardId);
+    const cards: Card[] = await this.cardDao.getByIds(cardIds);
+    const cardMap: Map<number, Card> = new Map();
+    for (const c of cards) {
+      cardMap.set(c.id, c);
+    }
+
     for (const r of records) {
-      const card: Card | null = await this.cardVm.getById(r.cardId);
+      const card: Card | undefined = cardMap.get(r.cardId);
       if (!card) {
         continue;
       }

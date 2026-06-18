@@ -221,6 +221,25 @@ export class CardDao {
     await this.db.delete(predicates);
   }
 
+  /** 批量根据 ID 查询 */
+  async getByIds(ids: number[]): Promise<Card[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+    const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('card');
+    predicates.in('id', ids);
+    const resultSet: relationalStore.ResultSet = await this.db.query(predicates);
+    const cards: Card[] = [];
+    if (resultSet.rowCount > 0) {
+      resultSet.goToFirstRow();
+      do {
+        cards.push(rowToCard(resultSet));
+      } while (resultSet.goToNextRow());
+    }
+    resultSet.close();
+    return cards;
+  }
+
   /** 统计卡片数 */
   async count(): Promise<number> {
     const resultSet: relationalStore.ResultSet = await this.db.query(

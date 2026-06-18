@@ -1,6 +1,7 @@
-import { StudyViewModel, TodayStats, DayDetail, DayDetailRecord, OverviewStats, RatingDistribution, StreakInfo, MasteryProgress, DailyAccuracy, DifficultCard } from '../viewmodel/StudyViewModel';
+import { StudyViewModel, DayDetail, DayDetailRecord, OverviewStats, RatingDistribution, StreakInfo, MasteryProgress, DailyAccuracy, DifficultCard } from '../viewmodel/StudyViewModel';
 import { DailyDuration } from '../data/MemoryRecordDao';
 import { Deck } from '../model/Deck';
+import { QuickMonthPicker } from '../components/QuickMonthPicker';
 
 interface SegmentData {
   count: number;
@@ -9,13 +10,18 @@ interface SegmentData {
 
 @Component
 export struct StatsPage {
+  @Prop @Watch('onTabVisible') currentTab: number = 0;
   @State reviewDates: Set<number> = new Set();
+  @State reviewDatesMap: Map<string, Set<number>> = new Map();
   @State currentYear: number = new Date().getFullYear();
   @State currentMonth: number = new Date().getMonth() + 1;
-  @State todayForget: number = 0;
-  @State todayHard: number = 0;
-  @State todayGood: number = 0;
-  @State todayEasy: number = 0;
+  private monthPickerController: CustomDialogController = new CustomDialogController({
+    builder: QuickMonthPicker({ confirm: (year: number, month: number) => {
+      this.onMonthPicked(year, month);
+    } }),
+    autoCancel: true,
+    alignment: DialogAlignment.Bottom,
+  });
   @State dailyDurations: DailyDuration[] = [];
   @State selectedDay: number = 0;
   @State dayDetail: DayDetail | null = null;
@@ -43,7 +49,7 @@ export struct StatsPage {
     try {
       this.decks = await this.studyVm.getAllDecks();
     } catch (err) {
-      console.error('Load decks failed:', err);
+      console.error('Load decks failed:' + JSON.stringify(err));
     }
   }
 
@@ -53,11 +59,7 @@ export struct StatsPage {
 
       if (this.selectedDeckId === 0) {
         this.reviewDates = await this.studyVm.getReviewDatesForMonth(this.currentYear, this.currentMonth);
-        const stats: TodayStats = await this.studyVm.getTodayStats();
-        this.todayForget = stats.forget;
-        this.todayHard = stats.hard;
-        this.todayGood = stats.good;
-        this.todayEasy = stats.easy;
+        this.reviewDatesMap.set(this.getMonthKey(this.currentYear, this.currentMonth), this.reviewDates);
 
         const dayDetail: DayDetail = await this.studyVm.getDayDetail(
           today.getFullYear(), today.getMonth() + 1, today.getDate()
@@ -67,11 +69,7 @@ export struct StatsPage {
         this.overview = await this.studyVm.getOverviewStats();
       } else {
         this.reviewDates = await this.studyVm.getReviewDatesForMonthByDeck(this.currentYear, this.currentMonth, this.selectedDeckId);
-        const stats: TodayStats = await this.studyVm.getTodayStatsByDeck(this.selectedDeckId);
-        this.todayForget = stats.forget;
-        this.todayHard = stats.hard;
-        this.todayGood = stats.good;
-        this.todayEasy = stats.easy;
+        this.reviewDatesMap.set(this.getMonthKey(this.currentYear, this.currentMonth), this.reviewDates);
 
         const dayDetail: DayDetail = await this.studyVm.getDayDetailByDeck(
           today.getFullYear(), today.getMonth() + 1, today.getDate(), this.selectedDeckId
@@ -81,7 +79,7 @@ export struct StatsPage {
         this.overview = await this.studyVm.getOverviewStatsByDeck(this.selectedDeckId);
       }
     } catch (err) {
-      console.error('Load stats failed:', err);
+      console.error('Load stats failed:' + JSON.stringify(err));
     }
   }
 
@@ -101,21 +99,30 @@ export struct StatsPage {
         this.difficultCards = await this.studyVm.getDifficultCardsByDeck(this.selectedDeckId, 10);
       }
     } catch (err) {
-      console.error('Load extra stats failed:', err);
+      console.error('Load extra stats failed:' + JSON.stringify(err));
     }
   }
 
   private getDaysInMonth(year: number, month: number): number {
-    return new Date(year, month, 0).getDate();
+    if (month === 2) {
+      if ((year % 4 === 0 && year % 100 !== 0) || year % 400 === 0) {
+        return 29;
+      }
+      return 28;
+    }
+    const days: number[] = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    return days[month - 1];
   }
 
   private getFirstDayOfWeek(year: number, month: number): number {
-    return new Date(year, month - 1, 1).getDay();
+    const t: number[] = [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4];
+    const y: number = month < 3 ? year - 1 : year;
+    return (y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) + t[month - 1] + 1) % 7;
   }
 
-  private getCalendarDays(): number[] {
-    const daysInMonth: number = this.getDaysInMonth(this.currentYear, this.currentMonth);
-    const firstDay: number = this.getFirstDayOfWeek(this.currentYear, this.currentMonth);
+  private getCalendarDays(year: number, month: number): number[] {
+    const daysInMonth: number = this.getDaysInMonth(year, month);
+    const firstDay: number = this.getFirstDayOfWeek(year, month);
     const totalCells: number = firstDay + daysInMonth;
     const rows: number = Math.ceil(totalCells / 7);
     const cells: number[] = [];
@@ -130,11 +137,27 @@ export struct StatsPage {
     return cells;
   }
 
-  private isToday(day: number): boolean {
+  private isToday(year: number, month: number, day: number): boolean {
     const today: Date = new Date();
-    return today.getFullYear() === this.currentYear &&
-      today.getMonth() + 1 === this.currentMonth &&
+    return today.getFullYear() === year &&
+      today.getMonth() + 1 === month &&
       today.getDate() === day;
+  }
+
+  private getMonthKey(year: number, month: number): string {
+    return year.toString() + '-' + month.toString();
+  }
+
+  private getReviewDatesFor(year: number, month: number): Set<number> {
+    const key: string = this.getMonthKey(year, month);
+    return this.reviewDatesMap.get(key) ?? new Set();
+  }
+
+  private onMonthPicked(year: number, month: number) {
+    this.currentYear = year;
+    this.currentMonth = month;
+    this.clearSelection();
+    this.loadData();
   }
 
   private prevMonth() {
@@ -191,6 +214,15 @@ export struct StatsPage {
     this.loadExtraStats();
   }
 
+  // 标签页切换时触发刷新
+  onTabVisible() {
+    if (this.currentTab === 1) {
+      this.loadDecks();
+      this.loadData();
+      this.loadExtraStats();
+    }
+  }
+
   selectDeck(deckId: number) {
     if (this.selectedDeckId === deckId) {
       return;
@@ -201,7 +233,8 @@ export struct StatsPage {
   }
 
   async selectDay(day: number) {
-    if (!this.reviewDates.has(day)) {
+    const dates: Set<number> = this.getReviewDatesFor(this.currentYear, this.currentMonth);
+    if (!dates.has(day)) {
       return;
     }
     this.selectedDay = day;
@@ -250,84 +283,8 @@ export struct StatsPage {
             this.buildMasteryBar()
           }
 
-          // 月份导航
-          Row() {
-            Text('◀')
-              .fontSize(16)
-              .fontColor($r('app.color.primary'))
-              .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-              .onClick(() => { this.prevMonth() })
-
-            Text(`${this.currentYear}年${this.currentMonth}月`)
-              .fontSize(17)
-              .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.text_primary'))
-              .layoutWeight(1)
-              .textAlign(TextAlign.Center)
-
-            Text('▶')
-              .fontSize(16)
-              .fontColor($r('app.color.primary'))
-              .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-              .onClick(() => { this.nextMonth() })
-          }
-          .width('100%')
-          .padding({ left: 20, right: 20, top: 10, bottom: 6 })
-
-          // 日历主体
-          Column() {
-            // 星期标题行
-            Row() {
-              ForEach(['日', '一', '二', '三', '四', '五', '六'], (label: string) => {
-                Text(label)
-                  .fontSize(11)
-                  .fontColor($r('app.color.text_secondary'))
-                  .width('14.28%')
-                  .textAlign(TextAlign.Center)
-                  .padding({ top: 8, bottom: 6 })
-              })
-            }
-            .width('100%')
-
-            // 日期网格
-            Flex({ wrap: FlexWrap.Wrap }) {
-              ForEach(this.getCalendarDays(), (day: number, index: number) => {
-                if (day === 0) {
-                  Column()
-                    .width('14.28%')
-                    .height(42)
-                } else {
-                  Column() {
-                    Text(`${day}`)
-                      .fontSize(14)
-                      .fontColor(this.reviewDates.has(day) ? $r('app.color.on_primary') : $r('app.color.text_primary'))
-                  }
-                  .width('14.28%')
-                  .height(42)
-                  .justifyContent(FlexAlign.Center)
-                  .borderRadius(21)
-                  .backgroundColor(
-                    this.selectedDay === day
-                      ? $r('app.color.warning')
-                      : (this.reviewDates.has(day) ? $r('app.color.primary') : $r('app.color.transparent'))
-                  )
-                  .border(
-                    this.isToday(day) && !this.reviewDates.has(day)
-                      ? { width: 1.5, color: $r('app.color.primary'), style: BorderStyle.Solid }
-                      : {}
-                  )
-                  .onClick(() => { this.selectDay(day) })
-                }
-              }, (day: number, index: number) => index.toString())
-            }
-            .width('100%')
-            .padding({ left: 2, right: 2, top: 4, bottom: 8 })
-          }
-          .width('100%')
-          .backgroundColor($r('app.color.surface'))
-          .borderRadius(12)
-          .padding({ left: 6, right: 6, bottom: 6 })
-          .margin({ left: 14, right: 14 })
+          // ===== 月历 =====
+          this.buildCalendarView()
 
           // 日详情面板
           if (this.dayDetail) {
@@ -338,77 +295,6 @@ export struct StatsPage {
           if (this.streak) {
             this.buildStreakInfo()
           }
-
-          // 今日评分统计
-          Column() {
-            Text('今日评分')
-              .fontSize(13)
-              .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.text_primary'))
-              .width('100%')
-              .textAlign(TextAlign.Start)
-              .margin({ bottom: 10 })
-
-            Row() {
-              Column() {
-                Text(`${this.todayForget}`)
-                  .fontSize(22)
-                  .fontWeight(FontWeight.Bold)
-                  .fontColor($r('app.color.danger'))
-                Text('忘记')
-                  .fontSize(11)
-                  .fontColor($r('app.color.text_secondary'))
-                  .margin({ top: 2 })
-              }
-              .width('25%')
-              .alignItems(HorizontalAlign.Center)
-
-              Column() {
-                Text(`${this.todayHard}`)
-                  .fontSize(22)
-                  .fontWeight(FontWeight.Bold)
-                  .fontColor($r('app.color.warning'))
-                Text('困难')
-                  .fontSize(11)
-                  .fontColor($r('app.color.text_secondary'))
-                  .margin({ top: 2 })
-              }
-              .width('25%')
-              .alignItems(HorizontalAlign.Center)
-
-              Column() {
-                Text(`${this.todayGood}`)
-                  .fontSize(22)
-                  .fontWeight(FontWeight.Bold)
-                  .fontColor($r('app.color.success'))
-                Text('良好')
-                  .fontSize(11)
-                  .fontColor($r('app.color.text_secondary'))
-                  .margin({ top: 2 })
-              }
-              .width('25%')
-              .alignItems(HorizontalAlign.Center)
-
-              Column() {
-                Text(`${this.todayEasy}`)
-                  .fontSize(22)
-                  .fontWeight(FontWeight.Bold)
-                  .fontColor($r('app.color.success'))
-                Text('容易')
-                  .fontSize(11)
-                  .fontColor($r('app.color.text_secondary'))
-                  .margin({ top: 2 })
-              }
-              .width('25%')
-              .alignItems(HorizontalAlign.Center)
-            }
-            .width('100%')
-          }
-          .width('100%')
-          .padding({ top: 14, bottom: 14, left: 14, right: 14 })
-          .backgroundColor($r('app.color.surface'))
-          .borderRadius(12)
-          .margin({ left: 14, right: 14, top: 12 })
 
           // 今日学习卡片列表
           this.buildTodayCardList()
@@ -554,7 +440,7 @@ export struct StatsPage {
       .width('100%')
     }
     .width('100%')
-    .padding({ left: 14, right: 14, top: 10, bottom: 4 })
+    .padding({ left: 14, right: 14, top: 12, bottom: 4 })
   }
 
   @Builder
@@ -574,20 +460,21 @@ export struct StatsPage {
             .width(this.calcPct(this.mastery!.unlearned) + '%')
             .height(20)
             .backgroundColor($r('app.color.outline'))
-            .borderRadius({ topLeft: 4, bottomLeft: 4 })
+            .borderRadius(this.isOnlySegment('unlearned') ? 4 : { topLeft: 4, bottomLeft: 4 })
         }
         if (this.mastery!.reviewing > 0) {
           Row()
             .width(this.calcPct(this.mastery!.reviewing) + '%')
             .height(20)
             .backgroundColor($r('app.color.warning'))
+            .borderRadius(this.reviewingBorderRadius())
         }
         if (this.mastery!.mastered > 0) {
           Row()
             .width(this.calcPct(this.mastery!.mastered) + '%')
             .height(20)
             .backgroundColor($r('app.color.success'))
-            .borderRadius({ topRight: 4, bottomRight: 4 })
+            .borderRadius(this.isOnlySegment('mastered') ? 4 : { topRight: 4, bottomRight: 4 })
         }
       }
       .width('100%')
@@ -617,11 +504,223 @@ export struct StatsPage {
     .margin({ left: 14, right: 14, top: 12 })
   }
 
+  private isOnlySegment(segment: string): boolean {
+    const m: MasteryProgress = this.mastery!;
+    if (segment === 'unlearned') {
+      return m.unlearned > 0 && m.reviewing === 0 && m.mastered === 0;
+    }
+    if (segment === 'mastered') {
+      return m.mastered > 0 && m.unlearned === 0 && m.reviewing === 0;
+    }
+    return false;
+  }
+
+  private reviewingBorderRadius(): BorderRadiuses | number {
+    const m: MasteryProgress = this.mastery!;
+    const hasLeft: boolean = m.unlearned > 0;
+    const hasRight: boolean = m.mastered > 0;
+    if (!hasLeft && !hasRight) {
+      return 4;
+    }
+    if (!hasLeft) {
+      return { topLeft: 4, bottomLeft: 4 };
+    }
+    if (!hasRight) {
+      return { topRight: 4, bottomRight: 4 };
+    }
+    return 0;
+  }
+
   private calcPct(count: number): string {
     if (!this.mastery || this.mastery.total === 0) {
       return '0';
     }
     return Math.max(4, Math.round(count / this.mastery.total * 100)).toString();
+  }
+
+  @Builder
+  buildCalendarView() {
+    Column() {
+      Row() {
+        Column() {
+          SymbolGlyph($r('sys.symbol.chevron_left'))
+            .fontColor([$r('app.color.text_primary')])
+            .fontSize(18)
+        }
+        .width(44)
+        .height(44)
+        .justifyContent(FlexAlign.Center)
+        .alignItems(HorizontalAlign.Center)
+        .onClick(() => { this.prevMonth(); })
+
+        Text(this.currentYear.toString() + '年' + this.currentMonth.toString() + '月')
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.text_primary'))
+          .layoutWeight(1)
+          .textAlign(TextAlign.Center)
+          .onClick(() => {
+            this.monthPickerController.open();
+          })
+
+        Column() {
+          SymbolGlyph($r('sys.symbol.chevron_right'))
+            .fontColor([$r('app.color.text_primary')])
+            .fontSize(18)
+        }
+        .width(44)
+        .height(44)
+        .justifyContent(FlexAlign.Center)
+        .alignItems(HorizontalAlign.Center)
+        .onClick(() => { this.nextMonth(); })
+      }
+      .width('100%')
+      .padding({ top: 10, bottom: 8 })
+
+      Divider()
+        .strokeWidth(0.5)
+        .color($r('app.color.outline'))
+
+      Row() {
+        ForEach(['日', '一', '二', '三', '四', '五', '六'], (label: string) => {
+          Text(label)
+            .fontSize(11)
+            .fontColor($r('app.color.text_secondary'))
+            .width('14.28%')
+            .textAlign(TextAlign.Center)
+            .padding({ top: 6, bottom: 6 })
+        })
+      }
+      .width('100%')
+
+      Column() {
+        this.buildMonthGrid()
+      }
+      .width('100%')
+      .height(this.getCalendarRows() * 44)
+      .id('month_' + this.currentYear.toString() + '_' + this.currentMonth.toString())
+    }
+    .width('100%')
+    .backgroundColor($r('app.color.surface'))
+    .borderRadius(12)
+    .padding({ left: 6, right: 6, bottom: 6 })
+    .margin({ left: 14, right: 14, top: 12 })
+  }
+
+  private getCalendarRows(): number {
+    const daysInMonth: number = this.getDaysInMonth(this.currentYear, this.currentMonth);
+    const firstDay: number = this.getFirstDayOfWeek(this.currentYear, this.currentMonth);
+    return Math.ceil((firstDay + daysInMonth) / 7);
+  }
+
+  @Builder
+  buildMonthGrid() {
+    Flex({ wrap: FlexWrap.Wrap }) {
+      ForEach(this.getCalendarDays(this.currentYear, this.currentMonth), (day: number, index: number) => {
+        if (day === 0) {
+          Column()
+            .width('14.28%')
+            .height(44)
+        } else {
+          Column() {
+            Text(day.toString())
+              .fontSize(14)
+              .fontWeight(this.isToday(this.currentYear, this.currentMonth, day) ? FontWeight.Medium : FontWeight.Regular)
+              .fontColor(
+                this.selectedDay === day
+                  ? $r('app.color.on_primary')
+                  : (this.getReviewDatesFor(this.currentYear, this.currentMonth).has(day) ? $r('app.color.on_primary') : $r('app.color.text_primary'))
+              )
+          }
+          .width('14.28%')
+          .height(44)
+          .justifyContent(FlexAlign.Center)
+          .borderRadius(22)
+          .backgroundColor(
+            this.selectedDay === day
+              ? $r('app.color.warning')
+              : (this.getReviewDatesFor(this.currentYear, this.currentMonth).has(day) ? $r('app.color.primary') : $r('app.color.transparent'))
+          )
+          .border(
+            this.isToday(this.currentYear, this.currentMonth, day) && !this.getReviewDatesFor(this.currentYear, this.currentMonth).has(day)
+              ? { width: 1.5, color: $r('app.color.primary'), style: BorderStyle.Solid }
+              : {}
+          )
+          .animation({ duration: 150, curve: Curve.EaseOut })
+          .onClick(() => {
+            this.selectDay(day);
+          })
+        }
+      }, (day: number, index: number) => this.currentYear.toString() + '_' + this.currentMonth.toString() + '_' + index.toString())
+    }
+    .width('100%')
+    .padding({ left: 2, right: 2, top: 2, bottom: 4 })
+  }
+
+  @Builder
+  buildCardItem(item: DayDetailRecord) {
+    Row() {
+      Column() {
+        Text(item.cardFront)
+          .fontSize(13)
+          .fontColor($r('app.color.text_primary'))
+          .maxLines(2)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .textAlign(TextAlign.Start)
+          .width('100%')
+
+        if (item.durationSeconds > 0) {
+          Text('⏱ ' + Math.round(item.durationSeconds / 60).toString() + ' 分钟')
+            .fontSize(10)
+            .fontColor($r('app.color.text_secondary'))
+            .margin({ top: 2 })
+        }
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+
+      Text(item.resultLabel)
+        .fontSize(11)
+        .fontWeight(FontWeight.Medium)
+        .fontColor($r('app.color.on_primary'))
+        .backgroundColor(item.resultColor)
+        .borderRadius(4)
+        .padding({ left: 8, right: 8, top: 3, bottom: 3 })
+    }
+    .width('100%')
+    .padding({ top: 6, bottom: 6 })
+    .onClick(() => {
+      this.getUIContext().getRouter().pushUrl({
+        url: 'pages/LearningDetailPage',
+        params: { cardId: item.cardId }
+      });
+    })
+  }
+
+  @Builder
+  buildViewAllFooter(targetPage: string) {
+    Divider()
+      .height(1)
+      .color($r('app.color.outline'))
+      .margin({ top: 10, bottom: 10 })
+
+    Row() {
+      Text('查看全部')
+        .fontSize(13)
+        .fontColor($r('app.color.primary'))
+      Text(' >')
+        .fontSize(13)
+        .fontColor($r('app.color.primary'))
+    }
+    .width('100%')
+    .justifyContent(FlexAlign.Center)
+    .padding({ top: 4, bottom: 4 })
+    .onClick(() => {
+      this.getUIContext().getRouter().pushUrl({
+        url: 'pages/' + targetPage,
+        params: { deckId: this.selectedDeckId }
+      });
+    })
   }
 
   @Builder
@@ -815,28 +914,7 @@ export struct StatsPage {
         }
       }, (item: DifficultCard) => 'diff_' + item.cardId.toString())
 
-      Divider()
-        .height(1)
-        .color($r('app.color.outline'))
-        .margin({ top: 10, bottom: 10 })
-
-      Row() {
-        Text('查看全部')
-          .fontSize(13)
-          .fontColor($r('app.color.primary'))
-        Text(' ›')
-          .fontSize(13)
-          .fontColor($r('app.color.primary'))
-      }
-      .width('100%')
-      .justifyContent(FlexAlign.Center)
-      .padding({ top: 4, bottom: 4 })
-      .onClick(() => {
-        this.getUIContext().getRouter().pushUrl({
-          url: 'pages/CardDifficultyPage',
-          params: { deckId: this.selectedDeckId }
-        });
-      })
+      this.buildViewAllFooter('CardDifficultyPage')
     }
     .width('100%')
     .padding(14)
@@ -947,7 +1025,7 @@ export struct StatsPage {
         ForEach(this.dailyDurations, (item: DailyDuration, index: number) => {
           Text(
             item.totalSeconds > 0
-              ? `${Math.round(item.totalSeconds / 60)}`
+              ? Math.round(item.totalSeconds / 60).toString()
               : '-'
           )
             .fontSize(9)
@@ -986,73 +1064,17 @@ export struct StatsPage {
           .padding({ top: 8, bottom: 8 })
       } else {
         ForEach(this.todayCards.slice(0, 10), (item: DayDetailRecord, index: number) => {
-          Row() {
-            Column() {
-              Text(item.cardFront)
-                .fontSize(13)
-                .fontColor($r('app.color.text_primary'))
-                .maxLines(2)
-                .textOverflow({ overflow: TextOverflow.Ellipsis })
-                .textAlign(TextAlign.Start)
-                .width('100%')
-
-              if (item.durationSeconds > 0) {
-                Text(`⏱ ${Math.round(item.durationSeconds / 60)} 分钟`)
-                  .fontSize(10)
-                  .fontColor($r('app.color.text_secondary'))
-                  .margin({ top: 2 })
-              }
-            }
-            .layoutWeight(1)
-            .alignItems(HorizontalAlign.Start)
-
-            Text(item.resultLabel)
-              .fontSize(11)
-              .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.on_primary'))
-              .backgroundColor(item.resultColor)
-              .borderRadius(4)
-              .padding({ left: 8, right: 8, top: 3, bottom: 3 })
-          }
-          .width('100%')
-          .padding({ top: 6, bottom: 6 })
-          .onClick(() => {
-            this.getUIContext().getRouter().pushUrl({
-              url: 'pages/LearningDetailPage',
-              params: { cardId: item.cardId }
-            });
-          })
+          this.buildCardItem(item)
 
           if (index < Math.min(9, this.todayCards.length - 1)) {
             Divider()
               .height(1)
               .color($r('app.color.outline'))
           }
-        }, (item: DayDetailRecord) => `today_${item.cardId}_${item.durationSeconds}`)
+        }, (item: DayDetailRecord) => 'today_' + item.cardId.toString() + '_' + item.durationSeconds.toString())
       }
 
-      Divider()
-        .height(1)
-        .color($r('app.color.outline'))
-        .margin({ top: 10, bottom: 10 })
-
-      Row() {
-        Text('查看全部')
-          .fontSize(13)
-          .fontColor($r('app.color.primary'))
-        Text(' ›')
-          .fontSize(13)
-          .fontColor($r('app.color.primary'))
-      }
-      .width('100%')
-      .justifyContent(FlexAlign.Center)
-      .padding({ top: 4, bottom: 4 })
-      .onClick(() => {
-        this.getUIContext().getRouter().pushUrl({
-          url: 'pages/TodayCardsPage',
-          params: { deckId: this.selectedDeckId }
-        });
-      })
+      this.buildViewAllFooter('TodayCardsPage')
     }
     .width('100%')
     .padding(14)
@@ -1067,11 +1089,18 @@ export struct StatsPage {
       // 标题栏
       Row() {
         Column() {
-          Text(`${this.dayDetail!.dateLabel}`)
+          Text(this.dayDetail!.dateLabel)
             .fontSize(15)
             .fontWeight(FontWeight.Medium)
             .fontColor($r('app.color.text_primary'))
-          Text(`${this.dayDetail!.totalReviews} 次复习 · 忘${this.dayDetail!.forgetCount} 难${this.dayDetail!.hardCount} 良${this.dayDetail!.goodCount} 易${this.dayDetail!.easyCount} · ${Math.round(this.dayDetail!.totalDurationSeconds / 60)} 分钟`)
+          Text(
+            this.dayDetail!.totalReviews.toString() + ' 次复习 · 忘' +
+            this.dayDetail!.forgetCount.toString() + ' 难' +
+            this.dayDetail!.hardCount.toString() + ' 良' +
+            this.dayDetail!.goodCount.toString() + ' 易' +
+            this.dayDetail!.easyCount.toString() + ' · ' +
+            Math.round(this.dayDetail!.totalDurationSeconds / 60).toString() + ' 分钟'
+          )
             .fontSize(12)
             .fontColor($r('app.color.text_secondary'))
             .margin({ top: 2 })
@@ -1095,43 +1124,14 @@ export struct StatsPage {
 
       // 卡片列表
       ForEach(this.dayDetail!.records, (item: DayDetailRecord, index: number) => {
-        Row() {
-          Column() {
-            Text(item.cardFront)
-              .fontSize(13)
-              .fontColor($r('app.color.text_primary'))
-              .maxLines(2)
-              .textOverflow({ overflow: TextOverflow.Ellipsis })
-              .textAlign(TextAlign.Start)
-              .width('100%')
-
-            if (item.durationSeconds > 0) {
-              Text(`⏱ ${Math.round(item.durationSeconds / 60)} 分钟`)
-                .fontSize(10)
-                .fontColor($r('app.color.text_secondary'))
-                .margin({ top: 2 })
-            }
-          }
-          .layoutWeight(1)
-          .alignItems(HorizontalAlign.Start)
-
-          Text(item.resultLabel)
-            .fontSize(11)
-            .fontWeight(FontWeight.Medium)
-            .fontColor($r('app.color.on_primary'))
-            .backgroundColor(item.resultColor)
-            .borderRadius(4)
-            .padding({ left: 8, right: 8, top: 3, bottom: 3 })
-        }
-        .width('100%')
-        .padding({ top: 6, bottom: 6 })
+        this.buildCardItem(item)
 
         if (index < this.dayDetail!.records.length - 1) {
           Divider()
             .height(1)
             .color($r('app.color.outline'))
         }
-      }, (item: DayDetailRecord) => `${item.cardId}_${item.durationSeconds}`)
+      }, (item: DayDetailRecord) => item.cardId.toString() + '_' + item.durationSeconds.toString())
     }
     .width('100%')
     .padding(14)

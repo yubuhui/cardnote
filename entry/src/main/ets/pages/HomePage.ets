@@ -6,6 +6,7 @@ import { MemoryRecordDao } from '../data/MemoryRecordDao';
 import { StatsPage } from './StatsPage';
 import { SettingsPage } from './SettingsPage';
 import { HdsTabs, hdsMaterial } from '@kit.UIDesignKit';
+import { DataRefreshHelper } from '../utils/DataRefreshHelper';
 
 const DECK_COLORS: string[] = ['#4A90D9', '#E85D75', '#50C878', '#FFB347', '#9B59B6', '#1ABC9C'];
 
@@ -392,6 +393,8 @@ struct HomePage {
   onPageShow() {
     this.lastLoadTime = 0;
     this.loadHomeData();
+    this.lastLoadTime = Date.now();
+    DataRefreshHelper.notify();
   }
 
   onBackPress(): boolean {
@@ -534,7 +537,7 @@ struct HomePage {
           }.width('100%').height('100%').backgroundColor($r('app.color.background'))
         }.tabBar(this.buildTab('首页', 0))
 
-        TabContent() { StatsPage() }.tabBar(this.buildTab('统计', 1))
+        TabContent() { StatsPage({ currentTab: this.currentTabIndex }) }.tabBar(this.buildTab('统计', 1))
         TabContent() { SettingsPage() }.tabBar(this.buildTab('设置', 2))
       }
       .barPosition(BarPosition.End).scrollable(false).barOverlap(true)

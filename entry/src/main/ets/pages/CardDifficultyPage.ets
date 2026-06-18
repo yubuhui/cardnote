@@ -9,9 +9,12 @@ struct CardDifficultyPage {
   private studyVm: StudyViewModel = new StudyViewModel();
 
   aboutToAppear() {
-    const params: Record<string, Object> | undefined = this.getUIContext().getRouter().getParams() as Record<string, Object>;
-    if (params && params['deckId'] !== undefined) {
-      this.deckId = params['deckId'] as number;
+    const raw = this.getUIContext().getRouter().getParams();
+    if (raw !== undefined && typeof raw === 'object') {
+      const params = raw as Record<string, Object>;
+      if (params['deckId'] !== undefined) {
+        this.deckId = params['deckId'] as number;
+      }
     }
     this.loadData();
   }
@@ -32,33 +35,38 @@ struct CardDifficultyPage {
         this.cards = await this.studyVm.getAllDifficultCardsByDeck(this.deckId);
       }
     } catch (err) {
-      console.error('Load difficulty cards failed:', err);
+      console.error('Load difficulty cards failed:' + JSON.stringify(err));
     }
+  }
+
+  @Builder
+  buildPageHeader(title: string) {
+    Row() {
+      Text('<')
+        .fontSize(16)
+        .fontColor($r('app.color.text_primary'))
+        .textAlign(TextAlign.Center)
+        .width(36)
+        .onClick(() => {
+          this.getUIContext().getRouter().back();
+        })
+
+      Text(title)
+        .fontSize(16)
+        .fontWeight(FontWeight.Medium)
+        .fontColor($r('app.color.text_primary'))
+        .textAlign(TextAlign.Center)
+        .layoutWeight(1)
+    }
+    .width('100%')
+    .alignItems(VerticalAlign.Center)
+    .padding({ top: 46, bottom: 12 })
+    .backgroundColor($r('app.color.surface'))
   }
 
   build() {
     Column() {
-      Row() {
-        Text('‹')
-          .fontSize(16)
-          .fontColor($r('app.color.text_primary'))
-          .textAlign(TextAlign.Center)
-          .width(36)
-          .onClick(() => {
-            this.getUIContext().getRouter().back();
-          })
-
-        Text('卡片难度排行')
-          .fontSize(16)
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.text_primary'))
-          .textAlign(TextAlign.Center)
-          .layoutWeight(1)
-      }
-      .width('100%')
-      .alignItems(VerticalAlign.Center)
-      .padding({ top: 46, bottom: 12 })
-      .backgroundColor($r('app.color.surface'))
+      this.buildPageHeader('卡片难度排行')
 
       Scroll() {
         Column() {
