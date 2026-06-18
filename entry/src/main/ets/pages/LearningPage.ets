@@ -32,6 +32,7 @@ struct LearningPage {
   private cardActiveSeconds: number = 0;
   private lastInteractionTime: number = 0;
   private bookmarkedOnly: boolean = false;
+  private ratingInProgress: boolean = false;
 
   aboutToAppear() {
     const params = this.getUIContext().getRouter().getParams() as Record<string, Object>;
@@ -79,6 +80,9 @@ struct LearningPage {
   }
 
   async refreshCurrentCard() {
+    if (this.ratingInProgress) {
+      return;
+    }
     if (!this.currentCard) {
       return;
     }
@@ -890,6 +894,7 @@ struct LearningPage {
     if (!this.currentCard) {
       return;
     }
+    this.ratingInProgress = true;
     this.onUserInteraction();
     const duration: number = this.stopCardTimer();
     // 保存评分前卡片快照（用于撤销）
@@ -902,6 +907,8 @@ struct LearningPage {
       console.error('Record rating failed:', JSON.stringify(err));
       // 恢复计时器（让用户可以重试）
       this.startCardTimer();
+    } finally {
+      this.ratingInProgress = false;
     }
   }
 
@@ -940,6 +947,9 @@ struct LearningPage {
     this.currentIndex -= 1;
     this.currentCard = this.dueCards[this.currentIndex];
     await this.updateCurrentDeck();
+    this.loadCardMeta();
+    this.stopCardTimer();
+    this.startCardTimer();
     this.showAnswer = false;
     this.showRating = false;
     this.selectedChoiceIndex = -1;
