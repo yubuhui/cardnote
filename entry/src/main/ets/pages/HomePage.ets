@@ -341,6 +341,7 @@ struct HomePage {
   @State reviewingOpen: boolean = false;
   @State masteredOpen: boolean = false;
   @State selectedDeckId: number = 0;
+  @State showBookmarkedOnly: boolean = false;
   @State deletingDeckId: number = -1;
   @State editingDeckId: number = 0;
   @State editingDeckName: string = '';
@@ -439,7 +440,11 @@ struct HomePage {
   }
 
   private getFilteredCards(): Card[] {
-    return this.selectedDeckId === 0 ? this.cards : this.cards.filter(c => c.deckId === this.selectedDeckId);
+    let filtered: Card[] = this.selectedDeckId === 0 ? this.cards : this.cards.filter(c => c.deckId === this.selectedDeckId);
+    if (this.showBookmarkedOnly) {
+      filtered = filtered.filter(c => c.isBookmarked === true);
+    }
+    return filtered;
   }
 
   async loadHomeData() {
@@ -555,16 +560,21 @@ struct HomePage {
     Scroll() {
       Row({ space: 8 }) {
         Text('全部').fontSize(13).fontWeight(FontWeight.Medium)
-          .fontColor(this.selectedDeckId === 0 ? $r('app.color.on_primary') : $r('app.color.text_secondary'))
+          .fontColor(this.selectedDeckId === 0 && !this.showBookmarkedOnly ? $r('app.color.on_primary') : $r('app.color.text_secondary'))
           .padding({ left: 16, right: 16, top: 7, bottom: 7 })
-          .backgroundColor(this.selectedDeckId === 0 ? $r('app.color.primary') : $r('app.color.surface'))
-          .borderRadius(16).onClick(() => { this.selectedDeckId = 0; })
+          .backgroundColor(this.selectedDeckId === 0 && !this.showBookmarkedOnly ? $r('app.color.primary') : $r('app.color.surface'))
+          .borderRadius(16).onClick(() => { this.selectedDeckId = 0; this.showBookmarkedOnly = false; })
+        Text('收藏').fontSize(13).fontWeight(FontWeight.Medium)
+          .fontColor(this.showBookmarkedOnly ? $r('app.color.on_primary') : $r('app.color.text_secondary'))
+          .padding({ left: 16, right: 16, top: 7, bottom: 7 })
+          .backgroundColor(this.showBookmarkedOnly ? $r('app.color.primary') : $r('app.color.surface'))
+          .borderRadius(16).onClick(() => { this.selectedDeckId = 0; this.showBookmarkedOnly = true; })
         ForEach(this.decks, (deck: Deck) => {
           Text(deck.name).fontSize(13).fontWeight(FontWeight.Medium)
             .fontColor(this.selectedDeckId === deck.id ? $r('app.color.on_primary') : $r('app.color.text_secondary'))
             .padding({ left: 16, right: 16, top: 7, bottom: 7 })
             .backgroundColor(this.selectedDeckId === deck.id ? $r('app.color.primary') : $r('app.color.surface'))
-            .borderRadius(16).onClick(() => { this.selectedDeckId = deck.id; })
+            .borderRadius(16).onClick(() => { this.selectedDeckId = deck.id; this.showBookmarkedOnly = false; })
             .gesture(LongPressGesture({ repeat: false, duration: 400 }).onAction(() => { this.showDeckActionMenu(deck); }))
         }, (deck: Deck) => `${deck.id}_${deck.updatedAt}`)
         Text('+').fontSize(16).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_secondary')).width(30).height(30).textAlign(TextAlign.Center)
