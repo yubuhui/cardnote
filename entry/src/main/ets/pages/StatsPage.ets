@@ -3,11 +3,6 @@ import { DailyDuration } from '../data/MemoryRecordDao';
 import { Deck } from '../model/Deck';
 import { QuickMonthPicker } from '../components/QuickMonthPicker';
 
-interface SegmentData {
-  count: number;
-  color: string;
-}
-
 @Component
 export struct StatsPage {
   @Prop @Watch('onTabVisible') currentTab: number = 0;
@@ -35,8 +30,6 @@ export struct StatsPage {
   @State selectedDeckId: number = 0;
   @State decks: Deck[] = [];
   private studyVm: StudyViewModel = new StudyViewModel();
-  private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true);
-  private canvasCtx: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings);
 
   aboutToAppear() {
     this.loadDecks();
@@ -747,33 +740,102 @@ export struct StatsPage {
         .fontColor($r('app.color.text_primary'))
         .width('100%')
         .textAlign(TextAlign.Start)
-        .margin({ bottom: 10 })
+        .margin({ bottom: 8 })
 
       Row() {
-        Canvas(this.canvasCtx)
-          .width(100)
-          .height(100)
-          .onReady(() => {
-            this.drawDonut();
-          })
-
-        Column() {
-          this.donutLegendItem($r('app.color.danger'), '忘记', this.ratingDist!.forget, this.ratingDist!.total)
-          this.donutLegendItem($r('app.color.warning'), '困难', this.ratingDist!.hard, this.ratingDist!.total)
-          this.donutLegendItem($r('app.color.success'), '良好', this.ratingDist!.good, this.ratingDist!.total)
-          this.donutLegendItem($r('app.color.primary'), '容易', this.ratingDist!.easy, this.ratingDist!.total)
+        if (this.ratingDist!.forget > 0) {
+          Row()
+            .width(this.ratingPct(this.ratingDist!.forget) + '%')
+            .height(20)
+            .backgroundColor($r('app.color.danger'))
+            .borderRadius(this.ratingSegBorder('forget'))
         }
-        .margin({ left: 20 })
-        .layoutWeight(1)
+        if (this.ratingDist!.hard > 0) {
+          Row()
+            .width(this.ratingPct(this.ratingDist!.hard) + '%')
+            .height(20)
+            .backgroundColor($r('app.color.warning'))
+            .borderRadius(this.ratingSegBorder('hard'))
+        }
+        if (this.ratingDist!.good > 0) {
+          Row()
+            .width(this.ratingPct(this.ratingDist!.good) + '%')
+            .height(20)
+            .backgroundColor($r('app.color.success'))
+            .borderRadius(this.ratingSegBorder('good'))
+        }
+        if (this.ratingDist!.easy > 0) {
+          Row()
+            .width(this.ratingPct(this.ratingDist!.easy) + '%')
+            .height(20)
+            .backgroundColor($r('app.color.primary'))
+            .borderRadius(this.ratingSegBorder('easy'))
+        }
       }
       .width('100%')
-      .justifyContent(FlexAlign.Center)
+      .height(20)
+      .borderRadius(4)
+      .backgroundColor($r('app.color.outline'))
+
+      Row() {
+        Text('忘记 ' + this.ratingDist!.forget.toString())
+          .fontSize(10)
+          .fontColor($r('app.color.danger'))
+        Text('困难 ' + this.ratingDist!.hard.toString())
+          .fontSize(10)
+          .fontColor($r('app.color.warning'))
+        Text('良好 ' + this.ratingDist!.good.toString())
+          .fontSize(10)
+          .fontColor($r('app.color.success'))
+        Text('容易 ' + this.ratingDist!.easy.toString())
+          .fontSize(10)
+          .fontColor($r('app.color.primary'))
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.SpaceBetween)
+      .margin({ top: 6 })
     }
     .width('100%')
     .padding(14)
     .backgroundColor($r('app.color.surface'))
     .borderRadius(12)
     .margin({ left: 14, right: 14, top: 12 })
+  }
+
+  private ratingPct(count: number): string {
+    if (!this.ratingDist || this.ratingDist.total === 0) {
+      return '0';
+    }
+    return Math.max(3, Math.round(count / this.ratingDist.total * 100)).toString();
+  }
+
+  private ratingSegBorder(segment: string): BorderRadiuses | number {
+    const d: RatingDistribution = this.ratingDist!;
+    const hasF: boolean = d.forget > 0;
+    const hasH: boolean = d.hard > 0;
+    const hasG: boolean = d.good > 0;
+    const hasE: boolean = d.easy > 0;
+
+    if (segment === 'forget') {
+      return hasF ? { topLeft: 4, bottomLeft: 4 } : 0;
+    }
+    if (segment === 'hard') {
+      if (!hasF && !hasG && !hasE) { return 4; }
+      if (!hasF) { return { topLeft: 4, bottomLeft: 4 }; }
+      if (!hasG && !hasE) { return { topRight: 4, bottomRight: 4 }; }
+      return 0;
+    }
+    if (segment === 'good') {
+      if (!hasF && !hasH && !hasE) { return 4; }
+      if (!hasF && !hasH) { return { topLeft: 4, bottomLeft: 4 }; }
+      if (!hasE) { return { topRight: 4, bottomRight: 4 }; }
+      return 0;
+    }
+    if (segment === 'easy') {
+      if (!hasF && !hasH && !hasG) { return 4; }
+      return { topRight: 4, bottomRight: 4 };
+    }
+    return 0;
   }
 
   @Builder
@@ -858,64 +920,6 @@ export struct StatsPage {
     .backgroundColor($r('app.color.surface'))
     .borderRadius(12)
     .margin({ left: 14, right: 14, top: 12 })
-  }
-
-  @Builder
-  donutLegendItem(color: ResourceColor, label: string, count: number, total: number) {
-    Row() {
-      Row()
-        .width(10)
-        .height(10)
-        .borderRadius(5)
-        .backgroundColor(color)
-      Text(label)
-        .fontSize(11)
-        .fontColor($r('app.color.text_primary'))
-        .margin({ left: 6 })
-      Text(Math.round(count / total * 100).toString() + '%')
-        .fontSize(11)
-        .fontColor($r('app.color.text_secondary'))
-        .margin({ left: 4 })
-    }
-    .width('100%')
-    .padding({ top: 3, bottom: 3 })
-  }
-
-  private drawDonut(): void {
-    if (!this.ratingDist || this.ratingDist.total === 0) {
-      return;
-    }
-    const ctx: CanvasRenderingContext2D = this.canvasCtx;
-    const centerX: number = 50;
-    const centerY: number = 50;
-    const radius: number = 40;
-    const lineWidth: number = 16;
-
-    ctx.clearRect(0, 0, 100, 100);
-
-    const seg0: SegmentData = { count: this.ratingDist.forget, color: '#E74C3C' };
-    const seg1: SegmentData = { count: this.ratingDist.hard, color: '#F39C12' };
-    const seg2: SegmentData = { count: this.ratingDist.good, color: '#2ECC71' };
-    const seg3: SegmentData = { count: this.ratingDist.easy, color: '#4A90D9' };
-    const segments: SegmentData[] = [seg0, seg1, seg2, seg3];
-
-    let startAngle: number = -Math.PI / 2;
-    const total: number = this.ratingDist.total;
-
-    for (let i: number = 0; i < segments.length; i++) {
-      const seg: SegmentData = segments[i];
-      if (seg.count === 0) {
-        continue;
-      }
-      const sweepAngle: number = (seg.count / total) * 2 * Math.PI;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius, startAngle, startAngle + sweepAngle);
-      ctx.strokeStyle = seg.color;
-      ctx.lineWidth = lineWidth;
-      ctx.lineCap = 'butt';
-      ctx.stroke();
-      startAngle += sweepAngle;
-    }
   }
 
   @Builder
