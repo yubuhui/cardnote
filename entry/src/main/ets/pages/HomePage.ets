@@ -398,6 +398,10 @@ struct HomePage {
   }
 
   onBackPress(): boolean {
+    if (this.isMultiSelectMode) {
+      this.exitMultiSelectMode();
+      return true;
+    }
     if (this.isSearching) {
       this.exitSearch();
       return true;
