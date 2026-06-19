@@ -73,7 +73,10 @@ struct ImportExportPage {
     try {
       this.deckList = await this.cardVm.getAllDecks();
       if (this.deckList.length > 0) {
-        this.selectedDeckId = this.deckList[0].id;
+        const exists: boolean = this.deckList.some((d: Deck) => d.id === this.selectedDeckId);
+        if (!exists || this.selectedDeckId === 0) {
+          this.selectedDeckId = this.deckList[0].id;
+        }
       }
     } catch (err) {
       console.error('Load decks failed:', JSON.stringify(err));
@@ -379,6 +382,7 @@ struct ImportExportPage {
         return;
       }
 
+      const targetDeckId: number = this.selectedDeckId;
       const now: number = Date.now();
       let successCount: number = 0;
 
@@ -392,7 +396,7 @@ struct ImportExportPage {
 
         const card: Card = {
           id: 0,
-          deckId: this.selectedDeckId,
+          deckId: targetDeckId,
           type: item.cardType,
           front: item.front,
           options: item.options,
